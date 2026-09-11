@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "CommonJS",
+    "strict": true,
+    "noImplicitAny": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "sourceMap": false,
+    "allowJs": true,
+    "rootDir": "./miniprogram",
+    "outDir": "./miniprogram",
+    "lib": [
+      "ES2015",
+      "ES2016",
+      "ES2017",
+      "ES2016.Array.Include"
+    ],
+    "types": [
+      "miniprogram-api-typings"
+    ]
+  },
+  "include": [
+    "miniprogram/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "miniprogram/miniprogram_npm"
+  ]
+}

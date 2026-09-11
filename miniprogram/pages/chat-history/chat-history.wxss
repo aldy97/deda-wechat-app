@@ -1,0 +1,129 @@
+.chat-history-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f6f8;
+}
+
+/* 顶部头像与欢迎语 */
+.chat-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 32rpx 24rpx;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background-color: #e6f2ff;
+  margin-bottom: 16rpx;
+}
+
+.welcome-text {
+  font-size: 28rpx;
+  color: #333333;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 8rpx;
+}
+
+.welcome-subtext {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 日期分隔 */
+.date-divider {
+  display: flex;
+  justify-content: center;
+  padding: 8rpx 0 16rpx;
+  flex-shrink: 0;
+}
+
+.date-divider text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 加载与空状态 */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+/* 可滚动对话区域 */
+.chat-scroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 顶部加载提示 */
+.top-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0;
+}
+
+.no-more-top {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0;
+}
+
+/* 对话列表 */
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 24rpx 32rpx;
+}
+
+.chat-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+  max-width: 100%;
+}
+
+.chat-item-left {
+  justify-content: flex-start;
+}
+
+.chat-item-right {
+  justify-content: flex-end;
+}
+
+.bubble-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background-color: #e6f2ff;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  word-break: break-word;
+}
+
+.bubble-device {
+  background-color: #ffffff;
+  border-top-left-radius: 4rpx;
+}
+
+.bubble-user {
+  background-color: #8fc5ff;
+  border-top-right-radius: 4rpx;
+}
+
+.bubble-text {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333333;
+}

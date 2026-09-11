@@ -1,0 +1,38 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-header {
+  margin-bottom: 48rpx;
+  text-align: center;
+}
+
+.login-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.login-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-color-secondary);
+}
+
+.login-form {
+  padding: 32rpx 0;
+}
+
+.login-actions {
+  margin-top: 48rpx;
+  padding: 0 32rpx;
+}
+
+.login-tips {
+  margin-top: 32rpx;
+  text-align: center;
+}

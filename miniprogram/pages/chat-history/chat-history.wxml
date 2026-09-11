@@ -1,0 +1,58 @@
+<view class="chat-history-page">
+  <!-- 顶部头像与欢迎语 -->
+  <view class="chat-header">
+    <image class="avatar" src="" mode="aspectFill" />
+    <text class="welcome-text">你好，我是你的好朋友专精英文故事工坊的DEDA AI玩偶</text>
+    <text class="welcome-subtext">快和我聊天吧</text>
+  </view>
+
+  <!-- 日期分隔 -->
+  <view class="date-divider">
+    <text>08 月 14 日 09:45</text>
+  </view>
+
+  <!-- 加载中（初始） -->
+  <view class="loading-wrap" wx:if="{{ loading && records.length === 0 }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <van-empty wx:elif="{{ records.length === 0 }}" description="暂无对话记录" />
+
+  <!-- 对话列表（可滚动区域） -->
+  <scroll-view
+    wx:else
+    class="chat-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar
+    scroll-into-view="{{ scrollIntoView }}"
+    bindscrolltoupper="onScrollToUpper"
+    upper-threshold="80"
+  >
+    <!-- 顶部加载提示 -->
+    <view class="top-loading" wx:if="{{ loading && records.length > 0 }}">
+      <van-loading type="spinner" size="32rpx">加载更早消息...</van-loading>
+    </view>
+
+    <view class="no-more-top" wx:if="{{ !hasMore && records.length > 0 }}">
+      <text class="text-secondary">没有更早的消息了</text>
+    </view>
+
+    <view class="chat-list">
+      <view
+        id="msg-{{ item.id }}"
+        class="chat-item {{ item.role === 'user' ? 'chat-item-right' : 'chat-item-left' }}"
+        wx:for="{{ records }}"
+        wx:key="id"
+      >
+        <image wx:if="{{ item.role === 'device' }}" class="bubble-avatar" src="" mode="aspectFill" />
+        <view class="bubble {{ item.role === 'user' ? 'bubble-user' : 'bubble-device' }}">
+          <text class="bubble-text">{{ item.content }}</text>
+        </view>
+      </view>
+      <!-- 锚点：用于初始滚动到底部 -->
+      <view id="msg-last"></view>
+    </view>
+  </scroll-view>
+</view>

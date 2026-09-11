@@ -1,0 +1,76 @@
+<view class="container learning-data-page">
+  <text class="page-title">学习数据</text>
+
+  <!-- 概览卡片 -->
+  <view class="overview card">
+    <view class="overview-item">
+      <text class="overview-value">{{ overview.totalDuration || 0 }}</text>
+      <text class="overview-label text-secondary">学习时长(分)</text>
+    </view>
+    <view class="overview-item">
+      <text class="overview-value">{{ overview.totalSessions || 0 }}</text>
+      <text class="overview-label text-secondary">学习次数</text>
+    </view>
+    <view class="overview-item">
+      <text class="overview-value">{{ overview.avgScore || 0 }}</text>
+      <text class="overview-label text-secondary">平均得分</text>
+    </view>
+    <view class="overview-item">
+      <text class="overview-value">{{ overview.continuousDays || 0 }}</text>
+      <text class="overview-label text-secondary">连续天数</text>
+    </view>
+  </view>
+
+  <!-- 日期筛选 -->
+  <view class="filter-bar">
+    <van-button type="default" size="small" bind:click="onOpenDatePicker">
+      选择日期
+    </van-button>
+  </view>
+
+  <!-- 对话记录 -->
+  <view class="section-title">对话记录</view>
+
+  <view class="loading-wrap" wx:if="{{ loading && records.length === 0 }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <van-empty wx:elif="{{ records.length === 0 }}" description="暂无对话记录" />
+
+  <view wx:else class="record-list">
+    <view
+      class="record-item card"
+      wx:for="{{ records }}"
+      wx:key="id"
+    >
+      <view class="record-header">
+        <van-tag type="{{ item.role === 'user' ? 'primary' : 'success' }}">
+          {{ item.role === 'user' ? '我' : '设备' }}
+        </van-tag>
+        <text class="record-time text-secondary">{{ item.createdAt }}</text>
+      </view>
+      <text class="record-content">{{ item.content }}</text>
+    </view>
+
+    <van-button
+      wx:if="{{ hasMore }}"
+      type="default"
+      block
+      loading="{{ loading }}"
+      bind:click="onLoadMore"
+    >
+      加载更多
+    </van-button>
+    <text wx:else class="no-more text-secondary">没有更多了</text>
+  </view>
+
+  <!-- 日期选择弹窗 -->
+  <van-popup show="{{ showDatePicker }}" position="bottom" bind:close="onCloseDatePicker">
+    <van-datetime-picker
+      type="date"
+      value="{{ currentDate }}"
+      bind:confirm="onDateConfirm"
+      bind:cancel="onCloseDatePicker"
+    />
+  </van-popup>
+</view>

@@ -1,0 +1,53 @@
+<view class="container login-page">
+  <view class="login-header">
+    <text class="login-title">欢迎使用</text>
+    <text class="login-subtitle">Deda 智能设备管理</text>
+  </view>
+
+  <view class="login-form card">
+    <van-cell-group inset>
+      <van-field
+        value="{{ phone }}"
+        label="手机号"
+        placeholder="请输入手机号"
+        type="number"
+        maxlength="11"
+        bind:change="onPhoneChange"
+      />
+      <van-field
+        value="{{ code }}"
+        label="验证码"
+        placeholder="请输入验证码"
+        type="number"
+        maxlength="6"
+        bind:change="onCodeChange"
+        use-button-slot
+      >
+        <van-button
+          slot="button"
+          size="small"
+          type="primary"
+          disabled="{{ countdown > 0 }}"
+          bind:click="onSendCode"
+        >
+          {{ countdown > 0 ? countdown + 's' : '获取验证码' }}
+        </van-button>
+      </van-field>
+    </van-cell-group>
+
+    <view class="login-actions">
+      <van-button
+        type="primary"
+        block
+        loading="{{ loading }}"
+        bind:click="onLogin"
+      >
+        登录
+      </van-button>
+    </view>
+  </view>
+
+  <view class="login-tips text-secondary">
+    未注册手机号验证后将自动创建账号
+  </view>
+</view>

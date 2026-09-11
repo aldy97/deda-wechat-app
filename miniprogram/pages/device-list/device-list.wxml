@@ -1,0 +1,69 @@
+<view class="container device-list-page">
+  <text class="page-title">我的设备</text>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{ devices.length === 0 }}">
+    <van-empty description="暂无设备，请先添加设备">
+      <van-button type="primary" size="small" bind:click="fetchDeviceList">重新加载</van-button>
+    </van-empty>
+  </view>
+
+  <!-- 设备列表 -->
+  <view wx:else>
+    <view
+      class="device-card card"
+      wx:for="{{ devices }}"
+      wx:key="id"
+      data-id="{{ item.id }}"
+    >
+      <!-- 卡片顶部：品牌、状态、设置 -->
+      <view class="card-top">
+        <view class="brand-row">
+          <text class="brand-name">滴答科玩</text>
+          <view class="status-tag {{ item.status === 'online' ? 'status-online' : 'status-offline' }}">
+            <text class="status-dot"></text>
+            <text>{{ item.status === 'online' ? '在线' : '离线' }}</text>
+          </view>
+        </view>
+        <view class="settings-entry" bind:tap="onSettingsTap" data-id="{{ item.id }}">
+          <text class="settings-text">设置</text>
+        </view>
+      </view>
+
+      <!-- 卡片中部：标题、描述、图片 -->
+      <view class="card-body">
+        <view class="card-info">
+          <view class="card-title-row">
+            <text class="card-title">中文聊天陪伴</text>
+            <image class="title-icon" src="" mode="aspectFill" />
+          </view>
+          <text class="card-desc">
+            DEDA AI玩偶，中文智能体，不仅可以扮演树洞的角色，帮助宝贝们疏导情绪；还上知天文下知地理，随时在线给宝贝们解答不懂的科学知识，是孩子们的好伙伴！
+          </text>
+        </view>
+        <image class="card-image" src="" mode="aspectFill" />
+      </view>
+
+      <!-- 卡片底部：三个按钮 -->
+      <view class="card-actions">
+        <view class="action-btn" bind:tap="onViewChat" data-id="{{ item.id }}">
+          <text class="action-icon">💬</text>
+          <text class="action-text">查看对话</text>
+        </view>
+        <view class="action-btn">
+          <text class="action-icon">📊</text>
+          <text class="action-text">智能分析</text>
+        </view>
+        <view class="action-btn">
+          <text class="action-icon">🎭</text>
+          <text class="action-text">切换角色</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

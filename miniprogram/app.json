@@ -1,0 +1,34 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/device-list/device-list",
+    "pages/device-control/device-control",
+    "pages/learning-data/learning-data",
+    "pages/chat-history/chat-history"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "Deda 小程序",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#1989fa",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/device-list/device-list",
+        "text": "设备"
+      },
+      {
+        "pagePath": "pages/learning-data/learning-data",
+        "text": "学习"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

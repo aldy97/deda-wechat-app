@@ -1,0 +1,24 @@
+{
+  "name": "deda-wechat-app",
+  "version": "1.0.0",
+  "description": "微信原生小程序 + TypeScript 最小脚手架（设备管控、学习数据、对话记录）",
+  "main": "miniprogram/app.ts",
+  "scripts": {
+    "dev": "echo '请使用微信开发者工具导入项目并开启热更新预览'",
+    "build:npm": "echo '请在微信开发者工具中执行：工具 -> 构建 npm'"
+  },
+  "keywords": [
+    "wechat-miniprogram",
+    "typescript",
+    "vant-weapp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@vant/weapp": "^1.11.7"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^4.0.4",
+    "typescript": "^7.0.2"
+  }
+}

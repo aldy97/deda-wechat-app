@@ -1,0 +1,48 @@
+<view class="container device-control-page">
+  <text class="page-title">{{ device.name || '设备控制' }}</text>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <!-- 控制面板 -->
+  <view wx:else>
+    <van-cell-group inset class="card">
+      <van-cell title="设备电源">
+        <van-switch
+          checked="{{ device.power }}"
+          bind:change="onPowerChange"
+          slot="right-icon"
+        />
+      </van-cell>
+
+      <van-cell title="音量：{{ device.volume }}">
+        <van-slider
+          value="{{ device.volume }}"
+          min="0"
+          max="100"
+          bind:change="onVolumeChange"
+          bind:dragend="onVolumeDragEnd"
+          slot="right-icon"
+          custom-class="volume-slider"
+        />
+      </van-cell>
+    </van-cell-group>
+
+    <view class="card mode-card">
+      <text class="mode-title">工作模式</text>
+      <van-radio-group value="{{ device.mode }}" bind:change="onModeChange">
+        <van-radio name="study">学习模式</van-radio>
+        <van-radio name="play">娱乐模式</van-radio>
+        <van-radio name="rest">休息模式</van-radio>
+      </van-radio-group>
+    </view>
+
+    <view class="actions">
+      <van-button type="primary" block bind:click="fetchDeviceData" data-id="{{ deviceId }}">
+        刷新状态
+      </van-button>
+    </view>
+  </view>
+</view>
