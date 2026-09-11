@@ -16,6 +16,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = login;
 exports.getDeviceList = getDeviceList;
+exports.getDeviceStatus = getDeviceStatus;
 exports.getDeviceControl = getDeviceControl;
 exports.updateDeviceControl = updateDeviceControl;
 exports.getLearningOverview = getLearningOverview;
@@ -61,16 +62,52 @@ function login(params) {
 }
 /**
  * 获取设备列表
+ * 仅返回基础信息，状态/电量通过 getDeviceStatus 单独获取。
  */
 function getDeviceList() {
     return __awaiter(this, void 0, void 0, function* () {
         yield mockDelay();
         const list = [
-            { id: 'D001', name: '小象学习机', status: 'online', battery: 82, lastActiveAt: '2026-09-10 14:30:00' },
-            { id: 'D002', name: '绘本阅读器', status: 'sleeping', battery: 45, lastActiveAt: '2026-09-09 21:15:00' },
-            { id: 'D003', name: '智能音箱', status: 'offline', battery: 12, lastActiveAt: '2026-09-08 18:00:00' },
+            { id: 'D001', name: '小象学习机' },
+            { id: 'D002', name: '绘本阅读器' },
+            { id: 'D003', name: '智能音箱' },
         ];
         return success(list);
+    });
+}
+/**
+ * 获取设备实时状态（电量、在线状态、充电状态）
+ */
+function getDeviceStatus(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        yield mockDelay(400);
+        // 根据 deviceId 生成稳定 mock 数据，避免每次刷新随机跳动
+        // D001: 在线，电量 74%
+        // D002: 离线，电量 12%
+        // D003: 在线且充电中，电量 45%
+        const batteryMap = {
+            D001: 74,
+            D002: 12,
+            D003: 45,
+        };
+        const statusMap = {
+            D001: 'online',
+            D002: 'offline',
+            D003: 'online',
+        };
+        const chargingMap = {
+            D001: false,
+            D002: false,
+            D003: true,
+        };
+        return success({
+            deviceId,
+            status: statusMap[deviceId] || 'offline',
+            battery: (_a = batteryMap[deviceId]) !== null && _a !== void 0 ? _a : Math.floor(Math.random() * 100),
+            isCharging: (_b = chargingMap[deviceId]) !== null && _b !== void 0 ? _b : false,
+            lastActiveAt: '2026-09-10 14:30:00',
+        });
     });
 }
 /**
@@ -239,20 +276,26 @@ function getFamilyOverview() {
         yield mockDelay();
         const devicesRes = yield getDeviceList();
         const devices = devicesRes.data;
-        const summaries = devices.map((device) => ({
-            deviceId: device.id,
-            deviceName: device.name,
-            childName: device.id === 'D001' ? '小明' : device.id === 'D002' ? '小红' : '小宝',
-            status: device.status,
-            todayDuration: Math.floor(Math.random() * 60) + 10,
-            weekDuration: Math.floor(Math.random() * 300) + 60,
-            continuousDays: Math.floor(Math.random() * 7) + 1,
-            avgScore: Math.floor(Math.random() * 30) + 70,
-        }));
+        // 并发获取设备状态
+        const statusResList = yield Promise.all(devices.map((d) => getDeviceStatus(d.id)));
+        const statusMap = new Map(statusResList.map((res) => [res.data.deviceId, res.data]));
+        const summaries = devices.map((device) => {
+            const status = statusMap.get(device.id);
+            return {
+                deviceId: device.id,
+                deviceName: device.name,
+                childName: device.id === 'D001' ? '小明' : device.id === 'D002' ? '小红' : '小宝',
+                status: (status === null || status === void 0 ? void 0 : status.status) || 'offline',
+                todayDuration: Math.floor(Math.random() * 60) + 10,
+                weekDuration: Math.floor(Math.random() * 300) + 60,
+                continuousDays: Math.floor(Math.random() * 7) + 1,
+                avgScore: Math.floor(Math.random() * 30) + 70,
+            };
+        });
         return success({
             totalDuration: summaries.reduce((sum, d) => sum + d.weekDuration, 0),
             totalSessions: summaries.reduce((sum) => sum + Math.floor(Math.random() * 20) + 5, 0),
-            activeDeviceCount: devices.filter((d) => d.status === 'online').length,
+            activeDeviceCount: summaries.filter((d) => d.status === 'online').length,
             todayCompletedDeviceIds: summaries.filter(() => Math.random() > 0.3).map((d) => d.deviceId),
             devices: summaries,
         });

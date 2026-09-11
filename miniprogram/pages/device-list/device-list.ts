@@ -1,4 +1,13 @@
-import { getDeviceList, Device } from '../../api/api';
+import { getDeviceList, getDeviceStatus, Device, DeviceStatus } from '../../api/api';
+
+/** 设备展示项 = 基础信息 + 状态信息 */
+interface DeviceDisplayItem extends Device {
+  status?: DeviceStatus['status'];
+  battery?: number;
+  isCharging?: boolean;
+  lastActiveAt?: string;
+  statusLoading?: boolean;
+}
 
 /**
  * 设备列表页
@@ -7,7 +16,7 @@ import { getDeviceList, Device } from '../../api/api';
 Page({
   data: {
     loading: true,
-    devices: [] as Device[],
+    devices: [] as DeviceDisplayItem[],
   },
 
   onLoad() {
@@ -20,17 +29,55 @@ Page({
   },
 
   /**
-   * 拉取设备列表
+   * 拉取设备列表，并并发获取每个设备的状态/电量
    */
   async fetchDeviceList() {
     this.setData({ loading: true });
     try {
-      const res = await getDeviceList();
-      this.setData({ devices: res.data });
+      const listRes = await getDeviceList();
+      const devices: DeviceDisplayItem[] = listRes.data.map((device) => ({
+        ...device,
+        statusLoading: true,
+      }));
+      this.setData({ devices });
+
+      // 并发获取每个设备的状态/电量
+      await Promise.all(
+        devices.map((device) => this.fetchDeviceStatus(device.id)),
+      );
     } catch (error) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
+    }
+  },
+
+  /**
+   * 获取单个设备状态/电量
+   */
+  async fetchDeviceStatus(deviceId: string) {
+    try {
+      const res = await getDeviceStatus(deviceId);
+      const statusData = res.data;
+      const devices = this.data.devices.map((device) => {
+        if (device.id !== deviceId) return device;
+        return {
+          ...device,
+          status: statusData.status,
+          battery: statusData.battery,
+          isCharging: statusData.isCharging,
+          lastActiveAt: statusData.lastActiveAt,
+          statusLoading: false,
+        };
+      });
+      this.setData({ devices });
+    } catch (error) {
+      // 单个设备状态获取失败，不影响其他设备
+      const devices = this.data.devices.map((device) => {
+        if (device.id !== deviceId) return device;
+        return { ...device, statusLoading: false };
+      });
+      this.setData({ devices });
     }
   },
 
@@ -55,10 +102,13 @@ Page({
   },
 
   /**
-   * 设置入口（占位）
+   * 设置入口：跳转设备设置页
    */
-  onSettingsTap() {
-    // 设置功能后续迭代实现
+  onSettingsTap(event: WechatMiniprogram.TouchEvent) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/device-setting/device-setting?id=${id}`,
+    });
   },
 
   /**

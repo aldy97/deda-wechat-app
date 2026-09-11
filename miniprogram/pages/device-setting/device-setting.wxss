@@ -1,0 +1,28 @@
+.device-setting-page {
+  min-height: 100vh;
+  background-color: #f5f6f8;
+  padding-top: 24rpx;
+}
+
+.setting-group {
+  margin-bottom: 24rpx;
+}
+
+.delete-group {
+  margin: 24rpx;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28rpx 0;
+}
+
+.delete-text {
+  font-size: 32rpx;
+  color: #ee0a24;
+}

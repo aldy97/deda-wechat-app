@@ -1,0 +1,36 @@
+<view class="container device-setting-page">
+  <!-- 第一组：关于设备、主人信息、说明书 -->
+  <van-cell-group inset class="setting-group">
+    <van-cell
+      title="关于设备"
+      is-link
+      bind:click="onAboutDevice"
+    />
+    <van-cell
+      title="主人信息"
+      is-link
+      bind:click="onOwnerInfo"
+    />
+    <van-cell
+      title="说明书"
+      is-link
+      bind:click="onManual"
+    />
+  </van-cell-group>
+
+  <!-- 第二组：重新联网 -->
+  <van-cell-group inset class="setting-group">
+    <van-cell
+      title="重新联网"
+      is-link
+      bind:click="onReconnect"
+    />
+  </van-cell-group>
+
+  <!-- 第三组：删除设备 -->
+  <view class="delete-group">
+    <view class="delete-btn" bind:tap="onDeleteDevice">
+      <text class="delete-text">删除设备</text>
+    </view>
+  </view>
+</view>

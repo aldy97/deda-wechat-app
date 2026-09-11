@@ -85,7 +85,7 @@
     </view>
 
     <!-- 薄弱项与建议 -->
-    <view class="section card" wx:if="{{ analysis.weakPoints?.length > 0 }}">
+    <view class="section card" wx:if="{{ analysis.weakPoints.length > 0 }}">
       <text class="section-title">提升建议</text>
       <view class="weak-point" wx:for="{{ analysis.weakPoints }}" wx:key="index">
         <van-tag type="warning">建议</van-tag>

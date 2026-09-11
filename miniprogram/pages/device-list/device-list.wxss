@@ -24,20 +24,14 @@
 .card-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 24rpx;
 }
 
-.brand-row {
+.status-battery-row {
   display: flex;
   align-items: center;
-}
-
-.brand-name {
-  font-size: 28rpx;
-  color: #4a90d9;
-  font-weight: 500;
-  margin-right: 16rpx;
+  gap: 16rpx;
 }
 
 .status-tag {
@@ -53,9 +47,14 @@
   background-color: rgba(7, 193, 96, 0.1);
 }
 
+.status-sleeping {
+  color: #ff976a;
+  background-color: rgba(255, 151, 106, 0.1);
+}
+
 .status-offline {
-  color: #4a90d9;
-  background-color: rgba(74, 144, 217, 0.1);
+  color: #969799;
+  background-color: rgba(150, 151, 153, 0.1);
 }
 
 .status-dot {
@@ -69,8 +68,69 @@
   background-color: #07c160;
 }
 
+.status-sleeping .status-dot {
+  background-color: #ff976a;
+}
+
 .status-offline .status-dot {
+  background-color: #969799;
+}
+
+/* 电量加载 */
+.battery-loading {
+  display: flex;
+  align-items: center;
+}
+
+/* 电量显示 */
+.battery-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.battery-icon {
+  width: 36rpx;
+  height: 18rpx;
+  border: 2rpx solid #999999;
+  border-radius: 4rpx;
+  padding: 2rpx;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.battery-icon::after {
+  content: '';
+  position: absolute;
+  right: -5rpx;
+  top: 4rpx;
+  width: 3rpx;
+  height: 8rpx;
+  background-color: #999999;
+  border-radius: 0 2rpx 2rpx 0;
+}
+
+.battery-level {
+  height: 100%;
+  border-radius: 2rpx;
+  transition: width 0.3s ease;
+}
+
+.battery-charging .battery-icon {
+  border-color: #4a90d9;
+}
+
+.battery-charging .battery-icon::after {
   background-color: #4a90d9;
+}
+
+.battery-text {
+  font-size: 24rpx;
+  color: #666666;
+}
+
+.battery-charging .battery-text {
+  color: #4a90d9;
 }
 
 .settings-entry {
@@ -79,22 +139,24 @@
   align-items: center;
 }
 
+.settings-entry-right {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
 .settings-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #999999;
-  margin-top: 4rpx;
 }
 
 /* 卡片中部 */
 .card-body {
-  display: flex;
-  justify-content: space-between;
   margin-bottom: 32rpx;
 }
 
 .card-info {
   flex: 1;
-  padding-right: 24rpx;
 }
 
 .card-title-row {
@@ -127,14 +189,6 @@
   overflow: hidden;
 }
 
-.card-image {
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 16rpx;
-  background-color: #e6f2ff;
-  flex-shrink: 0;
-}
-
 /* 卡片底部按钮 */
 .card-actions {
   display: flex;
@@ -153,7 +207,6 @@
 }
 
 .action-icon {
-  font-size: 28rpx;
   margin-right: 8rpx;
 }
 

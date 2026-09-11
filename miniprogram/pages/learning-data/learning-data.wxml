@@ -1,6 +1,4 @@
 <view class="container learning-data-page">
-  <text class="page-title">学习全览</text>
-
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{ loading && !overview.devices }}">
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>

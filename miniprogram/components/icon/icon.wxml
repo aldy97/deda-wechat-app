@@ -1,0 +1,7 @@
+<image
+  wx:if="{{ iconPath }}"
+  class="icon"
+  src="{{ iconPath }}"
+  style="{{ iconStyle }}"
+  mode="aspectFit"
+/>

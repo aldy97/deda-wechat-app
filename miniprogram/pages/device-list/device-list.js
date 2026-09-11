@@ -27,20 +27,49 @@ Page({
         this.fetchDeviceList();
     },
     /**
-     * 拉取设备列表
+     * 拉取设备列表，并并发获取每个设备的状态/电量
      */
     fetchDeviceList() {
         return __awaiter(this, void 0, void 0, function* () {
             this.setData({ loading: true });
             try {
-                const res = yield (0, api_1.getDeviceList)();
-                this.setData({ devices: res.data });
+                const listRes = yield (0, api_1.getDeviceList)();
+                const devices = listRes.data.map((device) => (Object.assign(Object.assign({}, device), { statusLoading: true })));
+                this.setData({ devices });
+                // 并发获取每个设备的状态/电量
+                yield Promise.all(devices.map((device) => this.fetchDeviceStatus(device.id)));
             }
             catch (error) {
                 wx.showToast({ title: '加载失败', icon: 'none' });
             }
             finally {
                 this.setData({ loading: false });
+            }
+        });
+    },
+    /**
+     * 获取单个设备状态/电量
+     */
+    fetchDeviceStatus(deviceId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = yield (0, api_1.getDeviceStatus)(deviceId);
+                const statusData = res.data;
+                const devices = this.data.devices.map((device) => {
+                    if (device.id !== deviceId)
+                        return device;
+                    return Object.assign(Object.assign({}, device), { status: statusData.status, battery: statusData.battery, isCharging: statusData.isCharging, lastActiveAt: statusData.lastActiveAt, statusLoading: false });
+                });
+                this.setData({ devices });
+            }
+            catch (error) {
+                // 单个设备状态获取失败，不影响其他设备
+                const devices = this.data.devices.map((device) => {
+                    if (device.id !== deviceId)
+                        return device;
+                    return Object.assign(Object.assign({}, device), { statusLoading: false });
+                });
+                this.setData({ devices });
             }
         });
     },
@@ -63,10 +92,13 @@ Page({
         });
     },
     /**
-     * 设置入口（占位）
+     * 设置入口：跳转设备设置页
      */
-    onSettingsTap() {
-        // 设置功能后续迭代实现
+    onSettingsTap(event) {
+        const { id } = event.currentTarget.dataset;
+        wx.navigateTo({
+            url: `/pages/device-setting/device-setting?id=${id}`,
+        });
     },
     /**
      * 下拉刷新
