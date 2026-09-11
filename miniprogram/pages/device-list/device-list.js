@@ -112,8 +112,18 @@ Page({
             try {
                 const listRes = yield (0, api_1.getDeviceList)();
                 const devices = listRes.data.map((device) => (Object.assign(Object.assign({}, device), { statusLoading: true })));
-                // 并发获取每个设备的状态/电量
-                yield Promise.all(devices.map((device) => this.fetchDeviceStatus(device.id, devices)));
+                // 并发获取每个设备的状态/电量，等待全部完成后一次性合并
+                const statusList = yield Promise.all(devices.map((device) => this.fetchDeviceStatus(device.id)));
+                statusList.forEach((status) => {
+                    const device = devices.find((d) => d.id === status.deviceId);
+                    if (device) {
+                        device.status = status.status;
+                        device.battery = status.battery;
+                        device.isCharging = status.isCharging;
+                        device.lastActiveAt = status.lastActiveAt;
+                        device.statusLoading = false;
+                    }
+                });
                 // 仅当数据发生变化时才更新 UI，避免闪烁
                 if (!this.isSameDevices(this.data.devices, devices)) {
                     this.setData({ devices });
@@ -136,41 +146,23 @@ Page({
     /**
      * 获取单个设备状态/电量
      * @param deviceId 设备 ID
-     * @param devicesRef 设备列表引用，用于更新状态
+     * @returns 设备状态数据，失败时返回离线默认值
      */
-    fetchDeviceStatus(deviceId, devicesRef) {
+    fetchDeviceStatus(deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const res = yield (0, api_1.getDeviceStatus)(deviceId);
-                const statusData = res.data;
-                const devices = (devicesRef || this.data.devices).map((device) => {
-                    if (device.id !== deviceId)
-                        return device;
-                    return Object.assign(Object.assign({}, device), { status: statusData.status, battery: statusData.battery, isCharging: statusData.isCharging, lastActiveAt: statusData.lastActiveAt, statusLoading: false });
-                });
-                if (devicesRef) {
-                    // 直接修改引用，避免频繁 setData
-                    devicesRef.length = 0;
-                    devicesRef.push(...devices);
-                }
-                else {
-                    this.setData({ devices });
-                }
+                return res.data;
             }
             catch (error) {
                 // 单个设备状态获取失败，不影响其他设备
-                const devices = (devicesRef || this.data.devices).map((device) => {
-                    if (device.id !== deviceId)
-                        return device;
-                    return Object.assign(Object.assign({}, device), { statusLoading: false });
-                });
-                if (devicesRef) {
-                    devicesRef.length = 0;
-                    devicesRef.push(...devices);
-                }
-                else {
-                    this.setData({ devices });
-                }
+                return {
+                    deviceId,
+                    status: 'offline',
+                    battery: 0,
+                    isCharging: false,
+                    lastActiveAt: '',
+                };
             }
         });
     },
