@@ -1,9 +1,8 @@
 {
-  "navigationBarTitleText": "设备设置",
+  "navigationBarTitleText": "关于设备",
   "usingComponents": {
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",
-    "van-icon": "@vant/weapp/icon/index",
     "van-loading": "@vant/weapp/loading/index"
   }
 }

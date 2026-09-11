@@ -574,3 +574,78 @@ function generateTrend(deviceId: string, days: number): TrendPoint[] {
   }
   return points;
 }
+
+/**
+ * 删除设备
+ * 模拟删除请求，返回成功响应。
+ */
+export async function deleteDevice(deviceId: string): Promise<ApiResponse<null>> {
+  await mockDelay(800);
+  return success(null, '删除成功');
+}
+
+/** 关于设备信息 */
+export interface DeviceAboutInfo {
+  deviceCode: string;
+  topicAddress: string;
+  firmwareVersion: string;
+  wifiName: string;
+  macAddress: string;
+  ipAddress: string;
+  networkType: string;
+  timezone: string;
+  subnetMask: string;
+  gateway: string;
+  dns: string;
+}
+
+/**
+ * 获取关于设备信息
+ */
+export async function getDeviceAboutInfo(deviceId: string): Promise<ApiResponse<DeviceAboutInfo>> {
+  await mockDelay(600);
+  return success({
+    deviceCode: '1608281053529797520',
+    topicAddress: 'GwWDKNXo',
+    firmwareVersion: 'CMS1W8bd_V1.01_828_brtc_version',
+    wifiName: 'wifi名称',
+    macAddress: 'a03c:31b2:97dc',
+    ipAddress: '192.168.3.214',
+    networkType: '无线WIFI',
+    timezone: 'GMT+8:00',
+    subnetMask: '255.255.255.0',
+    gateway: '192.168.3.1',
+    dns: '192.168.3.1',
+  });
+}
+
+/** 主人信息（孩子档案） */
+export interface OwnerInfo {
+  name: string;
+  birthday: string; // YYYY-MM-DD
+}
+
+/**
+ * 获取主人信息
+ * D001 预填充数据，其他设备为空，便于演示新建与编辑两种场景。
+ */
+export async function getOwnerInfo(deviceId: string): Promise<ApiResponse<OwnerInfo>> {
+  await mockDelay(600);
+
+  const ownerMap: Record<string, OwnerInfo> = {
+    D001: { name: '小明', birthday: '2020-05-20' },
+  };
+
+  return success(ownerMap[deviceId] || { name: '', birthday: '' });
+}
+
+/**
+ * 更新主人信息
+ */
+export async function updateOwnerInfo(
+  deviceId: string,
+  data: OwnerInfo,
+): Promise<ApiResponse<OwnerInfo>> {
+  await mockDelay(800);
+  return success({ ...data });
+}

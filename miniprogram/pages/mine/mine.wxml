@@ -1,0 +1,28 @@
+<view class="container mine-page">
+  <!-- 用户资料卡 -->
+  <view class="profile-card card">
+    <view class="avatar-placeholder"></view>
+    <view class="profile-info">
+      <text class="phone">{{ phone }}</text>
+      <view class="child-row" bind:tap="onSwitchChildTap">
+        <text class="child-name">{{ childName }}</text>
+        <d-icon class="arrow-icon" name="arrow-right" size="28rpx" color="#999999"></d-icon>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能入口列表 -->
+  <view class="menu-list card">
+    <view class="menu-item" bind:tap="onSettingsTap">
+      <d-icon class="menu-icon" name="setting" size="40rpx" color="#4a90d9"></d-icon>
+      <text class="menu-text">设置</text>
+      <d-icon class="arrow-icon" name="arrow-right" size="28rpx" color="#999999"></d-icon>
+    </view>
+    <view class="menu-divider"></view>
+    <view class="menu-item" bind:tap="onContactTap">
+      <d-icon class="menu-icon" name="headset" size="40rpx" color="#4a90d9"></d-icon>
+      <text class="menu-text">联系我们</text>
+      <d-icon class="arrow-icon" name="arrow-right" size="28rpx" color="#999999"></d-icon>
+    </view>
+  </view>
+</view>

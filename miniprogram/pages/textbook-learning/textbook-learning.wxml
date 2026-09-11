@@ -1,0 +1,13 @@
+<view class="container textbook-learning-page">
+  <view
+    class="textbook-card"
+    wx:for="{{ textbooks }}"
+    wx:key="key"
+  >
+    <view class="textbook-avatar"></view>
+    <view class="textbook-info">
+      <text class="textbook-title">{{ item.title }}</text>
+      <text class="textbook-desc">{{ item.description }}</text>
+    </view>
+  </view>
+</view>

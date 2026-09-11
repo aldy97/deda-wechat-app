@@ -1,0 +1,13 @@
+<view class="container choose-free-chat-mode-page">
+  <view
+    class="mode-card"
+    wx:for="{{ modes }}"
+    wx:key="key"
+  >
+    <view class="mode-avatar"></view>
+    <view class="mode-info">
+      <text class="mode-title">{{ item.title }}</text>
+      <text class="mode-desc">{{ item.description }}</text>
+    </view>
+  </view>
+</view>

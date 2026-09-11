@@ -1,0 +1,8 @@
+<view class="container user-manual-page">
+  <image
+    class="manual-image"
+    src="/static/images/user-manual.jpg"
+    mode="widthFix"
+    lazy-load
+  />
+</view>

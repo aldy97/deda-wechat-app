@@ -26,3 +26,84 @@
   font-size: 32rpx;
   color: #ee0a24;
 }
+
+/* 删除确认弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 560rpx;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333333;
+  padding: 48rpx 48rpx 24rpx;
+}
+
+.modal-message {
+  font-size: 32rpx;
+  color: #666666;
+  padding: 0 48rpx 48rpx;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  height: 96rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.modal-divider {
+  width: 1rpx;
+  height: 100%;
+  background-color: #f0f0f0;
+}
+
+.modal-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 32rpx;
+}
+
+.modal-cancel {
+  color: #333333;
+}
+
+.modal-confirm {
+  color: #ee0a24;
+}
+
+.modal-confirm-loading {
+  opacity: 0.7;
+}
+
+.modal-loading {
+  margin-right: 8rpx;
+}
+
+.confirm-text {
+  color: #ee0a24;
+}
+
+.confirm-text-loading {
+  color: #ee0a24;
+}

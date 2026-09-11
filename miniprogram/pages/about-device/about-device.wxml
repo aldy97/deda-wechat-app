@@ -1,0 +1,26 @@
+<view class="container about-device-page">
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <!-- 信息列表 -->
+  <van-cell-group inset class="info-group" wx:else>
+    <van-cell
+      title="设备编码"
+      value="{{ info.deviceCode }}"
+      is-link
+      bind:click="onCopyDeviceCode"
+    />
+    <van-cell title="主题地址" value="{{ info.topicAddress }}" />
+    <van-cell title="固件版本" value="{{ info.firmwareVersion }}" />
+    <van-cell title="WIFI名称" value="{{ info.wifiName }}" />
+    <van-cell title="mac地址" value="{{ info.macAddress }}" />
+    <van-cell title="IP地址" value="{{ info.ipAddress }}" />
+    <van-cell title="网络类型" value="{{ info.networkType }}" />
+    <van-cell title="时区" value="{{ info.timezone }}" />
+    <van-cell title="子网掩码" value="{{ info.subnetMask }}" />
+    <van-cell title="网关" value="{{ info.gateway }}" />
+    <van-cell title="DNS" value="{{ info.dns }}" />
+  </van-cell-group>
+</view>

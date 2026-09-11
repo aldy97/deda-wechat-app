@@ -1,0 +1,48 @@
+.switch-mode-page {
+  min-height: 100vh;
+  background-color: #f5f6f8;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.mode-card {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  background: linear-gradient(135deg, #e8f4ff 0%, #ffffff 60%);
+  border-radius: 24rpx;
+}
+
+.mode-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background-color: #e6e6e6;
+  margin-right: 32rpx;
+  flex-shrink: 0;
+}
+
+.mode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mode-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 12rpx;
+}
+
+.mode-desc {
+  font-size: 28rpx;
+  color: #666666;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

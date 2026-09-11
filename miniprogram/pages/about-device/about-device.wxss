@@ -1,0 +1,41 @@
+.about-device-page {
+  min-height: 100vh;
+  background-color: #f5f6f8;
+  padding-top: 24rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.info-group {
+  margin: 0 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+/* 复制成功提示 */
+.copy-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 24rpx 48rpx;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 12rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.copy-toast-show {
+  opacity: 1;
+}
+
+.copy-toast-text {
+  font-size: 30rpx;
+  color: #ffffff;
+}

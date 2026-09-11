@@ -1,0 +1,9 @@
+.user-manual-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.manual-image {
+  display: block;
+  width: 100%;
+}

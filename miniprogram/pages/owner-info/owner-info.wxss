@@ -1,0 +1,21 @@
+.owner-info-page {
+  min-height: 100vh;
+  background-color: #f5f6f8;
+  padding-top: 24rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.form-group {
+  margin: 0 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.save-btn-wrap {
+  margin: 48rpx 24rpx 0;
+}

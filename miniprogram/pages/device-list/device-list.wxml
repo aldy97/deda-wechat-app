@@ -72,9 +72,9 @@
           <d-icon class="action-icon" name="chart" size="32rpx" color="#4a90d9"></d-icon>
           <text class="action-text">智能分析</text>
         </view>
-        <view class="action-btn">
-          <d-icon class="action-icon" name="mask" size="32rpx" color="#4a90d9"></d-icon>
-          <text class="action-text">切换角色</text>
+        <view class="action-btn" bind:tap="onSwitchMode" data-id="{{ item.id }}">
+          <d-icon class="action-icon" name="swap" size="32rpx" color="#4a90d9"></d-icon>
+          <text class="action-text">切换模式</text>
         </view>
       </view>
     </view>

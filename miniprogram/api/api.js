@@ -28,6 +28,10 @@ exports.getDeviceTrend = getDeviceTrend;
 exports.getFamilyOverview = getFamilyOverview;
 exports.getFamilyTrend = getFamilyTrend;
 exports.getFamilyTimeline = getFamilyTimeline;
+exports.deleteDevice = deleteDevice;
+exports.getDeviceAboutInfo = getDeviceAboutInfo;
+exports.getOwnerInfo = getOwnerInfo;
+exports.updateOwnerInfo = updateOwnerInfo;
 // ==================== 模拟延迟工具 ====================
 /**
  * 模拟网络延迟
@@ -410,4 +414,57 @@ function generateTrend(deviceId, days) {
         });
     }
     return points;
+}
+/**
+ * 删除设备
+ * 模拟删除请求，返回成功响应。
+ */
+function deleteDevice(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield mockDelay(800);
+        return success(null, '删除成功');
+    });
+}
+/**
+ * 获取关于设备信息
+ */
+function getDeviceAboutInfo(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield mockDelay(600);
+        return success({
+            deviceCode: '1608281053529797520',
+            topicAddress: 'GwWDKNXo',
+            firmwareVersion: 'CMS1W8bd_V1.01_828_brtc_version',
+            wifiName: 'wifi名称',
+            macAddress: 'a03c:31b2:97dc',
+            ipAddress: '192.168.3.214',
+            networkType: '无线WIFI',
+            timezone: 'GMT+8:00',
+            subnetMask: '255.255.255.0',
+            gateway: '192.168.3.1',
+            dns: '192.168.3.1',
+        });
+    });
+}
+/**
+ * 获取主人信息
+ * D001 预填充数据，其他设备为空，便于演示新建与编辑两种场景。
+ */
+function getOwnerInfo(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield mockDelay(600);
+        const ownerMap = {
+            D001: { name: '小明', birthday: '2020-05-20' },
+        };
+        return success(ownerMap[deviceId] || { name: '', birthday: '' });
+    });
+}
+/**
+ * 更新主人信息
+ */
+function updateOwnerInfo(deviceId, data) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield mockDelay(800);
+        return success(Object.assign({}, data));
+    });
 }

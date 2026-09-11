@@ -1,12 +1,19 @@
 {
   "pages": [
-    "pages/login/login",
     "pages/device-list/device-list",
     "pages/device-control/device-control",
     "pages/learning-data/learning-data",
     "pages/chat-history/chat-history",
     "pages/device-analysis/device-analysis",
-    "pages/device-setting/device-setting"
+    "pages/device-setting/device-setting",
+    "pages/about-device/about-device",
+    "pages/owner-info/owner-info",
+    "pages/user-manual/user-manual",
+    "pages/switch-mode/switch-mode",
+    "pages/choose-free-chat-mode/choose-free-chat-mode",
+    "pages/textbook-learning/textbook-learning",
+    "pages/login/login",
+    "pages/mine/mine"
   ],
   "window": {
     "backgroundTextStyle": "dark",
@@ -22,11 +29,21 @@
     "list": [
       {
         "pagePath": "pages/device-list/device-list",
-        "text": "设备"
+        "text": "设备",
+        "iconPath": "static/icons/tabbar/device-normal.png",
+        "selectedIconPath": "static/icons/tabbar/device-selected.png"
       },
       {
         "pagePath": "pages/learning-data/learning-data",
-        "text": "学习"
+        "text": "学习",
+        "iconPath": "static/icons/tabbar/learning-normal.png",
+        "selectedIconPath": "static/icons/tabbar/learning-selected.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "static/icons/tabbar/mine-normal.png",
+        "selectedIconPath": "static/icons/tabbar/mine-selected.png"
       }
     ]
   },

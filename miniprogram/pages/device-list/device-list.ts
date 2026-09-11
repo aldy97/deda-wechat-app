@@ -112,6 +112,16 @@ Page({
   },
 
   /**
+   * 切换模式：跳转切换模式页
+   */
+  onSwitchMode(event: WechatMiniprogram.TouchEvent) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/switch-mode/switch-mode?id=${id}`,
+    });
+  },
+
+  /**
    * 下拉刷新
    */
   async onPullDownRefresh() {

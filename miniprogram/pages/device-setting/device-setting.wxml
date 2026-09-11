@@ -33,4 +33,22 @@
       <text class="delete-text">删除设备</text>
     </view>
   </view>
+
+  <!-- 删除确认弹窗 -->
+  <view class="modal-mask" wx:if="{{ showDeleteModal }}" bind:tap="onCancelDelete">
+    <view class="modal-content" catch:tap="onModalTap">
+      <view class="modal-title">温馨提示</view>
+      <view class="modal-message">是否删除设备</view>
+      <view class="modal-actions">
+        <view class="modal-btn modal-cancel" bind:tap="onCancelDelete">
+          <text>取消</text>
+        </view>
+        <view class="modal-divider"></view>
+        <view class="modal-btn modal-confirm {{ deleteLoading ? 'modal-confirm-loading' : '' }}" bind:tap="onConfirmDelete">
+          <van-loading wx:if="{{ deleteLoading }}" type="spinner" size="28rpx" color="#ee0a24" class="modal-loading" />
+          <text class="{{ deleteLoading ? 'confirm-text-loading' : 'confirm-text' }}">{{ deleteLoading ? '删除中' : '确认' }}</text>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>

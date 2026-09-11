@@ -1,0 +1,57 @@
+<view class="container owner-info-page">
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <!-- 编辑表单 -->
+  <view wx:else>
+    <van-cell-group inset class="form-group">
+      <van-field
+        label="名字"
+        placeholder="请输入孩子名字"
+        value="{{ form.name }}"
+        bind:change="onNameChange"
+        maxlength="20"
+        input-align="right"
+      />
+      <van-cell
+        title="生日"
+        value="{{ form.birthday || '请选择生日' }}"
+        is-link
+        bind:click="onOpenDatePicker"
+      />
+    </van-cell-group>
+
+    <!-- 保存按钮 -->
+    <view class="save-btn-wrap">
+      <van-button
+        type="primary"
+        block
+        loading="{{ saving }}"
+        loading-text="保存中..."
+        disabled="{{ saving }}"
+        bind:click="onSave"
+      >
+        保存
+      </van-button>
+    </view>
+  </view>
+
+  <!-- 日期选择弹窗 -->
+  <van-popup
+    show="{{ showDatePicker }}"
+    position="bottom"
+    bind:close="onCloseDatePicker"
+  >
+    <van-datetime-picker
+      type="date"
+      value="{{ currentDate }}"
+      bind:confirm="onDateConfirm"
+      bind:cancel="onCloseDatePicker"
+      bind:input="onDateChange"
+      min-date="{{ 0 }}"
+      max-date="{{ 1704067200000 }}"
+    />
+  </van-popup>
+</view>
