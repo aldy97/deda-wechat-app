@@ -63,23 +63,23 @@
         <view class="dimension-item">
           <view class="dimension-header">
             <text>发音准确度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions?.accuracy || 0 }}分</text>
+            <text class="dimension-score">{{ analysis.oralDimensions.accuracy || 0 }}分</text>
           </view>
-          <van-progress percentage="{{ analysis.oralDimensions?.accuracy || 0 }}" stroke-height="12rpx" color="#4a90d9" show-pivot="{{ false }}" />
+          <van-progress percentage="{{ analysis.oralDimensions.accuracy || 0 }}" stroke-height="12rpx" color="#4a90d9" show-pivot="{{ false }}" />
         </view>
         <view class="dimension-item">
           <view class="dimension-header">
             <text>流利度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions?.fluency || 0 }}分</text>
+            <text class="dimension-score">{{ analysis.oralDimensions.fluency || 0 }}分</text>
           </view>
-          <van-progress percentage="{{ analysis.oralDimensions?.fluency || 0 }}" stroke-height="12rpx" color="#07c160" show-pivot="{{ false }}" />
+          <van-progress percentage="{{ analysis.oralDimensions.fluency || 0 }}" stroke-height="12rpx" color="#07c160" show-pivot="{{ false }}" />
         </view>
         <view class="dimension-item">
           <view class="dimension-header">
             <text>完整度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions?.integrity || 0 }}分</text>
+            <text class="dimension-score">{{ analysis.oralDimensions.integrity || 0 }}分</text>
           </view>
-          <van-progress percentage="{{ analysis.oralDimensions?.integrity || 0 }}" stroke-height="12rpx" color="#ff976a" show-pivot="{{ false }}" />
+          <van-progress percentage="{{ analysis.oralDimensions.integrity || 0 }}" stroke-height="12rpx" color="#ff976a" show-pivot="{{ false }}" />
         </view>
       </view>
     </view>
