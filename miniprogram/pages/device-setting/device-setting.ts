@@ -1,5 +1,8 @@
 import { deleteDevice } from '../../api/api';
 
+/** 设备列表缓存键（与 device-list 保持一致） */
+const DEVICE_LIST_CACHE_KEY = 'device_list_cache';
+
 /**
  * 设备设置页
  * 复刻设计图，除删除设备外其他按钮均为占位无响应。
@@ -84,10 +87,23 @@ Page({
       await deleteDevice(this.data.deviceId);
       wx.showToast({ title: '删除成功', icon: 'success' });
       this.setData({ showDeleteModal: false });
+      // 删除成功后清除设备列表缓存，确保返回列表页时重新加载
+      this.clearDeviceListCache();
       this.navigateBackToDeviceList();
     } catch (error) {
       wx.showToast({ title: '删除失败，请重试', icon: 'none' });
       this.setData({ deleteLoading: false });
+    }
+  },
+
+  /**
+   * 清除设备列表缓存
+   */
+  clearDeviceListCache() {
+    try {
+      wx.removeStorageSync(DEVICE_LIST_CACHE_KEY);
+    } catch (error) {
+      console.warn('[device-setting] 清除设备列表缓存失败', error);
     }
   },
 

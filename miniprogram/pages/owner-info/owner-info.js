@@ -11,6 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("../../api/api");
 const date_1 = require("../../utils/date");
+/** 设备列表缓存键（与 device-list 保持一致） */
+const DEVICE_LIST_CACHE_KEY = 'device_list_cache';
 /**
  * 主人信息页
  * 展示并编辑当前设备对应的孩子名字与生日。
@@ -114,6 +116,8 @@ Page({
             try {
                 yield (0, api_1.updateOwnerInfo)(this.data.deviceId, this.data.form);
                 wx.showToast({ title: '保存成功', icon: 'success' });
+                // 保存成功后清除设备列表缓存，确保返回列表页时重新加载
+                this.clearDeviceListCache();
                 setTimeout(() => {
                     wx.navigateBack();
                 }, 800);
@@ -123,5 +127,16 @@ Page({
                 this.setData({ saving: false });
             }
         });
+    },
+    /**
+     * 清除设备列表缓存
+     */
+    clearDeviceListCache() {
+        try {
+            wx.removeStorageSync(DEVICE_LIST_CACHE_KEY);
+        }
+        catch (error) {
+            console.warn('[owner-info] 清除设备列表缓存失败', error);
+        }
     },
 });

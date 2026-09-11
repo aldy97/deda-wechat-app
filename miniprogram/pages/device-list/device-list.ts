@@ -9,9 +9,25 @@ interface DeviceDisplayItem extends Device {
   statusLoading?: boolean;
 }
 
+/** 设备列表缓存结构 */
+interface DeviceListCache {
+  data: DeviceDisplayItem[];
+  timestamp: number;
+}
+
+/** 缓存键 */
+const CACHE_KEY = 'device_list_cache';
+/** 缓存有效期：5 分钟 */
+const CACHE_TTL = 5 * 60 * 1000;
+
 /**
  * 设备列表页
  * 展示用户绑定的设备卡片，点击卡片进入控制面板。
+ *
+ * 加载策略：
+ * 1. 优先读取本地缓存并立即渲染，减少等待时间。
+ * 2. 无缓存或缓存过期时显示 loading。
+ * 3. 每次进入页面都会在后台静默刷新，保证数据最新。
  */
 Page({
   data: {
@@ -20,46 +36,131 @@ Page({
   },
 
   onLoad() {
-    this.fetchDeviceList();
+    this.loadDeviceList();
   },
 
   onShow() {
-    // 每次显示页面时刷新列表，方便从控制页返回后看到最新状态
-    this.fetchDeviceList();
+    // 每次显示页面时后台刷新，方便从控制页/设置页返回后看到最新状态
+    this.loadDeviceList();
+  },
+
+  /**
+   * 加载设备列表：优先缓存，后台刷新
+   */
+  loadDeviceList() {
+    const cache = this.getCache();
+    const cacheValid = cache && Date.now() - cache.timestamp < CACHE_TTL;
+
+    if (cacheValid) {
+      // 有有效缓存：先渲染缓存，再静默刷新
+      this.setData({ devices: cache.data, loading: false });
+      this.fetchDeviceList({ silent: true });
+    } else {
+      // 无缓存或已过期：显示 loading 重新加载
+      this.fetchDeviceList({ silent: false });
+    }
+  },
+
+  /**
+   * 读取本地缓存
+   */
+  getCache(): DeviceListCache | null {
+    try {
+      const cache = wx.getStorageSync(CACHE_KEY) as DeviceListCache | undefined;
+      return cache || null;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  /**
+   * 写入本地缓存
+   */
+  saveCache(devices: DeviceDisplayItem[]) {
+    try {
+      wx.setStorageSync(CACHE_KEY, { data: devices, timestamp: Date.now() });
+    } catch (error) {
+      console.warn('[device-list] 缓存写入失败', error);
+    }
+  },
+
+  /**
+   * 清除本地缓存
+   */
+  clearCache() {
+    try {
+      wx.removeStorageSync(CACHE_KEY);
+    } catch (error) {
+      console.warn('[device-list] 缓存清除失败', error);
+    }
+  },
+
+  /**
+   * 判断两个设备列表是否相等（仅比较关键字段，避免无意义刷新）
+   */
+  isSameDevices(a: DeviceDisplayItem[], b: DeviceDisplayItem[]): boolean {
+    if (a.length !== b.length) return false;
+    return a.every((device, index) => {
+      const other = b[index];
+      return (
+        device.id === other.id &&
+        device.name === other.name &&
+        device.status === other.status &&
+        device.battery === other.battery &&
+        device.isCharging === other.isCharging
+      );
+    });
   },
 
   /**
    * 拉取设备列表，并并发获取每个设备的状态/电量
+   * @param silent true 表示后台静默刷新，不显示 loading
    */
-  async fetchDeviceList() {
-    this.setData({ loading: true });
+  async fetchDeviceList(options: { silent: boolean } = { silent: false }) {
+    if (!options.silent) {
+      this.setData({ loading: true });
+    }
+
     try {
       const listRes = await getDeviceList();
       const devices: DeviceDisplayItem[] = listRes.data.map((device) => ({
         ...device,
         statusLoading: true,
       }));
-      this.setData({ devices });
 
       // 并发获取每个设备的状态/电量
       await Promise.all(
-        devices.map((device) => this.fetchDeviceStatus(device.id)),
+        devices.map((device) => this.fetchDeviceStatus(device.id, devices)),
       );
+
+      // 仅当数据发生变化时才更新 UI，避免闪烁
+      if (!this.isSameDevices(this.data.devices, devices)) {
+        this.setData({ devices });
+      }
+
+      this.saveCache(devices);
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      // 静默刷新失败时，若已有缓存则不打扰用户；否则提示错误
+      if (!options.silent || this.data.devices.length === 0) {
+        wx.showToast({ title: '加载失败', icon: 'none' });
+      }
     } finally {
-      this.setData({ loading: false });
+      if (!options.silent) {
+        this.setData({ loading: false });
+      }
     }
   },
 
   /**
    * 获取单个设备状态/电量
+   * @param deviceId 设备 ID
+   * @param devicesRef 设备列表引用，用于更新状态
    */
-  async fetchDeviceStatus(deviceId: string) {
+  async fetchDeviceStatus(deviceId: string, devicesRef?: DeviceDisplayItem[]) {
     try {
       const res = await getDeviceStatus(deviceId);
       const statusData = res.data;
-      const devices = this.data.devices.map((device) => {
+      const devices = (devicesRef || this.data.devices).map((device) => {
         if (device.id !== deviceId) return device;
         return {
           ...device,
@@ -70,14 +171,27 @@ Page({
           statusLoading: false,
         };
       });
-      this.setData({ devices });
+
+      if (devicesRef) {
+        // 直接修改引用，避免频繁 setData
+        devicesRef.length = 0;
+        devicesRef.push(...devices);
+      } else {
+        this.setData({ devices });
+      }
     } catch (error) {
       // 单个设备状态获取失败，不影响其他设备
-      const devices = this.data.devices.map((device) => {
+      const devices = (devicesRef || this.data.devices).map((device) => {
         if (device.id !== deviceId) return device;
         return { ...device, statusLoading: false };
       });
-      this.setData({ devices });
+
+      if (devicesRef) {
+        devicesRef.length = 0;
+        devicesRef.push(...devices);
+      } else {
+        this.setData({ devices });
+      }
     }
   },
 
