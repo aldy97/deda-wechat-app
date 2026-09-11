@@ -1,0 +1,294 @@
+.device-analysis-page {
+  padding-bottom: 48rpx;
+  background-color: #f5f6f8;
+  min-height: 100vh;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+/* 孩子档案头部 */
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.child-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background-color: #e6f2ff;
+  margin-right: 24rpx;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.child-name {
+  font-size: 40rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.child-meta {
+  font-size: 26rpx;
+}
+
+/* 时间范围切换 */
+.range-tabs {
+  margin-bottom: 24rpx;
+}
+
+/* 核心指标卡 */
+.metrics-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 24rpx 0;
+  margin-bottom: 24rpx;
+}
+
+.metric-item {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 0;
+  box-sizing: border-box;
+}
+
+.metric-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #4a90d9;
+}
+
+.metric-label {
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+/* 通用区块 */
+.section {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 500;
+  margin-bottom: 24rpx;
+}
+
+/* 趋势图 */
+.trend-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 200rpx;
+  padding: 0 8rpx;
+}
+
+.trend-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.trend-bar {
+  width: 24rpx;
+  background: linear-gradient(180deg, #4a90d9 0%, #8fc5ff 100%);
+  border-radius: 8rpx 8rpx 0 0;
+  min-height: 4rpx;
+}
+
+.trend-date {
+  font-size: 20rpx;
+  color: #999999;
+  margin-top: 8rpx;
+}
+
+/* 口语能力维度 */
+.dimension-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.dimension-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.dimension-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+}
+
+.dimension-score {
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+/* 薄弱项 */
+.weak-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.weak-point:last-child {
+  border-bottom: none;
+}
+
+.weak-point-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #666666;
+  line-height: 1.5;
+}
+
+/* 教材进度 */
+.textbook-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.textbook-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.module-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx;
+  background-color: #f7f8fa;
+  border-radius: 12rpx;
+}
+
+.module-name {
+  font-size: 28rpx;
+}
+
+.module-toggle {
+  font-size: 24rpx;
+  color: #4a90d9;
+}
+
+.unit-list {
+  padding-left: 16rpx;
+  margin-top: 8rpx;
+}
+
+.unit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.unit-item:last-child {
+  border-bottom: none;
+}
+
+.unit-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.unit-name {
+  font-size: 28rpx;
+  margin-bottom: 4rpx;
+}
+
+.unit-progress {
+  font-size: 24rpx;
+}
+
+.unit-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.unit-score {
+  font-size: 28rpx;
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+/* 最近练习记录 */
+.record-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+.record-title {
+  font-size: 28rpx;
+  margin-bottom: 4rpx;
+}
+
+.record-sub {
+  font-size: 24rpx;
+}
+
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.record-score {
+  font-size: 30rpx;
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+.record-time {
+  font-size: 22rpx;
+}

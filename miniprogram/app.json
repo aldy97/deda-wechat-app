@@ -4,7 +4,8 @@
     "pages/device-list/device-list",
     "pages/device-control/device-control",
     "pages/learning-data/learning-data",
-    "pages/chat-history/chat-history"
+    "pages/chat-history/chat-history",
+    "pages/device-analysis/device-analysis"
   ],
   "window": {
     "backgroundTextStyle": "dark",

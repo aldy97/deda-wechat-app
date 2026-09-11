@@ -55,7 +55,7 @@
           <text class="action-icon">💬</text>
           <text class="action-text">查看对话</text>
         </view>
-        <view class="action-btn">
+        <view class="action-btn" bind:tap="onViewAnalysis" data-id="{{ item.id }}">
           <text class="action-icon">📊</text>
           <text class="action-text">智能分析</text>
         </view>

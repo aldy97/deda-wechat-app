@@ -45,6 +45,16 @@ Page({
   },
 
   /**
+   * 智能分析：跳转单设备智能分析页
+   */
+  onViewAnalysis(event: WechatMiniprogram.TouchEvent) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/device-analysis/device-analysis?id=${id}`,
+    });
+  },
+
+  /**
    * 设置入口（占位）
    */
   onSettingsTap() {

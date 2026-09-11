@@ -1,0 +1,15 @@
+{
+  "navigationBarTitleText": "智能分析",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-cell": "@vant/weapp/cell/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-progress": "@vant/weapp/progress/index",
+    "van-tag": "@vant/weapp/tag/index",
+    "van-tabs": "@vant/weapp/tabs/index",
+    "van-tab": "@vant/weapp/tab/index"
+  }
+}
