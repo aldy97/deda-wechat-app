@@ -44,6 +44,13 @@ Page({
         icon: 'success',
       });
 
+      // 清除设备列表缓存，确保返回后重新拉取
+      try {
+        wx.removeStorageSync('device_list_cache');
+      } catch (e) {
+        // ignore
+      }
+
       setTimeout(() => {
         wx.navigateBack();
       }, 800);

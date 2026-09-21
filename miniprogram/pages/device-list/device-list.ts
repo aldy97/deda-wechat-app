@@ -248,7 +248,8 @@ Page({
    * 下拉刷新
    */
   async onPullDownRefresh() {
-    await this.fetchDeviceList();
+    this.clearCache();
+    await this.fetchDeviceList({ silent: false });
     wx.stopPullDownRefresh();
   },
 });
