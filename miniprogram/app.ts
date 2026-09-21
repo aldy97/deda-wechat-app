@@ -15,6 +15,17 @@ App<{
   onLaunch() {
     // 小程序启动时执行，可在此检查登录态、获取系统信息等
     console.log('[App] onLaunch');
+    this.checkLoginStatus();
+  },
+
+  /**
+   * 检查登录态：无 token 则跳转到登录页
+   */
+  checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.reLaunch({ url: '/pages/login/login' });
+    }
   },
 
   onShow() {

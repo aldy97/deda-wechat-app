@@ -54,17 +54,20 @@ Page({
 
   /**
    * 登录提交
+   * 1. 调用 wx.login 获取微信临时 code
+   * 2. 将 code 传给 deda-server 换取 JWT
    */
   async onLogin() {
-    const { phone, code } = this.data;
-    if (!phone || !code) {
+    const { phone, code: smsCode } = this.data;
+    if (!phone || !smsCode) {
       wx.showToast({ title: '请填写完整信息', icon: 'none' });
       return;
     }
 
     this.setData({ loading: true });
     try {
-      const res = await login({ phone, code });
+      const wxLoginRes = await this.wxLogin();
+      const res = await login({ phone, code: wxLoginRes.code });
       wx.setStorageSync('token', res.data.token);
       wx.showToast({ title: '登录成功', icon: 'success' });
 
@@ -72,9 +75,22 @@ Page({
         wx.switchTab({ url: '/pages/device-list/device-list' });
       }, 800);
     } catch (error) {
-      wx.showToast({ title: '登录失败', icon: 'none' });
+      const message = error instanceof Error ? error.message : '登录失败';
+      wx.showToast({ title: message, icon: 'none' });
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  /**
+   * 调用微信登录获取 code
+   */
+  wxLogin(): Promise<WechatMiniprogram.LoginSuccessCallbackResult> {
+    return new Promise((resolve, reject) => {
+      wx.login({
+        success: resolve,
+        fail: reject,
+      });
+    });
   },
 });

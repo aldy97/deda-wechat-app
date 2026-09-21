@@ -4,6 +4,8 @@
  * 后续替换真实接口时，只需修改本文件内部实现，页面层无需改动。
  */
 
+import { request } from '../utils/request';
+
 // ==================== 类型定义 ====================
 
 /** 通用接口响应结构 */
@@ -15,7 +17,7 @@ export interface ApiResponse<T> {
 
 /** 登录参数 */
 export interface LoginParams {
-  phone: string;
+  phone?: string;
   code: string;
 }
 
@@ -23,9 +25,9 @@ export interface LoginParams {
 export interface LoginResult {
   token: string;
   userInfo: {
-    nickName: string;
-    avatarUrl: string;
-    phone: string;
+    id: string;
+    openid: string;
+    phone: string | null;
   };
 }
 
@@ -192,17 +194,13 @@ function success<T>(data: T, message = 'success'): ApiResponse<T> {
 
 /**
  * 登录
- * 后续替换为 wx.request 调用真实登录接口
+ * 调用 deda-server POST /users/login 获取 JWT
  */
 export async function login(params: LoginParams): Promise<ApiResponse<LoginResult>> {
-  await mockDelay();
-  return success({
-    token: `mock_token_${params.phone}`,
-    userInfo: {
-      nickName: '测试用户',
-      avatarUrl: '',
-      phone: params.phone,
-    },
+  return request<LoginResult>({
+    method: 'POST',
+    url: '/users/login',
+    data: { code: params.code },
   });
 }
 
@@ -301,53 +299,13 @@ export async function getLearningOverview(): Promise<ApiResponse<LearningOvervie
 
 /**
  * 获取对话记录列表
- * 模拟数据贴近设计图中的中英文故事对话场景，共 63 条。
+ * 调用 deda-server GET /conversations
  */
-export async function getChatRecords(page = 1, pageSize = 10): Promise<ApiResponse<ChatRecord[]>> {
-  await mockDelay();
-
-  // 固定模拟对话内容模板
-  const mockContents = [
-    { role: 'user' as const, content: '坐高铁。' },
-    {
-      role: 'device' as const,
-      content: 'Once upon a time, there was a little boy named Tom. He was very excited because he was going to take a high - speed train for the first time. He went to the train station with his parents. When they got on the train, Tom found his seat and sat down. The train was very clean and comfortable. There were big windows, and he could see beautiful scenery outside. Green fields, tall trees, and small houses passed by quickly. Tom watched everything with wide eyes. He even saw a group of sheep on a farm. Do you think Tom had a good time on the train?',
-    },
-    { role: 'user' as const, content: '再讲一个超长的故事。' },
-    {
-      role: 'device' as const,
-      content: 'There was a little girl named Lily. One year, it was almost Chinese New Year. Lily was very happy because she loved this festival. Her family started to prepare for the New Year. They cleaned their house from top to bottom. Lily helped her mother paste Spring Festival couplets on the door. The red couplets looked so beautiful. In the evening, the whole family got together and had a big dinner. They ate dumplings, fish, and many other delicious foods. Lily received red envelopes from her grandparents. She felt so loved. That night, they watched the Spring Festival Gala on TV and stayed up late to welcome the new year. Lily thought it was the best Chinese New Year ever.',
-    },
-    { role: 'user' as const, content: '今天天气怎么样？' },
-    { role: 'device' as const, content: '今天天气晴朗，适合出门散步哦。' },
-    { role: 'user' as const, content: '帮我背一首唐诗。' },
-    { role: 'device' as const, content: '床前明月光，疑是地上霜。举头望明月，低头思故乡。——李白《静夜思》' },
-    { role: 'user' as const, content: '讲一个关于太空的故事。' },
-    { role: 'device' as const, content: '从前有一艘宇宙飞船，它带着宇航员们飞向火星。在太空中，他们看到了美丽的地球，蓝色的海洋和白色的云朵。宇航员们在飞船里做实验，种植蔬菜，还透过窗户看星星。' },
-    { role: 'user' as const, content: '我想学英语。' },
-    { role: 'device' as const, content: 'Great! Let\'s start with a simple sentence: "Hello, how are you today?" Can you repeat after me?' },
-  ];
-
-  // 生成 63 条模拟记录（按时间正序：旧 → 新）
-  const total = 63;
-  const records: ChatRecord[] = [];
-
-  for (let i = 0; i < total; i++) {
-    const template = mockContents[i % mockContents.length];
-    const hour = 8 + Math.floor(i / 5);
-    const minute = (i % 5) * 12;
-    records.push({
-      id: `R${String(i + 1).padStart(3, '0')}`,
-      role: template.role,
-      content: template.content,
-      createdAt: `2026-09-10 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`,
-    });
-  }
-
-  // 按原有 page/pageSize 参数返回正向分页结果，保持接口兼容性
-  const start = (page - 1) * pageSize;
-  const end = Math.min(start + pageSize, total);
-  return success(records.slice(start, end));
+export async function getChatRecords(page = 1, pageSize = 100): Promise<ApiResponse<ChatRecord[]>> {
+  return request<ChatRecord[]>({
+    method: 'GET',
+    url: `/conversations?page=${page}&pageSize=${pageSize}`,
+  });
 }
 
 // ==================== 智能分析相关接口（模拟数据） ====================

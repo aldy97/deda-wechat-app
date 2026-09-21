@@ -34,7 +34,7 @@ Page({
     this.setData({ loading: true });
     try {
       const res = await getChatRecords(1, 100);
-      this.privateAllRecords = res.data;
+      this.privateAllRecords = res.data.items || [];
 
       const result = paginateFromEnd(
         this.privateAllRecords,
