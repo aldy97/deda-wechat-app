@@ -33,8 +33,12 @@ export interface LoginResult {
 
 /** 设备基础信息 */
 export interface Device {
-  id: string;
-  name: string;
+  id: string;        // 对应 server 的 deviceId
+  name: string;      // 展示名称
+  deviceId?: string;
+  deviceCode?: string;
+  networkType?: string;
+  firmwareVersion?: string;
 }
 
 /** 设备实时状态（电量、在线状态等） */
@@ -209,13 +213,22 @@ export async function login(params: LoginParams): Promise<ApiResponse<LoginResul
  * 仅返回基础信息，状态/电量通过 getDeviceStatus 单独获取。
  */
 export async function getDeviceList(): Promise<ApiResponse<Device[]>> {
-  await mockDelay();
-  const list: Device[] = [
-    { id: 'D001', name: '小象学习机' },
-    { id: 'D002', name: '绘本阅读器' },
-    { id: 'D003', name: '智能音箱' },
-  ];
-  return success(list);
+  return request<Device[]>({
+    method: 'GET',
+    url: '/devices',
+  });
+}
+
+/**
+ * 绑定设备
+ * @param deviceCode 设备编码
+ */
+export async function bindDevice(deviceCode: string): Promise<ApiResponse<{ success: boolean; deviceId: string; alreadyBound: boolean }>> {
+  return request<{ success: boolean; deviceId: string; alreadyBound: boolean }>({
+    method: 'POST',
+    url: '/devices/bind',
+    data: { deviceCode },
+  });
 }
 
 /**
@@ -297,12 +310,19 @@ export async function getLearningOverview(): Promise<ApiResponse<LearningOvervie
   });
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 /**
  * 获取对话记录列表
  * 调用 deda-server GET /conversations
  */
-export async function getChatRecords(page = 1, pageSize = 100): Promise<ApiResponse<ChatRecord[]>> {
-  return request<ChatRecord[]>({
+export async function getChatRecords(page = 1, pageSize = 100): Promise<ApiResponse<PaginatedResponse<ChatRecord>>> {
+  return request<PaginatedResponse<ChatRecord>>({
     method: 'GET',
     url: `/conversations?page=${page}&pageSize=${pageSize}`,
   });
@@ -534,12 +554,13 @@ function generateTrend(deviceId: string, days: number): TrendPoint[] {
 }
 
 /**
- * 删除设备
- * 模拟删除请求，返回成功响应。
+ * 删除/解绑设备
  */
-export async function deleteDevice(deviceId: string): Promise<ApiResponse<null>> {
-  await mockDelay(800);
-  return success(null, '删除成功');
+export async function deleteDevice(deviceId: string): Promise<ApiResponse<{ success: boolean; deviceId: string }>> {
+  return request<{ success: boolean; deviceId: string }>({
+    method: 'DELETE',
+    url: `/devices/${deviceId}`,
+  });
 }
 
 /** 关于设备信息 */

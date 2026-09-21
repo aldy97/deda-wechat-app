@@ -36,11 +36,23 @@ Page({
   },
 
   onLoad() {
-    this.loadDeviceList();
+    this.checkLoginAndLoad();
   },
 
   onShow() {
     // 每次显示页面时后台刷新，方便从控制页/设置页返回后看到最新状态
+    this.checkLoginAndLoad();
+  },
+
+  /**
+   * 检查登录态，未登录则跳登录页
+   */
+  checkLoginAndLoad() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     this.loadDeviceList();
   },
 
@@ -210,6 +222,15 @@ Page({
     const { id } = event.currentTarget.dataset;
     wx.navigateTo({
       url: `/pages/device-setting/device-setting?id=${id}`,
+    });
+  },
+
+  /**
+   * 添加设备：跳转绑定页
+   */
+  onBindDevice() {
+    wx.navigateTo({
+      url: '/pages/device-bind/device-bind',
     });
   },
 

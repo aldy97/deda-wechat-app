@@ -1,0 +1,32 @@
+<view class="container device-bind-page">
+  <view class="bind-header">
+    <text class="bind-title">添加设备</text>
+    <text class="bind-subtitle">请输入设备底部的编码完成绑定</text>
+  </view>
+
+  <view class="bind-form card">
+    <van-cell-group inset>
+      <van-field
+        value="{{ deviceCode }}"
+        label="设备编码"
+        placeholder="请输入设备编码"
+        bind:change="onCodeChange"
+      />
+    </van-cell-group>
+
+    <view class="bind-actions">
+      <van-button
+        type="primary"
+        block
+        loading="{{ loading }}"
+        bind:click="onBind"
+      >
+        绑定
+      </van-button>
+    </view>
+  </view>
+
+  <view class="bind-tips text-secondary">
+    本地开发测试编码：DEV001
+  </view>
+</view>

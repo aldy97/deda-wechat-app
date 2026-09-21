@@ -1,0 +1,35 @@
+.device-bind-page {
+  padding: 40rpx;
+}
+
+.bind-header {
+  margin-bottom: 40rpx;
+}
+
+.bind-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.bind-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.bind-form {
+  padding: 32rpx 0;
+}
+
+.bind-actions {
+  margin-top: 40rpx;
+  padding: 0 32rpx;
+}
+
+.bind-tips {
+  margin-top: 32rpx;
+  text-align: center;
+  font-size: 24rpx;
+}

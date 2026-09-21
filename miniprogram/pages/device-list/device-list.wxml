@@ -7,8 +7,13 @@
   <!-- 空状态 -->
   <view wx:elif="{{ devices.length === 0 }}">
     <van-empty description="暂无设备，请先添加设备">
-      <van-button type="primary" size="small" bind:click="fetchDeviceList">重新加载</van-button>
+      <van-button type="primary" size="small" bind:click="onBindDevice">添加设备</van-button>
     </van-empty>
+  </view>
+
+  <!-- 添加设备按钮（有设备时也显示在底部） -->
+  <view wx:if="{{ devices.length > 0 }}" class="bind-btn-wrap">
+    <van-button type="primary" block bind:click="onBindDevice">添加设备</van-button>
   </view>
 
   <!-- 设备列表 -->
