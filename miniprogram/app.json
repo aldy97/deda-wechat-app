@@ -13,7 +13,6 @@
     "pages/switch-mode/switch-mode",
     "pages/choose-free-chat-mode/choose-free-chat-mode",
     "pages/textbook-learning/textbook-learning",
-    "pages/login/login",
     "pages/mine/mine"
   ],
   "window": {
