@@ -1,5 +1,9 @@
 <view class="container switch-mode-page">
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
   <view
+    wx:if="{{ !loading }}"
     class="mode-card"
     wx:for="{{ modes }}"
     wx:key="key"

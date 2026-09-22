@@ -1,29 +1,92 @@
+import { getConversationModeCategories, ConversationModeCategory, ensureAuthToken } from '../../api/api';
+
+/** 缓存键 */
+const CACHE_KEY = 'switch_mode_categories_cache';
+/** 缓存有效期：10 分钟 */
+const CACHE_TTL = 10 * 60 * 1000;
+
+interface CategoryDisplayItem {
+  key: string;
+  title: string;
+  description: string;
+}
+
 /**
  * 切换模式页
- * 展示设备可切换的两种学习/对话模式。
+ * 从服务端动态获取学习/对话模式分类，支持缓存与加载态。
  */
 Page({
   data: {
     deviceId: '',
-    modes: [
-      {
-        key: 'free-chat',
-        title: '自由对话模式',
-        description:
-          'AI 伙伴随时在线，陪孩子畅聊感兴趣的话题，在轻松对话中锻炼表达与思维能力。',
-      },
-      {
-        key: 'textbook',
-        title: '教材学习',
-        description:
-          '按照教材模块与单元进行系统学习，帮助孩子巩固课堂知识，循序渐进提升听说能力。',
-      },
-    ],
+    loading: true,
+    modes: [] as CategoryDisplayItem[],
   },
 
   onLoad(options) {
     const deviceId = options?.id || '';
     this.setData({ deviceId });
+    this.loadCategories();
+  },
+
+  /**
+   * 加载模式分类：优先缓存，后台刷新
+   */
+  async loadCategories() {
+    const cache = this.getCache();
+    if (cache) {
+      this.setData({ modes: cache.data, loading: false });
+    }
+
+    try {
+      await ensureAuthToken();
+      const res = await getConversationModeCategories();
+      const modes = res.data.map(this.mapCategoryToDisplay);
+      this.setData({ modes, loading: false });
+      this.saveCache(modes);
+    } catch (error) {
+      console.error('[switch-mode] load categories failed:', error);
+      if (!cache) {
+        wx.showToast({ title: '加载失败', icon: 'none' });
+        this.setData({ loading: false });
+      }
+    }
+  },
+
+  /**
+   * 将服务端分类映射为页面展示项
+   */
+  mapCategoryToDisplay(category: ConversationModeCategory): CategoryDisplayItem {
+    return {
+      key: category.key,
+      title: category.name,
+      description: category.description || '',
+    };
+  },
+
+  /**
+   * 读取本地缓存
+   */
+  getCache(): { data: CategoryDisplayItem[]; timestamp: number } | null {
+    try {
+      const cache = wx.getStorageSync(CACHE_KEY) as { data: CategoryDisplayItem[]; timestamp: number } | undefined;
+      if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
+        return cache;
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  /**
+   * 写入本地缓存
+   */
+  saveCache(modes: CategoryDisplayItem[]) {
+    try {
+      wx.setStorageSync(CACHE_KEY, { data: modes, timestamp: Date.now() });
+    } catch (error) {
+      console.warn('[switch-mode] cache save failed:', error);
+    }
   },
 
   /**
@@ -33,11 +96,11 @@ Page({
    */
   onSelectMode(event: WechatMiniprogram.TouchEvent) {
     const { key } = event.currentTarget.dataset;
-    if (key === 'free-chat') {
+    if (key === 'free_chat') {
       wx.navigateTo({
         url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${this.data.deviceId}`,
       });
-    } else if (key === 'textbook') {
+    } else if (key === 'textbook_learning') {
       wx.navigateTo({
         url: `/pages/textbook-learning/textbook-learning?id=${this.data.deviceId}`,
       });

@@ -67,7 +67,8 @@ Page({
     this.setData({ loading: true });
     try {
       const wxLoginRes = await this.wxLogin();
-      const res = await login({ phone, code: wxLoginRes.code });
+      // 微信小程序登录只需要 wx.login 返回的 code，手机号仅用于页面展示/后续绑定
+      const res = await login({ code: wxLoginRes.code });
       wx.setStorageSync('token', res.data.token);
       wx.showToast({ title: '登录成功', icon: 'success' });
 
@@ -76,6 +77,7 @@ Page({
       }, 800);
     } catch (error) {
       const message = error instanceof Error ? error.message : '登录失败';
+      console.error('[Login] login failed:', error);
       wx.showToast({ title: message, icon: 'none' });
     } finally {
       this.setData({ loading: false });

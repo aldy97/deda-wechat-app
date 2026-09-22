@@ -1,11 +1,11 @@
+import { API_BASE_URL } from '../config/api.config';
+
 /**
  * 小程序统一请求封装
  * - baseURL 指向本地 deda-server
  * - 自动从 storage 读取 token 并注入 Authorization
  * - 统一处理 { code, message, data } 响应格式
  */
-
-const BASE_URL = 'http://localhost:3000';
 
 export interface ApiResponse<T> {
   code: number;
@@ -22,9 +22,11 @@ export interface RequestOptions {
 export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   const token = wx.getStorageSync('token') || '';
 
+  const url = `${API_BASE_URL}${options.url}`;
+
   return new Promise((resolve, reject) => {
     wx.request({
-      url: `${BASE_URL}${options.url}`,
+      url,
       method: options.method,
       data: options.data,
       header: {
@@ -37,16 +39,19 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
 
         if (statusCode >= 200 && statusCode < 300) {
           if (body && typeof body.code === 'number' && body.code !== 0) {
+            console.warn(`[request] business error: ${url}`, body);
             reject(new Error(body.message || 'Request failed'));
           } else {
             resolve(body as ApiResponse<T>);
           }
         } else {
+          console.error(`[request] HTTP error: ${url}`, statusCode, body);
           const message = body?.message || `HTTP ${statusCode}`;
           reject(new Error(message));
         }
       },
       fail: (err) => {
+        console.error(`[request] network error: ${url}`, err);
         reject(new Error(err.errMsg || 'Network error'));
       },
     });

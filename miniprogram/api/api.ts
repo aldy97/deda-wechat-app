@@ -50,6 +50,29 @@ export interface DeviceStatus {
   lastActiveAt: string;
 }
 
+/** 对话模式顶层分类 */
+export interface ConversationModeCategory {
+  id: string;
+  key: string;
+  name: string;
+  description?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+/** 对话模式细粒度子模式 */
+export interface ConversationMode {
+  id: string;
+  categoryId: string;
+  key: string;
+  name: string;
+  description?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  configSchema?: Record<string, unknown> | null;
+  promptTemplate?: string | null;
+}
+
 /** 设备控制面板数据 */
 export interface DeviceControlData {
   id: string;
@@ -209,6 +232,33 @@ export async function login(params: LoginParams): Promise<ApiResponse<LoginResul
 }
 
 /**
+ * 确保已获取 JWT token
+ * 若 storage 中无 token，则自动调用 wx.login 换取。
+ */
+export function ensureAuthToken(): Promise<string> {
+  const existingToken = wx.getStorageSync('token') || '';
+  if (existingToken) {
+    return Promise.resolve(existingToken);
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: async (wxLoginRes) => {
+        try {
+          const res = await login({ code: wxLoginRes.code });
+          const token = res.data.token;
+          wx.setStorageSync('token', token);
+          resolve(token);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      fail: (err) => reject(new Error(err.errMsg || 'wx.login failed')),
+    });
+  });
+}
+
+/**
  * 获取设备列表
  * 仅返回基础信息，状态/电量通过 getDeviceStatus 单独获取。
  */
@@ -239,6 +289,29 @@ export async function getDeviceStatus(deviceId: string): Promise<ApiResponse<Dev
   return request<DeviceStatus>({
     method: 'GET',
     url: `/devices/${deviceId}/status`,
+  });
+}
+
+/**
+ * 获取对话模式顶层分类
+ * 调用 deda-server GET /conversation-modes/categories
+ */
+export async function getConversationModeCategories(): Promise<ApiResponse<ConversationModeCategory[]>> {
+  return request<ConversationModeCategory[]>({
+    method: 'GET',
+    url: '/conversation-modes/categories',
+  });
+}
+
+/**
+ * 获取对话子模式列表
+ * 调用 deda-server GET /conversation-modes?categoryKey=...
+ */
+export async function getConversationModes(categoryKey?: string): Promise<ApiResponse<ConversationMode[]>> {
+  const query = categoryKey ? `?categoryKey=${encodeURIComponent(categoryKey)}` : '';
+  return request<ConversationMode[]>({
+    method: 'GET',
+    url: `/conversation-modes${query}`,
   });
 }
 

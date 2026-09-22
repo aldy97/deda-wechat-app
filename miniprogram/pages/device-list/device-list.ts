@@ -29,24 +29,25 @@ Page({
   },
 
   onLoad() {
-    this.checkLoginAndLoad();
+    // 联调阶段跳过登录检查，直接进入设备列表
+    this.loadDeviceList();
   },
 
   onShow() {
-    this.checkLoginAndLoad();
-  },
-
-  /**
-   * 检查登录态，未登录则跳登录页
-   */
-  checkLoginAndLoad() {
-    const token = wx.getStorageSync('token');
-    if (!token) {
-      wx.navigateTo({ url: '/pages/login/login' });
-      return;
-    }
     this.loadDeviceList();
   },
+
+  // /**
+  //  * 检查登录态，未登录则跳登录页（联调阶段注释掉）
+  //  */
+  // checkLoginAndLoad() {
+  //   const token = wx.getStorageSync('token');
+  //   if (!token) {
+  //     wx.navigateTo({ url: '/pages/login/login' });
+  //     return;
+  //   }
+  //   this.loadDeviceList();
+  // },
 
   /**
    * 加载设备列表：固定只展示 DEV001
