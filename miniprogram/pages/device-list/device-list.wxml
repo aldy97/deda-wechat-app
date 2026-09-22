@@ -4,19 +4,7 @@
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
   </view>
 
-  <!-- 空状态 -->
-  <view wx:elif="{{ devices.length === 0 }}">
-    <van-empty description="暂无设备，请先添加设备">
-      <van-button type="primary" size="small" bind:click="onBindDevice">添加设备</van-button>
-    </van-empty>
-  </view>
-
-  <!-- 添加设备按钮（有设备时也显示在底部） -->
-  <view wx:if="{{ devices.length > 0 }}" class="bind-btn-wrap">
-    <van-button type="primary" block bind:click="onBindDevice">添加设备</van-button>
-  </view>
-
-  <!-- 设备列表 -->
+  <!-- 设备列表（联调简化版：固定只展示 DEV001） -->
   <view wx:else>
     <view
       class="device-card card"

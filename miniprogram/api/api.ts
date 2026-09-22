@@ -233,36 +233,12 @@ export async function bindDevice(deviceCode: string): Promise<ApiResponse<{ succ
 
 /**
  * 获取设备实时状态（电量、在线状态、充电状态）
+ * 调用 deda-server GET /devices/{deviceId}/status
  */
 export async function getDeviceStatus(deviceId: string): Promise<ApiResponse<DeviceStatus>> {
-  await mockDelay(400);
-
-  // 根据 deviceId 生成稳定 mock 数据，避免每次刷新随机跳动
-  // D001: 在线，电量 74%
-  // D002: 离线，电量 12%
-  // D003: 在线且充电中，电量 45%
-  const batteryMap: Record<string, number> = {
-    D001: 74,
-    D002: 12,
-    D003: 45,
-  };
-  const statusMap: Record<string, DeviceStatus['status']> = {
-    D001: 'online',
-    D002: 'offline',
-    D003: 'online',
-  };
-  const chargingMap: Record<string, boolean> = {
-    D001: false,
-    D002: false,
-    D003: true,
-  };
-
-  return success({
-    deviceId,
-    status: statusMap[deviceId] || 'offline',
-    battery: batteryMap[deviceId] ?? Math.floor(Math.random() * 100),
-    isCharging: chargingMap[deviceId] ?? false,
-    lastActiveAt: '2026-09-10 14:30:00',
+  return request<DeviceStatus>({
+    method: 'GET',
+    url: `/devices/${deviceId}/status`,
   });
 }
 
