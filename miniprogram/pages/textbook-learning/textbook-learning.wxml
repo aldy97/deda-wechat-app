@@ -1,13 +1,21 @@
 <view class="container textbook-learning-page">
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
   <view
+    wx:if="{{ !loading }}"
     class="textbook-card"
     wx:for="{{ textbooks }}"
     wx:key="key"
+    data-key="{{ item.key }}"
+    bind:tap="onSelectTextbook"
   >
     <view class="textbook-avatar"></view>
     <view class="textbook-info">
       <text class="textbook-title">{{ item.title }}</text>
       <text class="textbook-desc">{{ item.description }}</text>
+      <text wx:if="{{ item.cefrLevel }}" class="textbook-level">{{ item.cefrLevel }}</text>
     </view>
   </view>
 </view>

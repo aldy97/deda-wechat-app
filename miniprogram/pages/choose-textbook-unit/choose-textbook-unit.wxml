@@ -1,0 +1,23 @@
+<view class="container choose-textbook-unit-page">
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  </view>
+
+  <view
+    wx:if="{{ !loading }}"
+    class="unit-card"
+    wx:for="{{ units }}"
+    wx:key="key"
+    data-key="{{ item.key }}"
+    bind:tap="onSelectUnit"
+  >
+    <view class="unit-info">
+      <text class="unit-title">{{ item.title }}</text>
+      <text class="unit-desc">{{ item.description }}</text>
+      <view class="unit-meta" wx:if="{{ item.cefrLevel || item.difficulty }}">
+        <text wx:if="{{ item.cefrLevel }}" class="unit-level">{{ item.cefrLevel }}</text>
+        <text wx:if="{{ item.difficulty }}" class="unit-difficulty">难度 {{ item.difficulty }}</text>
+      </view>
+    </view>
+  </view>
+</view>

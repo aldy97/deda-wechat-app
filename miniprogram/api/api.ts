@@ -73,6 +73,27 @@ export interface ConversationMode {
   promptTemplate?: string | null;
 }
 
+/** 教材 */
+export interface Textbook {
+  id: string;
+  textbookId: string;
+  name: string;
+  description?: string | null;
+  cefrLevel?: string | null;
+}
+
+/** 教材单元 */
+export interface TextbookUnit {
+  id: string;
+  unitId: string;
+  textbookId: string;
+  name: string;
+  description?: string | null;
+  cefrLevel?: string | null;
+  difficulty?: number | null;
+  sortOrder: number;
+}
+
 /** 设备控制面板数据 */
 export interface DeviceControlData {
   id: string;
@@ -312,6 +333,36 @@ export async function getConversationModes(categoryKey?: string): Promise<ApiRes
   return request<ConversationMode[]>({
     method: 'GET',
     url: `/conversation-modes${query}`,
+  });
+}
+
+/**
+ * 获取教材列表
+ */
+export async function getTextbooks(): Promise<ApiResponse<Textbook[]>> {
+  return request<Textbook[]>({
+    method: 'GET',
+    url: '/textbooks',
+  });
+}
+
+/**
+ * 获取教材详情
+ */
+export async function getTextbookDetail(textbookId: string): Promise<ApiResponse<Textbook>> {
+  return request<Textbook>({
+    method: 'GET',
+    url: `/textbooks/${textbookId}`,
+  });
+}
+
+/**
+ * 获取教材下单元列表
+ */
+export async function getTextbookUnits(textbookId: string): Promise<ApiResponse<TextbookUnit[]>> {
+  return request<TextbookUnit[]>({
+    method: 'GET',
+    url: `/textbooks/${textbookId}/units`,
   });
 }
 
