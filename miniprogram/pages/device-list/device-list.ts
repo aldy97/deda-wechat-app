@@ -1,6 +1,15 @@
-import { getDeviceStatus, Device, DeviceStatus } from '../../api/api';
+import {
+  getDeviceList,
+  bindDevice,
+  getDeviceStatus,
+  getDeviceCurrentConfig,
+  Device,
+  DeviceStatus,
+  DeviceConfig,
+  ensureAuthToken,
+} from '../../api/api';
 
-/** 本地联调样机 DEV001，固定写入设备列表，便于跳过绑定步骤直接验证对话链路 */
+/** 本地联调样机 DEV001 */
 const DEV001_DEVICE: Device = {
   id: 'dev-local-001',
   name: 'DEV001（联调样机）',
@@ -9,18 +18,30 @@ const DEV001_DEVICE: Device = {
   networkType: '4G',
 };
 
-/** 设备展示项 = 基础信息 + 状态信息 */
+/** 模式展示名映射 */
+const MODE_DISPLAY_MAP: Record<string, string> = {
+  free_chat: '自由对话',
+  textbook_learning: '教材学习',
+  locked_unit: '教材单元',
+  free_textbook: '自由教材',
+};
+
+/** 设备展示项 = 基础信息 + 状态信息 + 当前模式 */
 interface DeviceDisplayItem extends Device {
   status?: DeviceStatus['status'];
   battery?: number;
   isCharging?: boolean;
   lastActiveAt?: string;
   statusLoading?: boolean;
+  cardTitle?: string;
+  cardDesc?: string;
+  currentMode?: string;
+  currentModeDetail?: string;
 }
 
 /**
- * 设备列表页（联调简化版）
- * 仅固定展示 DEV001 一个设备，用于快速验证对话链路。
+ * 设备列表页
+ * 从后端拉取当前登录用户的真实绑定设备；若为空则自动绑定本地联调样机 DEV001。
  */
 Page({
   data: {
@@ -29,7 +50,6 @@ Page({
   },
 
   onLoad() {
-    // 联调阶段跳过登录检查，直接进入设备列表
     this.loadDeviceList();
   },
 
@@ -37,51 +57,83 @@ Page({
     this.loadDeviceList();
   },
 
-  // /**
-  //  * 检查登录态，未登录则跳登录页（联调阶段注释掉）
-  //  */
-  // checkLoginAndLoad() {
-  //   const token = wx.getStorageSync('token');
-  //   if (!token) {
-  //     wx.navigateTo({ url: '/pages/login/login' });
-  //     return;
-  //   }
-  //   this.loadDeviceList();
-  // },
-
   /**
-   * 加载设备列表：固定只展示 DEV001
+   * 加载设备列表：优先真实绑定，空则自动绑定 DEV001
    */
   async loadDeviceList() {
     this.setData({ loading: true });
 
-    const device: DeviceDisplayItem = {
-      ...DEV001_DEVICE,
-      statusLoading: true,
-    };
-
     try {
-      const status = await this.fetchDeviceStatus(device.id);
-      device.status = status.status;
-      device.battery = status.battery;
-      device.isCharging = status.isCharging;
-      device.lastActiveAt = status.lastActiveAt;
-    } catch (error) {
-      // 状态获取失败不影响设备展示
-      device.status = 'offline';
-      device.battery = 0;
-      device.isCharging = false;
-    } finally {
-      device.statusLoading = false;
-    }
+      await ensureAuthToken();
+      let devices = await this.fetchBoundDevices();
 
-    this.setData({ devices: [device], loading: false });
+      if (devices.length === 0) {
+        console.log('[device-list] no bound devices, auto-bind DEV001');
+        await bindDevice({ deviceId: DEV001_DEVICE.deviceId });
+        devices = await this.fetchBoundDevices();
+      }
+
+      const displayItems = await this.enrichDevices(devices);
+      this.setData({ devices: displayItems, loading: false });
+    } catch (error) {
+      console.error('[device-list] load device list failed:', error);
+      wx.showToast({
+        title: error instanceof Error ? error.message : '加载设备失败',
+        icon: 'none',
+      });
+      this.setData({ devices: [], loading: false });
+    }
+  },
+
+  /**
+   * 从后端获取当前用户已绑定设备
+   */
+  async fetchBoundDevices(): Promise<Device[]> {
+    const res = await getDeviceList();
+    return res.data || [];
+  },
+
+  /**
+   * 为设备列表补充状态与当前配置
+   */
+  async enrichDevices(devices: Device[]): Promise<DeviceDisplayItem[]> {
+    return Promise.all(
+      devices.map(async (device) => {
+        const item: DeviceDisplayItem = { ...device, statusLoading: true };
+
+        const cachedConfig = this.getDeviceConfigCache(item.id);
+        if (cachedConfig) {
+          this.applyConfigToDevice(item, cachedConfig);
+        }
+
+        try {
+          const [status, config] = await Promise.all([
+            this.fetchDeviceStatus(item.id),
+            this.fetchDeviceCurrentConfig(item.id),
+          ]);
+          item.status = status.status;
+          item.battery = status.battery;
+          item.isCharging = status.isCharging;
+          item.lastActiveAt = status.lastActiveAt;
+          if (config) {
+            this.applyConfigToDevice(item, config);
+            this.saveDeviceConfigCache(config);
+          }
+        } catch (error) {
+          item.status = item.status || 'offline';
+          item.battery = item.battery ?? 0;
+          item.isCharging = item.isCharging ?? false;
+        } finally {
+          item.statusLoading = false;
+        }
+
+        return item;
+      }),
+    );
   },
 
   /**
    * 获取单个设备状态/电量
-   * @param deviceId 设备 ID
-   * @returns 设备状态数据，失败时返回离线默认值
    */
   async fetchDeviceStatus(deviceId: string): Promise<DeviceStatus> {
     try {
@@ -96,6 +148,90 @@ Page({
         lastActiveAt: '',
       };
     }
+  },
+
+  /**
+   * 获取设备当前生效配置
+   */
+  async fetchDeviceCurrentConfig(deviceId: string): Promise<DeviceConfig | null> {
+    try {
+      await ensureAuthToken();
+      const res = await getDeviceCurrentConfig(deviceId);
+      return res.data;
+    } catch (error) {
+      console.error('[device-list] fetch current config failed:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 将配置应用到设备展示项
+   */
+  applyConfigToDevice(device: DeviceDisplayItem, config: DeviceConfig) {
+    const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
+
+    // 卡片标题：当前对话模式
+    device.cardTitle = modeName;
+
+    // 卡片描述：根据模式展示子模式/教材单元信息
+    let detail = '';
+    if (config.mode === 'free_chat' && config.conversationModeKey) {
+      detail = config.conversationModeKey;
+      device.cardDesc = `子模式：${config.conversationModeKey}`;
+    } else if (
+      (config.mode === 'textbook_learning' || config.mode === 'locked_unit') &&
+      config.textbookId
+    ) {
+      const textbook = config.textbookName || config.textbookId;
+      const unit = config.unitName || config.unitId;
+      detail = unit ? `${textbook} / ${unit}` : textbook;
+      device.cardDesc = unit ? `${textbook} · ${unit}` : textbook;
+    } else if (config.mode === 'free_textbook' && config.textbookId) {
+      const textbook = config.textbookName || config.textbookId;
+      detail = textbook;
+      device.cardDesc = textbook;
+    } else {
+      device.cardDesc = 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。';
+    }
+
+    device.currentMode = modeName;
+    device.currentModeDetail = detail;
+  },
+
+  /**
+   * 读取本地配置缓存
+   */
+  getDeviceConfigCache(deviceId: string): DeviceConfig | null {
+    try {
+      return wx.getStorageSync(`device_config_${deviceId}`) as DeviceConfig | undefined || null;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  /**
+   * 写入本地配置缓存
+   */
+  saveDeviceConfigCache(config: DeviceConfig) {
+    try {
+      wx.setStorageSync(`device_config_${config.deviceId}`, config);
+    } catch (error) {
+      console.warn('[device-list] save config cache failed:', error);
+    }
+  },
+
+  /**
+   * 供其他页面调用，直接更新设备列表中的配置显示
+   */
+  updateDeviceConfig(config: DeviceConfig) {
+    const { devices } = this.data;
+    const index = devices.findIndex((d) => d.id === config.deviceId);
+    if (index === -1) return;
+
+    const device = { ...devices[index] };
+    this.applyConfigToDevice(device, config);
+    this.setData({ [`devices[${index}]`]: device });
+    this.saveDeviceConfigCache(config);
   },
 
   /**
@@ -127,15 +263,6 @@ Page({
       url: `/pages/device-setting/device-setting?id=${id}`,
     });
   },
-
-  // /**
-  //  * 添加设备：跳转绑定页（联调阶段注释掉，固定只展示 DEV001）
-  //  */
-  // onBindDevice() {
-  //   wx.navigateTo({
-  //     url: '/pages/device-bind/device-bind',
-  //   });
-  // },
 
   /**
    * 切换模式：跳转切换模式页

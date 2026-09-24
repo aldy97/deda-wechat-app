@@ -94,6 +94,20 @@ export interface TextbookUnit {
   sortOrder: number;
 }
 
+/** 设备当前生效配置 */
+export interface DeviceConfig {
+  deviceId: string;
+  mode: 'free_chat' | 'textbook_learning' | 'locked_unit' | 'free_textbook';
+  conversationModeKey?: string | null;
+  textbookId?: string | null;
+  textbookName?: string | null;
+  unitId?: string | null;
+  unitName?: string | null;
+  cefrLevel?: string | null;
+  language?: string | null;
+  speechRate?: string | null;
+}
+
 /** 设备控制面板数据 */
 export interface DeviceControlData {
   id: string;
@@ -292,13 +306,15 @@ export async function getDeviceList(): Promise<ApiResponse<Device[]>> {
 
 /**
  * 绑定设备
- * @param deviceCode 设备编码
+ * @param params deviceId 或 deviceCode 至少传一个
  */
-export async function bindDevice(deviceCode: string): Promise<ApiResponse<{ success: boolean; deviceId: string; alreadyBound: boolean }>> {
+export async function bindDevice(
+  params: { deviceId?: string; deviceCode?: string },
+): Promise<ApiResponse<{ success: boolean; deviceId: string; alreadyBound: boolean }>> {
   return request<{ success: boolean; deviceId: string; alreadyBound: boolean }>({
     method: 'POST',
     url: '/devices/bind',
-    data: { deviceCode },
+    data: params,
   });
 }
 
@@ -363,6 +379,44 @@ export async function getTextbookUnits(textbookId: string): Promise<ApiResponse<
   return request<TextbookUnit[]>({
     method: 'GET',
     url: `/textbooks/${textbookId}/units`,
+  });
+}
+
+/**
+ * 获取设备当前生效配置
+ */
+export async function getDeviceCurrentConfig(deviceId: string): Promise<ApiResponse<DeviceConfig>> {
+  return request<DeviceConfig>({
+    method: 'GET',
+    url: `/device-configs/${deviceId}/current`,
+  });
+}
+
+/**
+ * 应用教材/单元配置
+ */
+export async function applyDeviceConfig(
+  deviceId: string,
+  config: Omit<DeviceConfig, 'deviceId'>,
+): Promise<ApiResponse<DeviceConfig>> {
+  return request<DeviceConfig>({
+    method: 'POST',
+    url: `/device-configs/${deviceId}/apply`,
+    data: config,
+  });
+}
+
+/**
+ * 切换对话模式/子模式
+ */
+export async function switchDeviceMode(
+  deviceId: string,
+  config: Omit<DeviceConfig, 'deviceId'>,
+): Promise<ApiResponse<DeviceConfig>> {
+  return request<DeviceConfig>({
+    method: 'POST',
+    url: `/device-configs/${deviceId}/mode`,
+    data: config,
   });
 }
 

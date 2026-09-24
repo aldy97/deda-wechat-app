@@ -27,3 +27,9 @@
 .actions {
   margin-top: 48rpx;
 }
+
+.current-mode-text {
+  color: #07c160;
+  font-weight: 600;
+  font-size: 28rpx;
+}

@@ -38,7 +38,7 @@ Page({
 
     this.setData({ loading: true });
     try {
-      const res = await bindDevice(deviceCode.trim());
+      const res = await bindDevice({ deviceCode: deviceCode.trim() });
       wx.showToast({
         title: res.data.alreadyBound ? '设备已绑定' : '绑定成功',
         icon: 'success',

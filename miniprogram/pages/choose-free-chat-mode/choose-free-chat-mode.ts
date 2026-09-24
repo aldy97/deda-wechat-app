@@ -1,4 +1,11 @@
-import { getConversationModes, ConversationMode, ensureAuthToken } from '../../api/api';
+import {
+  getConversationModes,
+  getDeviceCurrentConfig,
+  switchDeviceMode,
+  ConversationMode,
+  DeviceConfig,
+  ensureAuthToken,
+} from '../../api/api';
 
 /** 缓存键 */
 const CACHE_KEY = 'free_chat_modes_cache';
@@ -19,6 +26,8 @@ Page({
   data: {
     deviceId: '',
     loading: true,
+    saving: false,
+    currentSubMode: '',
     modes: [] as ModeDisplayItem[],
   },
 
@@ -26,6 +35,7 @@ Page({
     const deviceId = options?.id || '';
     this.setData({ deviceId });
     this.loadFreeChatModes();
+    this.loadCurrentConfig();
   },
 
   /**
@@ -49,6 +59,24 @@ Page({
         wx.showToast({ title: '加载失败', icon: 'none' });
         this.setData({ loading: false });
       }
+    }
+  },
+
+  /**
+   * 加载当前生效配置，用于高亮已选子模式
+   */
+  async loadCurrentConfig() {
+    if (!this.data.deviceId) return;
+
+    try {
+      await ensureAuthToken();
+      const res = await getDeviceCurrentConfig(this.data.deviceId);
+      const config = res.data;
+      if (config.mode === 'free_chat' && config.conversationModeKey) {
+        this.setData({ currentSubMode: config.conversationModeKey });
+      }
+    } catch (error) {
+      console.error('[choose-free-chat-mode] load current config failed:', error);
     }
   },
 
@@ -90,12 +118,59 @@ Page({
   },
 
   /**
+   * 保存设备配置到本地缓存
+   */
+  saveDeviceConfigCache(config: DeviceConfig) {
+    try {
+      wx.setStorageSync(`device_config_${config.deviceId}`, config);
+    } catch (error) {
+      console.warn('[choose-free-chat-mode] device config cache save failed:', error);
+    }
+  },
+
+  /**
+   * 更新设备列表页的配置显示，避免返回时闪动
+   */
+  updateDeviceListPage(config: DeviceConfig) {
+    const pages = getCurrentPages();
+    const deviceListPage = pages.find((p) => p.route === 'pages/device-list/device-list');
+    if (deviceListPage && typeof (deviceListPage as any).updateDeviceConfig === 'function') {
+      (deviceListPage as any).updateDeviceConfig(config);
+    }
+  },
+
+  /**
    * 选择具体自由对话模式
    */
-  onSelectMode(event: WechatMiniprogram.TouchEvent) {
+  async onSelectMode(event: WechatMiniprogram.TouchEvent) {
     const { key } = event.currentTarget.dataset;
-    console.log('[choose-free-chat-mode] selected mode:', key);
-    // TODO: 调用设备配置切换接口，将模式同步到设备
-    wx.showToast({ title: `已选择：${key}`, icon: 'none' });
+    const { deviceId } = this.data;
+
+    if (!deviceId) {
+      wx.showToast({ title: '设备 ID 缺失', icon: 'none' });
+      return;
+    }
+
+    this.setData({ saving: true, currentSubMode: key });
+
+    try {
+      await ensureAuthToken();
+      const res = await switchDeviceMode(deviceId, {
+        mode: 'free_chat',
+        conversationModeKey: key,
+      });
+      const config = res.data;
+      this.saveDeviceConfigCache(config);
+      this.updateDeviceListPage(config);
+
+      wx.showToast({ title: '已保存', icon: 'success' });
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 800);
+    } catch (error) {
+      console.error('[choose-free-chat-mode] switch mode failed:', error);
+      this.setData({ saving: false });
+      wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+    }
   },
 });

@@ -5,7 +5,7 @@
 
   <view
     wx:if="{{ !loading }}"
-    class="unit-card"
+    class="unit-card {{ currentUnitId === item.key ? 'selected' : '' }}"
     wx:for="{{ units }}"
     wx:key="key"
     data-key="{{ item.key }}"
@@ -19,5 +19,10 @@
         <text wx:if="{{ item.difficulty }}" class="unit-difficulty">难度 {{ item.difficulty }}</text>
       </view>
     </view>
+    <view class="selected-icon" wx:if="{{ currentUnitId === item.key }}">✓</view>
+  </view>
+
+  <view class="save-overlay" wx:if="{{ saving }}">
+    <van-loading type="spinner" size="48rpx">保存中…</van-loading>
   </view>
 </view>

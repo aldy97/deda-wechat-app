@@ -1,4 +1,11 @@
-import { getConversationModeCategories, ConversationModeCategory, ensureAuthToken } from '../../api/api';
+import {
+  getConversationModeCategories,
+  getDeviceCurrentConfig,
+  switchDeviceMode,
+  ConversationModeCategory,
+  DeviceConfig,
+  ensureAuthToken,
+} from '../../api/api';
 
 /** 缓存键 */
 const CACHE_KEY = 'switch_mode_categories_cache';
@@ -19,6 +26,8 @@ Page({
   data: {
     deviceId: '',
     loading: true,
+    saving: false,
+    currentMode: '',
     modes: [] as CategoryDisplayItem[],
   },
 
@@ -26,6 +35,7 @@ Page({
     const deviceId = options?.id || '';
     this.setData({ deviceId });
     this.loadCategories();
+    this.loadCurrentConfig();
   },
 
   /**
@@ -49,6 +59,23 @@ Page({
         wx.showToast({ title: '加载失败', icon: 'none' });
         this.setData({ loading: false });
       }
+    }
+  },
+
+  /**
+   * 加载当前生效配置，用于高亮已选分类
+   */
+  async loadCurrentConfig() {
+    if (!this.data.deviceId) return;
+
+    try {
+      await ensureAuthToken();
+      const res = await getDeviceCurrentConfig(this.data.deviceId);
+      const config = res.data;
+      this.setData({ currentMode: config.mode });
+      this.saveDeviceConfigCache(config);
+    } catch (error) {
+      console.error('[switch-mode] load current config failed:', error);
     }
   },
 
@@ -90,20 +117,53 @@ Page({
   },
 
   /**
-   * 选择模式
-   * - 自由对话模式：跳转选择自由对话模式页
-   * - 教材学习：跳转教材学习页
+   * 保存设备配置到本地缓存
    */
-  onSelectMode(event: WechatMiniprogram.TouchEvent) {
+  saveDeviceConfigCache(config: DeviceConfig) {
+    try {
+      wx.setStorageSync(`device_config_${config.deviceId}`, config);
+    } catch (error) {
+      console.warn('[switch-mode] device config cache save failed:', error);
+    }
+  },
+
+  /**
+   * 选择模式
+   * - 自由对话模式：先保存 mode=free_chat，再跳转选择自由对话模式页
+   * - 教材学习：先保存 mode=textbook_learning，再跳转教材学习页
+   */
+  async onSelectMode(event: WechatMiniprogram.TouchEvent) {
     const { key } = event.currentTarget.dataset;
-    if (key === 'free_chat') {
-      wx.navigateTo({
-        url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${this.data.deviceId}`,
-      });
-    } else if (key === 'textbook_learning') {
-      wx.navigateTo({
-        url: `/pages/textbook-learning/textbook-learning?id=${this.data.deviceId}`,
-      });
+    const { deviceId } = this.data;
+
+    if (!deviceId) {
+      wx.showToast({ title: '设备 ID 缺失', icon: 'none' });
+      return;
+    }
+
+    this.setData({ saving: true });
+
+    try {
+      await ensureAuthToken();
+      const res = await switchDeviceMode(deviceId, { mode: key });
+      const config = res.data;
+      this.saveDeviceConfigCache(config);
+      this.setData({ currentMode: config.mode, saving: false });
+
+      if (key === 'free_chat') {
+        wx.navigateTo({
+          url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${deviceId}`,
+        });
+      } else if (key === 'textbook_learning') {
+        wx.navigateTo({
+          url: `/pages/textbook-learning/textbook-learning?id=${deviceId}`,
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '保存失败，请重试';
+      console.error('[switch-mode] switch mode failed:', error);
+      this.setData({ saving: false });
+      wx.showToast({ title: message, icon: 'none', duration: 2500 });
     }
   },
 });

@@ -9,6 +9,10 @@
   <!-- 控制面板 -->
   <view wx:else>
     <van-cell-group inset class="card">
+      <van-cell title="当前对话模式" wx:if="{{ currentModeDisplay }}">
+        <text class="current-mode-text" slot="right-icon">{{ currentModeDisplay }}</text>
+      </van-cell>
+
       <van-cell title="设备电源">
         <van-switch
           checked="{{ device.power }}"

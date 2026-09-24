@@ -1,37 +1,4 @@
-import { login } from './api/api';
 import { request } from './utils/request';
-
-/**
- * 调用微信登录获取 code
- */
-function wxLogin(): Promise<WechatMiniprogram.LoginSuccessCallbackResult> {
-  return new Promise((resolve, reject) => {
-    wx.login({
-      success: resolve,
-      fail: reject,
-    });
-  });
-}
-
-/**
- * 静默登录：自动获取微信 code 并换取服务端 JWT token
- */
-async function silentLogin() {
-  const existingToken = wx.getStorageSync('token');
-  if (existingToken) {
-    console.log('[App] token already exists, skip silent login');
-    return;
-  }
-
-  try {
-    const wxLoginRes = await wxLogin();
-    const res = await login({ code: wxLoginRes.code });
-    wx.setStorageSync('token', res.data.token);
-    console.log('[App] silent login success');
-  } catch (error) {
-    console.error('[App] silent login failed:', error);
-  }
-}
 
 /**
  * 连通性检查：调用 /health 确认服务端可达
@@ -50,8 +17,7 @@ async function checkServerHealth() {
 
 /**
  * 小程序全局入口
- * 联调阶段采用静默登录：启动时自动获取 wx.login code 并换取 JWT token，
- * 避免显示手机号验证码登录页，同时保证后续受保护接口能正常访问。
+ * 已登录用户直接进入设备列表；未登录用户留在登录页走 wx.login 流程。
  */
 App<{
   globalData: {
@@ -66,7 +32,14 @@ App<{
   onLaunch() {
     console.log('[App] onLaunch');
     checkServerHealth();
-    silentLogin();
+
+    const token = wx.getStorageSync('token');
+    if (token) {
+      console.log('[App] token exists, redirect to device list');
+      wx.switchTab({ url: '/pages/device-list/device-list' });
+    } else {
+      console.log('[App] no token, stay on login page');
+    }
   },
 
   onShow() {

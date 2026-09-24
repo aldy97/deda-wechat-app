@@ -56,18 +56,19 @@ Page({
    * 登录提交
    * 1. 调用 wx.login 获取微信临时 code
    * 2. 将 code 传给 deda-server 换取 JWT
+   *
+   * 开发环境说明：手机号验证码仅用于页面展示/后续绑定，未配置真实微信凭证时
+   * 后端会模拟 jscode2session 返回稳定 openid，因此允许空手机号直接登录联调。
    */
   async onLogin() {
     const { phone, code: smsCode } = this.data;
     if (!phone || !smsCode) {
-      wx.showToast({ title: '请填写完整信息', icon: 'none' });
-      return;
+      console.warn('[Login] phone/sms code empty, proceeding in dev mode');
     }
 
     this.setData({ loading: true });
     try {
       const wxLoginRes = await this.wxLogin();
-      // 微信小程序登录只需要 wx.login 返回的 code，手机号仅用于页面展示/后续绑定
       const res = await login({ code: wxLoginRes.code });
       wx.setStorageSync('token', res.data.token);
       wx.showToast({ title: '登录成功', icon: 'success' });

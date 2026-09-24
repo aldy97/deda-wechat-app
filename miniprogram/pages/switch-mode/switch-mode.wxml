@@ -4,7 +4,7 @@
   </view>
   <view
     wx:if="{{ !loading }}"
-    class="mode-card"
+    class="mode-card {{ currentMode === item.key ? 'selected' : '' }}"
     wx:for="{{ modes }}"
     wx:key="key"
     data-key="{{ item.key }}"
@@ -15,5 +15,10 @@
       <text class="mode-title">{{ item.title }}</text>
       <text class="mode-desc">{{ item.description }}</text>
     </view>
+    <view class="selected-icon" wx:if="{{ currentMode === item.key }}">✓</view>
+  </view>
+
+  <view class="save-overlay" wx:if="{{ saving }}">
+    <van-loading type="spinner" size="48rpx">保存中…</van-loading>
   </view>
 </view>

@@ -46,3 +46,42 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.mode-card:active {
+  transform: scale(0.97);
+  background: #f0f0f0;
+  transition: all 0.15s;
+}
+
+.mode-card.selected {
+  border: 2rpx solid #07c160;
+  background: #e6f7ed;
+}
+
+.selected-icon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background-color: #07c160;
+  color: #ffffff;
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.save-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}

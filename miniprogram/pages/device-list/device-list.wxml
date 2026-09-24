@@ -42,16 +42,19 @@
         </view>
       </view>
 
-      <!-- 卡片中部：标题、描述 -->
+      <!-- 卡片中部：标题、描述、当前模式 -->
       <view class="card-body">
         <view class="card-info">
           <view class="card-title-row">
-            <text class="card-title">中文聊天陪伴</text>
+            <text class="card-title">{{ item.cardTitle || 'DEDA AI 玩偶' }}</text>
             <image class="title-icon" src="" mode="aspectFill" />
           </view>
-          <text class="card-desc">
-            DEDA AI玩偶，中文智能体，不仅可以扮演树洞的角色，帮助宝贝们疏导情绪；还上知天文下知地理，随时在线给宝贝们解答不懂的科学知识，是孩子们的好伙伴！
-          </text>
+          <text class="card-desc">{{ item.cardDesc || 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。' }}</text>
+          <view class="current-mode-row" wx:if="{{ item.currentMode }}">
+            <text class="current-mode-label">当前模式：</text>
+            <text class="current-mode-value">{{ item.currentMode }}</text>
+            <text class="current-mode-detail" wx:if="{{ item.currentModeDetail }}">({{ item.currentModeDetail }})</text>
+          </view>
         </view>
       </view>
 
