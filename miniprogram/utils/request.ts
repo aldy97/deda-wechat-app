@@ -14,7 +14,7 @@ export interface ApiResponse<T> {
 }
 
 export interface RequestOptions {
-  method: 'GET' | 'POST' | 'DELETE';
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   url: string;
   data?: any;
 }
@@ -27,7 +27,7 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
     wx.request({
       url,
-      method: options.method,
+      method: options.method as any,
       data: options.data,
       header: {
         'Content-Type': 'application/json',

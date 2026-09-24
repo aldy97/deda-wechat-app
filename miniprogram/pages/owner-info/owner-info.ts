@@ -39,7 +39,9 @@ Page({
     this.setData({ loading: true });
     try {
       const res = await getOwnerInfo(deviceId);
-      const { name, birthday } = res.data;
+      const info = res.data;
+      const name = info?.name ?? '';
+      const birthday = info?.birthday ?? '';
       this.setData({
         'form.name': name,
         'form.birthday': birthday,
@@ -101,7 +103,7 @@ Page({
    * 保存主人信息
    */
   async onSave() {
-    const { name } = this.data.form;
+    const name = this.data.form.name || '';
     if (!name.trim()) {
       wx.showToast({ title: '请输入名字', icon: 'none' });
       return;
@@ -109,7 +111,11 @@ Page({
 
     this.setData({ saving: true });
     try {
-      await updateOwnerInfo(this.data.deviceId, this.data.form);
+      const { name, birthday } = this.data.form;
+      await updateOwnerInfo(this.data.deviceId, {
+        name: name || undefined,
+        birthday: birthday || undefined,
+      });
       wx.showToast({ title: '保存成功', icon: 'success' });
       // 保存成功后清除设备列表缓存，确保返回列表页时重新加载
       this.clearDeviceListCache();

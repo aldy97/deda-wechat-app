@@ -40,6 +40,8 @@
         type="primary"
         block
         loading="{{ loading }}"
+        loading-text="登录中..."
+        disabled="{{ loading }}"
         bind:click="onLogin"
       >
         登录

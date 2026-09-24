@@ -28,14 +28,17 @@
       <van-button
         type="primary"
         block
-        loading="{{ saving }}"
-        loading-text="保存中..."
         disabled="{{ saving }}"
         bind:click="onSave"
       >
         保存
       </van-button>
     </view>
+  </view>
+
+  <!-- 保存中遮罩 -->
+  <view class="save-overlay" wx:if="{{ saving }}">
+    <van-loading type="spinner" size="48rpx">保存中…</van-loading>
   </view>
 
   <!-- 日期选择弹窗 -->

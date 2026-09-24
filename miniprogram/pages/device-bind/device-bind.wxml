@@ -19,6 +19,8 @@
         type="primary"
         block
         loading="{{ loading }}"
+        loading-text="绑定中..."
+        disabled="{{ loading }}"
         bind:click="onBind"
       >
         绑定

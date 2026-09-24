@@ -146,6 +146,13 @@ export interface ChildProfile {
   deviceName: string;
 }
 
+/** 设备主人信息（owner info） */
+export interface OwnerInfo {
+  id?: string;
+  name?: string | null;
+  birthday?: string | null;
+}
+
 /** 单设备核心指标 */
 export interface DeviceAnalysis {
   deviceId: string;
@@ -420,6 +427,30 @@ export async function switchDeviceMode(
     method: 'POST',
     url: `/device-configs/${deviceId}/mode`,
     data: config,
+  });
+}
+
+/**
+ * 获取设备主人信息
+ */
+export async function getOwnerInfo(deviceId: string): Promise<ApiResponse<OwnerInfo | null>> {
+  return request<OwnerInfo | null>({
+    method: 'GET',
+    url: `/child-profiles/device/${deviceId}`,
+  });
+}
+
+/**
+ * 更新设备主人信息
+ */
+export async function updateOwnerInfo(
+  deviceId: string,
+  data: { name?: string; birthday?: string },
+): Promise<ApiResponse<OwnerInfo>> {
+  return request<OwnerInfo>({
+    method: 'PATCH',
+    url: `/child-profiles/device/${deviceId}`,
+    data,
   });
 }
 
@@ -755,33 +786,3 @@ export async function getDeviceAboutInfo(deviceId: string): Promise<ApiResponse<
   });
 }
 
-/** 主人信息（孩子档案） */
-export interface OwnerInfo {
-  name: string;
-  birthday: string; // YYYY-MM-DD
-}
-
-/**
- * 获取主人信息
- * D001 预填充数据，其他设备为空，便于演示新建与编辑两种场景。
- */
-export async function getOwnerInfo(deviceId: string): Promise<ApiResponse<OwnerInfo>> {
-  await mockDelay(600);
-
-  const ownerMap: Record<string, OwnerInfo> = {
-    D001: { name: '小明', birthday: '2020-05-20' },
-  };
-
-  return success(ownerMap[deviceId] || { name: '', birthday: '' });
-}
-
-/**
- * 更新主人信息
- */
-export async function updateOwnerInfo(
-  deviceId: string,
-  data: OwnerInfo,
-): Promise<ApiResponse<OwnerInfo>> {
-  await mockDelay(800);
-  return success({ ...data });
-}
