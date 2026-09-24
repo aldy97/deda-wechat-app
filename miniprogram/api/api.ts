@@ -99,10 +99,13 @@ export interface DeviceConfig {
   deviceId: string;
   mode: 'free_chat' | 'textbook_learning' | 'locked_unit' | 'free_textbook';
   conversationModeKey?: string | null;
+  conversationModeName?: string | null;
+  conversationModeDescription?: string | null;
   textbookId?: string | null;
   textbookName?: string | null;
   unitId?: string | null;
   unitName?: string | null;
+  unitDescription?: string | null;
   cefrLevel?: string | null;
   language?: string | null;
   speechRate?: string | null;

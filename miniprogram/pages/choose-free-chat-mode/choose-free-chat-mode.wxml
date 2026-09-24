@@ -10,7 +10,7 @@
     data-key="{{ item.key }}"
     bind:tap="onSelectMode"
   >
-    <view class="mode-avatar"></view>
+    <!-- <view class="mode-avatar"></view> -->
     <view class="mode-info">
       <text class="mode-title">{{ item.title }}</text>
       <text class="mode-desc">{{ item.description }}</text>

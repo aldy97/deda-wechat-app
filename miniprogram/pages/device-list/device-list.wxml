@@ -42,19 +42,15 @@
         </view>
       </view>
 
-      <!-- 卡片中部：标题、描述、当前模式 -->
+      <!-- 卡片中部：标题、副标题、描述 -->
       <view class="card-body">
         <view class="card-info">
           <view class="card-title-row">
             <text class="card-title">{{ item.cardTitle || 'DEDA AI 玩偶' }}</text>
-            <image class="title-icon" src="" mode="aspectFill" />
+            <!-- <image class="title-icon" src="" mode="aspectFill" /> -->
           </view>
+          <text class="card-subtitle" wx:if="{{ item.cardSubtitle }}">{{ item.cardSubtitle }}</text>
           <text class="card-desc">{{ item.cardDesc || 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。' }}</text>
-          <view class="current-mode-row" wx:if="{{ item.currentMode }}">
-            <text class="current-mode-label">当前模式：</text>
-            <text class="current-mode-value">{{ item.currentMode }}</text>
-            <text class="current-mode-detail" wx:if="{{ item.currentModeDetail }}">({{ item.currentModeDetail }})</text>
-          </view>
         </view>
       </view>
 

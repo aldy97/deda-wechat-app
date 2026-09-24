@@ -1,7 +1,7 @@
 <view class="chat-history-page">
   <!-- 顶部头像与欢迎语 -->
   <view class="chat-header">
-    <image class="avatar" src="" mode="aspectFill" />
+    <!-- <image class="avatar" src="" mode="aspectFill" /> -->
     <text class="welcome-text">你好，我是你的好朋友专精英文故事工坊的DEDA AI玩偶</text>
     <text class="welcome-subtext">快和我聊天吧</text>
   </view>
@@ -46,7 +46,7 @@
         wx:for="{{ records }}"
         wx:key="id"
       >
-        <image wx:if="{{ item.role === 'device' }}" class="bubble-avatar" src="" mode="aspectFill" />
+        <!-- <image wx:if="{{ item.role === 'device' }}" class="bubble-avatar" src="" mode="aspectFill" /> -->
         <view class="bubble {{ item.role === 'user' ? 'bubble-user' : 'bubble-device' }}">
           <text class="bubble-text">{{ item.content }}</text>
         </view>

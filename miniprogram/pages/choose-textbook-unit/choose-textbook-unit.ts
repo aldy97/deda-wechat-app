@@ -117,7 +117,7 @@ Page({
    */
   async onSelectUnit(event: WechatMiniprogram.TouchEvent) {
     const { key } = event.currentTarget.dataset;
-    const { deviceId, textbookId } = this.data;
+    const { deviceId, textbookId, units } = this.data;
 
     if (!deviceId || !textbookId) {
       wx.showToast({ title: '参数缺失', icon: 'none' });
@@ -134,13 +134,17 @@ Page({
         unitId: key,
       });
       const config = res.data;
-      this.saveDeviceConfigCache(config);
-      this.updateDeviceListPage(config);
 
-      wx.showToast({ title: '已保存', icon: 'success' });
-      setTimeout(() => {
-        wx.navigateBack({ delta: 2 });
-      }, 800);
+      // 把选中单元的描述一并缓存，供设备列表卡片展示
+      const selectedUnit = units.find((u) => u.key === key);
+      const configWithDesc: DeviceConfig = {
+        ...config,
+        unitDescription: selectedUnit?.description || null,
+      };
+      this.saveDeviceConfigCache(configWithDesc);
+      this.updateDeviceListPage(configWithDesc);
+
+      wx.switchTab({ url: '/pages/device-list/device-list' });
     } catch (error) {
       console.error('[choose-textbook-unit] apply config failed:', error);
       this.setData({ saving: false });

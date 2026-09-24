@@ -11,7 +11,7 @@
     data-key="{{ item.key }}"
     bind:tap="onSelectTextbook"
   >
-    <view class="textbook-avatar"></view>
+    <!-- <view class="textbook-avatar"></view> -->
     <view class="textbook-info">
       <text class="textbook-title">{{ item.title }}</text>
       <text class="textbook-desc">{{ item.description }}</text>

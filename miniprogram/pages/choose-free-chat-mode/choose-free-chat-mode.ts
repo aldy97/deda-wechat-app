@@ -144,7 +144,7 @@ Page({
    */
   async onSelectMode(event: WechatMiniprogram.TouchEvent) {
     const { key } = event.currentTarget.dataset;
-    const { deviceId } = this.data;
+    const { deviceId, modes } = this.data;
 
     if (!deviceId) {
       wx.showToast({ title: '设备 ID 缺失', icon: 'none' });
@@ -160,13 +160,18 @@ Page({
         conversationModeKey: key,
       });
       const config = res.data;
-      this.saveDeviceConfigCache(config);
-      this.updateDeviceListPage(config);
 
-      wx.showToast({ title: '已保存', icon: 'success' });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 800);
+      // 把选中子模式的名称和描述一并缓存，供设备列表卡片展示
+      const selectedMode = modes.find((m) => m.key === key);
+      const configWithDesc: DeviceConfig = {
+        ...config,
+        conversationModeName: selectedMode?.title || null,
+        conversationModeDescription: selectedMode?.description || null,
+      };
+      this.saveDeviceConfigCache(configWithDesc);
+      this.updateDeviceListPage(configWithDesc);
+
+      wx.switchTab({ url: '/pages/device-list/device-list' });
     } catch (error) {
       console.error('[choose-free-chat-mode] switch mode failed:', error);
       this.setData({ saving: false });

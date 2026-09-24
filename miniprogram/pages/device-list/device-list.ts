@@ -26,7 +26,7 @@ const MODE_DISPLAY_MAP: Record<string, string> = {
   free_textbook: '自由教材',
 };
 
-/** 设备展示项 = 基础信息 + 状态信息 + 当前模式 */
+/** 设备展示项 = 基础信息 + 状态信息 + 卡片内容 */
 interface DeviceDisplayItem extends Device {
   status?: DeviceStatus['status'];
   battery?: number;
@@ -34,9 +34,8 @@ interface DeviceDisplayItem extends Device {
   lastActiveAt?: string;
   statusLoading?: boolean;
   cardTitle?: string;
+  cardSubtitle?: string;
   cardDesc?: string;
-  currentMode?: string;
-  currentModeDetail?: string;
 }
 
 /**
@@ -107,7 +106,7 @@ Page({
         }
 
         try {
-          const [status, config] = await Promise.all([
+          const [status, serverConfig] = await Promise.all([
             this.fetchDeviceStatus(item.id),
             this.fetchDeviceCurrentConfig(item.id),
           ]);
@@ -115,9 +114,21 @@ Page({
           item.battery = status.battery;
           item.isCharging = status.isCharging;
           item.lastActiveAt = status.lastActiveAt;
-          if (config) {
-            this.applyConfigToDevice(item, config);
-            this.saveDeviceConfigCache(config);
+          if (serverConfig) {
+            // 服务端配置不含 name/description，需与本地缓存合并保留
+            const mergedConfig: DeviceConfig = {
+              ...serverConfig,
+              conversationModeName:
+                serverConfig.conversationModeName ||
+                cachedConfig?.conversationModeName,
+              conversationModeDescription:
+                serverConfig.conversationModeDescription ||
+                cachedConfig?.conversationModeDescription,
+              unitDescription:
+                serverConfig.unitDescription || cachedConfig?.unitDescription,
+            };
+            this.applyConfigToDevice(item, mergedConfig);
+            this.saveDeviceConfigCache(mergedConfig);
           }
         } catch (error) {
           item.status = item.status || 'offline';
@@ -170,32 +181,28 @@ Page({
   applyConfigToDevice(device: DeviceDisplayItem, config: DeviceConfig) {
     const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
 
-    // 卡片标题：当前对话模式
-    device.cardTitle = modeName;
-
-    // 卡片描述：根据模式展示子模式/教材单元信息
-    let detail = '';
-    if (config.mode === 'free_chat' && config.conversationModeKey) {
-      detail = config.conversationModeKey;
-      device.cardDesc = `子模式：${config.conversationModeKey}`;
-    } else if (
-      (config.mode === 'textbook_learning' || config.mode === 'locked_unit') &&
-      config.textbookId
-    ) {
-      const textbook = config.textbookName || config.textbookId;
-      const unit = config.unitName || config.unitId;
-      detail = unit ? `${textbook} / ${unit}` : textbook;
-      device.cardDesc = unit ? `${textbook} · ${unit}` : textbook;
-    } else if (config.mode === 'free_textbook' && config.textbookId) {
-      const textbook = config.textbookName || config.textbookId;
-      detail = textbook;
-      device.cardDesc = textbook;
+    if (config.mode === 'free_chat') {
+      // 自由对话：标题显示子模式中文名，描述显示子模式描述
+      device.cardTitle = config.conversationModeName || config.conversationModeKey || modeName;
+      device.cardSubtitle = '';
+      device.cardDesc =
+        config.conversationModeDescription ||
+        '自由对话模式，随时陪伴孩子聊天互动。';
+    } else if (config.textbookId) {
+      // 教材模式：标题显示教材名，副标题显示单元名，描述显示单元描述
+      device.cardTitle = config.textbookName || config.textbookId;
+      device.cardSubtitle = config.unitName || config.unitId || '';
+      device.cardDesc =
+        config.unitDescription ||
+        config.textbookName ||
+        config.textbookId ||
+        '教材学习模式，系统化提升英语能力。';
     } else {
+      // 兜底
+      device.cardTitle = modeName;
+      device.cardSubtitle = '';
       device.cardDesc = 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。';
     }
-
-    device.currentMode = modeName;
-    device.currentModeDetail = detail;
   },
 
   /**

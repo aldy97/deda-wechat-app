@@ -179,6 +179,14 @@
   background-color: #e6f2ff;
 }
 
+.card-subtitle {
+  font-size: 28rpx;
+  color: #4a90d9;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
 .card-desc {
   font-size: 26rpx;
   color: #666666;
