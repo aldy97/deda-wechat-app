@@ -15,6 +15,14 @@
         maxlength="20"
         input-align="right"
       />
+      <van-field
+        label="英文名"
+        placeholder="请输入孩子英文名（AI 称呼用）"
+        value="{{ form.englishName }}"
+        bind:change="onEnglishNameChange"
+        maxlength="50"
+        input-align="right"
+      />
       <van-cell
         title="生日"
         value="{{ form.birthday || '请选择生日' }}"

@@ -151,6 +151,7 @@ export interface OwnerInfo {
   id?: string;
   name?: string | null;
   birthday?: string | null;
+  englishName?: string | null;
 }
 
 /** 单设备核心指标 */
@@ -445,7 +446,7 @@ export async function getOwnerInfo(deviceId: string): Promise<ApiResponse<OwnerI
  */
 export async function updateOwnerInfo(
   deviceId: string,
-  data: { name?: string; birthday?: string },
+  data: { name?: string; birthday?: string; englishName?: string },
 ): Promise<ApiResponse<OwnerInfo>> {
   return request<OwnerInfo>({
     method: 'PATCH',

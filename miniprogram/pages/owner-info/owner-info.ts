@@ -18,6 +18,7 @@ Page({
     /** 表单数据 */
     form: {
       name: '',
+      englishName: '',
       birthday: '',
     } as OwnerInfo,
     /** 是否显示日期选择弹窗 */
@@ -41,9 +42,11 @@ Page({
       const res = await getOwnerInfo(deviceId);
       const info = res.data;
       const name = info?.name ?? '';
+      const englishName = info?.englishName ?? '';
       const birthday = info?.birthday ?? '';
       this.setData({
         'form.name': name,
+        'form.englishName': englishName,
         'form.birthday': birthday,
         currentDate: birthday ? new Date(birthday).getTime() : new Date('2020-05-20').getTime(),
       });
@@ -59,6 +62,13 @@ Page({
    */
   onNameChange(event: WechatMiniprogram.TouchEvent) {
     this.setData({ 'form.name': event.detail });
+  },
+
+  /**
+   * 英文名输入变化
+   */
+  onEnglishNameChange(event: WechatMiniprogram.TouchEvent) {
+    this.setData({ 'form.englishName': event.detail });
   },
 
   /**
@@ -111,9 +121,10 @@ Page({
 
     this.setData({ saving: true });
     try {
-      const { name, birthday } = this.data.form;
+      const { name, englishName, birthday } = this.data.form;
       await updateOwnerInfo(this.data.deviceId, {
         name: name || undefined,
+        englishName: englishName || undefined,
         birthday: birthday || undefined,
       });
       this.setData({ saving: false });
