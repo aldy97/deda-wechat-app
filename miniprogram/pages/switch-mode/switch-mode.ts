@@ -150,6 +150,7 @@ Page({
       this.saveDeviceConfigCache(config);
       this.setData({ currentMode: config.mode, saving: false });
 
+      // 先隐藏保存中遮罩，再跳转，避免与后续页面转场重叠
       if (key === 'free_chat') {
         wx.navigateTo({
           url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${deviceId}`,

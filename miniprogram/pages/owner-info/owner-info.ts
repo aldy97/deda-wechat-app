@@ -116,6 +116,7 @@ Page({
         name: name || undefined,
         birthday: birthday || undefined,
       });
+      this.setData({ saving: false });
       wx.showToast({ title: '保存成功', icon: 'success' });
       // 保存成功后清除设备列表缓存，确保返回列表页时重新加载
       this.clearDeviceListCache();
@@ -123,8 +124,8 @@ Page({
         wx.navigateBack();
       }, 800);
     } catch (error) {
-      wx.showToast({ title: '保存失败', icon: 'none' });
       this.setData({ saving: false });
+      wx.showToast({ title: '保存失败', icon: 'none' });
     }
   },
 

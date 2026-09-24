@@ -151,7 +151,7 @@ Page({
       return;
     }
 
-    this.setData({ saving: true, currentSubMode: key });
+    this.setData({ saving: true });
 
     try {
       await ensureAuthToken();
@@ -160,6 +160,8 @@ Page({
         conversationModeKey: key,
       });
       const config = res.data;
+      // 仅在 API 成功后更新选中状态，避免默认显示成功
+      this.setData({ currentSubMode: key });
 
       // 把选中子模式的名称和描述一并缓存，供设备列表卡片展示
       const selectedMode = modes.find((m) => m.key === key);
@@ -170,6 +172,7 @@ Page({
       };
       this.saveDeviceConfigCache(configWithDesc);
       this.updateDeviceListPage(configWithDesc);
+      this.setData({ saving: false });
 
       wx.switchTab({ url: '/pages/device-list/device-list' });
     } catch (error) {

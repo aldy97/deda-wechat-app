@@ -124,7 +124,7 @@ Page({
       return;
     }
 
-    this.setData({ saving: true, currentUnitId: key });
+    this.setData({ saving: true });
 
     try {
       await ensureAuthToken();
@@ -134,6 +134,8 @@ Page({
         unitId: key,
       });
       const config = res.data;
+      // 仅在 API 成功后更新选中状态，避免默认显示成功
+      this.setData({ currentUnitId: key });
 
       // 把选中单元的描述一并缓存，供设备列表卡片展示
       const selectedUnit = units.find((u) => u.key === key);
@@ -143,6 +145,7 @@ Page({
       };
       this.saveDeviceConfigCache(configWithDesc);
       this.updateDeviceListPage(configWithDesc);
+      this.setData({ saving: false });
 
       wx.switchTab({ url: '/pages/device-list/device-list' });
     } catch (error) {
