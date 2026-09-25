@@ -1,41 +1,63 @@
 <view class="container learning-data-page">
   <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{ loading && !overview.devices }}">
+  <view class="loading-wrap" wx:if="{{ loading && !dashboard.devices }}">
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
   </view>
 
-  <block wx:elif="{{ overview.devices }}">
+  <block wx:elif="{{ dashboard.devices }}">
     <!-- 家庭总览卡 -->
     <view class="overview card">
       <view class="overview-item">
-        <text class="overview-value">{{ overview.totalDuration || 0 }}</text>
-        <text class="overview-label text-secondary">本周时长(分)</text>
+        <text class="overview-value">{{ dashboard.totalDurationMinutes || 0 }}</text>
+        <text class="overview-label text-secondary">总时长(分)</text>
       </view>
       <view class="overview-item">
-        <text class="overview-value">{{ overview.totalSessions || 0 }}</text>
-        <text class="overview-label text-secondary">本周练习</text>
+        <text class="overview-value">{{ dashboard.totalSessions || 0 }}</text>
+        <text class="overview-label text-secondary">总练习</text>
       </view>
       <view class="overview-item">
-        <text class="overview-value">{{ overview.activeDeviceCount || 0 }}</text>
-        <text class="overview-label text-secondary">在线设备</text>
+        <text class="overview-value">{{ dashboard.continuousDays || 0 }}</text>
+        <text class="overview-label text-secondary">连续天</text>
       </view>
       <view class="overview-item">
-        <text class="overview-value">{{ overview.devices.length || 0 }}</text>
-        <text class="overview-label text-secondary">绑定设备</text>
+        <text class="overview-value">{{ dashboard.topicCount || 0 }}</text>
+        <text class="overview-label text-secondary">主题数</text>
       </view>
     </view>
 
-    <!-- 家庭学习趋势 -->
+    <!-- 近7天学习趋势 -->
     <view class="section card">
-      <text class="section-title">近7天家庭学习趋势</text>
-      <view class="trend-chart">
+      <text class="section-title">近7天学习趋势</text>
+      <view class="trend-chart" wx:if="{{ trend.length > 0 }}">
         <view
           class="trend-bar-wrap"
           wx:for="{{ trend }}"
           wx:key="date"
         >
-          <view class="trend-bar" style="height: {{ item.duration > 0 ? Math.min(item.duration, 120) / 120 * 160 : 4 }}rpx;"></view>
+          <view class="trend-bar" style="height: {{ item.durationMinutes > 0 ? Math.min(item.durationMinutes, 120) / 120 * 160 : 4 }}rpx;"></view>
           <text class="trend-date">{{ item.date }}</text>
+        </view>
+      </view>
+      <text wx:else class="empty-tip text-secondary">暂无趋势数据</text>
+    </view>
+
+    <!-- 主题分布 -->
+    <view class="section card" wx:if="{{ topics.length > 0 }}">
+      <text class="section-title">主题分布</text>
+      <view class="topic-list">
+        <view
+          class="topic-item"
+          wx:for="{{ topics }}"
+          wx:key="id"
+        >
+          <view class="topic-main">
+            <text class="topic-name {{ item.isActive ? 'topic-active' : '' }}">
+              {{ item.conversationModeName || item.textbookName || item.mode }}
+              <text wx:if="{{ item.unitName }}"> · {{ item.unitName }}</text>
+            </text>
+            <van-tag wx:if="{{ item.isActive }}" type="success" size="medium">当前</van-tag>
+          </view>
+          <text class="topic-count text-secondary">{{ item.count }} 次对话</text>
         </view>
       </view>
     </view>
@@ -44,14 +66,14 @@
     <view class="section-title">孩子设备</view>
     <view
       class="device-summary-card card"
-      wx:for="{{ overview.devices }}"
+      wx:for="{{ dashboard.devices }}"
       wx:key="deviceId"
       data-device-id="{{ item.deviceId }}"
       bind:tap="onDeviceCardTap"
     >
       <view class="summary-header">
         <view class="summary-left">
-          <text class="summary-child">{{ item.childName }}</text>
+          <text class="summary-child">{{ item.childName || '未命名' }}</text>
           <text class="summary-device text-secondary">{{ item.deviceName }}</text>
         </view>
         <van-tag type="{{ item.status === 'online' ? 'success' : item.status === 'sleeping' ? 'warning' : 'danger' }}">
@@ -60,11 +82,11 @@
       </view>
       <view class="summary-metrics">
         <view class="summary-metric">
-          <text class="summary-value">{{ item.todayDuration }}</text>
+          <text class="summary-value">{{ item.todayDurationMinutes }}</text>
           <text class="summary-label text-secondary">今日(分)</text>
         </view>
         <view class="summary-metric">
-          <text class="summary-value">{{ item.weekDuration }}</text>
+          <text class="summary-value">{{ item.weekDurationMinutes }}</text>
           <text class="summary-label text-secondary">本周(分)</text>
         </view>
         <view class="summary-metric">
@@ -72,15 +94,15 @@
           <text class="summary-label text-secondary">连续天</text>
         </view>
         <view class="summary-metric">
-          <text class="summary-value">{{ item.avgScore }}</text>
-          <text class="summary-label text-secondary">均分</text>
+          <text class="summary-value">{{ item.topicCount }}</text>
+          <text class="summary-label text-secondary">主题数</text>
         </view>
       </view>
     </view>
 
     <!-- 动态时间线 -->
     <view class="section-title">学习动态</view>
-    <view class="timeline-list">
+    <view class="timeline-list" wx:if="{{ timeline.length > 0 }}">
       <view
         class="timeline-item card"
         wx:for="{{ timeline }}"
@@ -88,11 +110,17 @@
       >
         <view class="timeline-dot"></view>
         <view class="timeline-content">
-          <text class="timeline-text">{{ item.content }}</text>
-          <text class="timeline-time text-secondary">{{ item.createdAt }}</text>
+          <view class="timeline-header">
+            <text class="timeline-topic">{{ item.topicName }}</text>
+            <text class="timeline-device text-secondary">{{ item.deviceName }}</text>
+          </view>
+          <text class="timeline-text">{{ item.userText }}</text>
+          <text class="timeline-ai">{{ item.aiText }}</text>
+          <text class="timeline-time text-secondary">{{ item.displayTime }}</text>
         </view>
       </view>
     </view>
+    <text wx:else class="empty-tip text-secondary">暂无学习动态</text>
 
     <van-button
       wx:if="{{ hasMore }}"

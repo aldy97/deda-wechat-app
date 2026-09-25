@@ -1,30 +1,34 @@
 import {
-  getFamilyOverview,
-  getFamilyTrend,
-  getFamilyTimeline,
-  FamilyOverview,
-  TrendPoint,
-  TimelineEvent,
-} from '../../api/api';
-import { paginate, PaginationResult } from '../../utils/pagination';
+  getLearningStatsDashboard,
+  getLearningStatsDaily,
+  getLearningStatsTopics,
+  getLearningStatsTimeline,
+  LearningStatsDashboard,
+  LearningStatsDailyPoint,
+  LearningStatsTopic,
+  LearningStatsTimelineEvent,
+} from "../../api/api";
+import { formatChatTime } from "../../utils/date";
+
+interface TimelineItem extends LearningStatsTimelineEvent {
+  displayTime: string;
+}
 
 /**
  * 学习 Tab - 家庭全览页
- * 展示家长账号下所有设备的跨设备学习汇总与动态时间线。
+ * 展示家长账号下所有设备的学习汇总、趋势、主题分布与动态时间线。
  */
 Page({
   data: {
     loading: true,
-    overview: {} as FamilyOverview,
-    trend: [] as TrendPoint[],
-    timeline: [] as TimelineEvent[],
+    dashboard: {} as LearningStatsDashboard,
+    trend: [] as LearningStatsDailyPoint[],
+    topics: [] as LearningStatsTopic[],
+    timeline: [] as TimelineItem[],
     page: 1,
     pageSize: 10,
     hasMore: true,
   },
-
-  // 本地缓存全部时间线数据
-  privateAllTimeline: [] as TimelineEvent[],
 
   onLoad() {
     this.loadAll();
@@ -39,21 +43,23 @@ Page({
    * 加载页面全部数据
    */
   async loadAll() {
-    this.setData({ loading: true });
+    this.setData({ loading: true, page: 1 });
     try {
-      const [overviewRes, trendRes] = await Promise.all([
-        getFamilyOverview(),
-        getFamilyTrend(7),
+      const [dashboardRes, trendRes, topicsRes] = await Promise.all([
+        getLearningStatsDashboard(),
+        getLearningStatsDaily(undefined, 7),
+        getLearningStatsTopics(),
       ]);
 
       this.setData({
-        overview: overviewRes.data,
+        dashboard: dashboardRes.data,
         trend: trendRes.data,
+        topics: topicsRes.data,
       });
 
       await this.loadTimeline(true);
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: "加载失败", icon: "none" });
     } finally {
       this.setData({ loading: false });
     }
@@ -65,28 +71,27 @@ Page({
   async loadTimeline(reset = false) {
     if (reset) {
       this.setData({ page: 1, timeline: [] });
-      this.privateAllTimeline = [];
     }
 
     try {
-      if (this.privateAllTimeline.length === 0) {
-        const res = await getFamilyTimeline(1, 100);
-        this.privateAllTimeline = res.data;
-      }
-
-      const result: PaginationResult<TimelineEvent> = paginate(
-        this.privateAllTimeline,
+      const res = await getLearningStatsTimeline(
+        undefined,
         this.data.page,
         this.data.pageSize,
       );
+      const { items, total } = res.data;
+      const formatted = items.map((item) => ({
+        ...item,
+        displayTime: formatChatTime(item.createdAt),
+      }));
 
       this.setData({
-        timeline: reset ? result.list : this.data.timeline.concat(result.list),
-        hasMore: result.hasMore,
-        page: result.page,
+        timeline: reset ? formatted : this.data.timeline.concat(formatted),
+        hasMore: this.data.timeline.length + formatted.length < total,
+        page: this.data.page,
       });
     } catch (error) {
-      wx.showToast({ title: '时间线加载失败', icon: 'none' });
+      wx.showToast({ title: "时间线加载失败", icon: "none" });
     }
   },
 

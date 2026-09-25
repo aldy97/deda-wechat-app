@@ -127,6 +127,51 @@
   margin-top: 4rpx;
 }
 
+/* 主题分布 */
+.topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.topic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.topic-item:last-child {
+  border-bottom: none;
+}
+
+.topic-main {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.topic-name {
+  font-size: 28rpx;
+  color: #333333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topic-active {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.topic-count {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
 /* 时间线 */
 .timeline-list {
   display: flex;
@@ -156,14 +201,46 @@
   flex-direction: column;
 }
 
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.timeline-topic {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
+}
+
+.timeline-device {
+  font-size: 22rpx;
+}
+
 .timeline-text {
   font-size: 28rpx;
   line-height: 1.5;
+  color: #333333;
+}
+
+.timeline-ai {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.5;
+  margin-top: 4rpx;
   margin-bottom: 8rpx;
 }
 
 .timeline-time {
   font-size: 24rpx;
+}
+
+.empty-tip {
+  display: block;
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 26rpx;
 }
 
 .no-more {
