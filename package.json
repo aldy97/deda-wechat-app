@@ -5,7 +5,14 @@
   "main": "miniprogram/app.ts",
   "scripts": {
     "dev": "echo '请使用微信开发者工具导入项目并开启热更新预览'",
-    "build:npm": "echo '请在微信开发者工具中执行：工具 -> 构建 npm'"
+    "build:npm": "echo '请在微信开发者工具中执行：工具 -> 构建 npm'",
+    "prepare": "husky",
+    "pre-commit": "cd miniprogram && npx tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{ts,js,wxml,wxss,json,md}": [
+      "prettier --write"
+    ]
   },
   "keywords": [
     "wechat-miniprogram",
@@ -18,7 +25,10 @@
     "@vant/weapp": "^1.11.7"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "miniprogram-api-typings": "^4.0.4",
+    "prettier": "^3.9.9",
     "typescript": "^7.0.2"
   }
 }
