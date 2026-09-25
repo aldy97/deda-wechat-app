@@ -5,47 +5,19 @@
   background-color: #f5f6f8;
 }
 
-/* 顶部头像与欢迎语 */
-.chat-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32rpx 32rpx 24rpx;
-  flex-shrink: 0;
-}
-
-.avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  background-color: #e6f2ff;
-  margin-bottom: 16rpx;
-}
-
-.welcome-text {
-  font-size: 28rpx;
-  color: #333333;
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 8rpx;
-}
-
-.welcome-subtext {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-/* 日期分隔 */
-.date-divider {
+/* 顶部上下文提示 */
+.chat-context-hint {
   display: flex;
   justify-content: center;
-  padding: 8rpx 0 16rpx;
+  padding: 16rpx 32rpx;
   flex-shrink: 0;
 }
 
-.date-divider text {
+.chat-context-hint text {
   font-size: 24rpx;
   color: #999999;
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* 加载与空状态 */
@@ -74,6 +46,11 @@
   padding: 24rpx 0;
 }
 
+.no-more-top .text-secondary {
+  font-size: 24rpx;
+  color: #999999;
+}
+
 /* 对话列表 */
 .chat-list {
   display: flex;
@@ -83,26 +60,34 @@
 
 .chat-item {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   margin-bottom: 32rpx;
   max-width: 100%;
 }
 
 .chat-item-left {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .chat-item-right {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
-.bubble-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background-color: #e6f2ff;
-  margin-right: 16rpx;
-  flex-shrink: 0;
+/* 消息时间 */
+.msg-time {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 24rpx;
+}
+
+.msg-time text {
+  font-size: 24rpx;
+  color: #999999;
+  background-color: #e5e5e5;
+  border-radius: 8rpx;
+  padding: 6rpx 16rpx;
 }
 
 .bubble {

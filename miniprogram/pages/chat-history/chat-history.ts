@@ -1,51 +1,97 @@
-import { getChatRecords, ChatRecord } from '../../api/api';
-import { paginateFromEnd, ReversePaginationResult } from '../../utils/pagination';
+import { getChatRecords, getDeviceCurrentConfig, ChatRecord, DeviceConfig } from '../../api/api';
+import { formatChatTime, shouldShowTime } from '../../utils/date';
+
+interface DisplayRecord extends ChatRecord {
+  displayTime?: string;
+}
+
+interface ChatHistoryData {
+  deviceId: string;
+  loading: boolean;
+  records: DisplayRecord[];
+  hasMore: boolean;
+  page: number;
+  pageSize: number;
+  initialLoaded: boolean;
+  scrollIntoView: string;
+  contextHint: string;
+}
 
 /**
  * 对话记录页
- * 采用即时通讯式交互：进入页面展示最新消息并定位到底部，向上滚动加载更早消息。
+ * 进入页面展示最新消息并定位到底部，向上滚动加载更早消息。
+ * 后端按 spokeAt 倒序返回（最新在前），前端渲染时按数组顺序展示，
+ * 通过 CSS 控制消息从底部向上排列。
  */
-Page({
+Page<ChatHistoryData, Record<string, any>>({
   data: {
     deviceId: '',
     loading: false,
-    records: [] as ChatRecord[],
+    records: [],
     hasMore: true,
-    loadedCount: 0,
+    page: 1,
     pageSize: 20,
     initialLoaded: false,
-    // 用于 scroll-view 的 scroll-into-view，控制滚动位置
     scrollIntoView: '',
+    contextHint: '',
   },
-
-  // 本地缓存全部对话记录（按时间正序：旧 → 新）
-  privateAllRecords: [] as ChatRecord[],
 
   onLoad(options) {
     const deviceId = options?.id || '';
     this.setData({ deviceId });
+    this.loadContext(deviceId);
     this.loadInitialRecords();
   },
 
   /**
-   * 初始加载：拉取全部数据到本地，取最新 N 条并滚动到底部
+   * 加载设备当前配置，设置导航栏标题与顶部提示
+   */
+  async loadContext(deviceId: string) {
+    if (!deviceId) return;
+
+    try {
+      const res = await getDeviceCurrentConfig(deviceId);
+      const config = res.data;
+      this.applyContext(config);
+    } catch (error) {
+      console.warn('[chat-history] 加载设备配置失败', error);
+    }
+  },
+
+  applyContext(config: DeviceConfig) {
+    let title = '';
+    let hint = '';
+
+    if (config.mode === 'free_chat' && config.conversationModeName) {
+      title = config.conversationModeName;
+      hint = config.conversationModeDescription || '';
+    } else if ((config.mode === 'locked_unit' || config.mode === 'textbook_learning') && config.textbookName) {
+      title = config.unitName ? `${config.textbookName} · ${config.unitName}` : config.textbookName;
+      hint = config.unitDescription || config.textbookName || '';
+    } else {
+      title = config.textbookName || config.conversationModeName || '对话记录';
+      hint = config.unitDescription || config.conversationModeDescription || '';
+    }
+
+    wx.setNavigationBarTitle({ title });
+    this.setData({ contextHint: hint });
+  },
+
+  /**
+   * 初始加载：拉取第一页（最新 N 条）并滚动到底部
    */
   async loadInitialRecords() {
-    this.setData({ loading: true });
+    this.setData({ loading: true, page: 1 });
     try {
-      const res = await getChatRecords(1, 100);
-      this.privateAllRecords = res.data.items || [];
-
-      const result = paginateFromEnd(
-        this.privateAllRecords,
-        0,
-        this.data.pageSize,
-      );
+      const res = await getChatRecords(1, this.data.pageSize);
+      const items = res.data.items || [];
+      const total = res.data.total || 0;
+      const records = this.buildDisplayRecords(items);
 
       this.setData({
-        records: result.list,
-        hasMore: result.hasMore,
-        loadedCount: result.loadedCount,
+        records,
+        hasMore: records.length < total,
+        page: 2,
         initialLoaded: true,
         scrollIntoView: 'msg-last',
       });
@@ -57,29 +103,25 @@ Page({
   },
 
   /**
-   * 向上滚动到顶部时加载更早消息
+   * 向上滚动到顶部时加载更早消息（下一页）
    */
   async onScrollToUpper() {
     if (!this.data.hasMore || this.data.loading) return;
 
-    // 记录当前最顶部消息 ID，加载完成后回滚到该位置，避免列表跳动
     const anchorMessageId = this.data.records[0]?.id || '';
     this.setData({ loading: true, scrollIntoView: '' });
 
-    // 模拟 API 调用延迟
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
     try {
-      const result: ReversePaginationResult<ChatRecord> = paginateFromEnd(
-        this.privateAllRecords,
-        this.data.loadedCount,
-        this.data.pageSize,
-      );
+      const res = await getChatRecords(this.data.page, this.data.pageSize);
+      const items = res.data.items || [];
+      const total = res.data.total || 0;
+      const olderRecords = this.buildDisplayRecords(items);
+      const merged = olderRecords.concat(this.data.records);
 
       this.setData({
-        records: result.list.concat(this.data.records),
-        hasMore: result.hasMore,
-        loadedCount: result.loadedCount,
+        records: merged,
+        hasMore: merged.length < total,
+        page: this.data.page + 1,
         scrollIntoView: anchorMessageId ? `msg-${anchorMessageId}` : '',
       });
     } catch (error) {
@@ -87,5 +129,28 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  /**
+   * 为记录列表计算显示时间
+   * 后端返回倒序（最新在前），这里从旧到新遍历以判断相邻消息间隔。
+   */
+  buildDisplayRecords(items: ChatRecord[]): DisplayRecord[] {
+    const result: DisplayRecord[] = [];
+    let previousIso: string | undefined;
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      const showTime = shouldShowTime(item.createdAt, previousIso);
+      result.unshift({
+        ...item,
+        displayTime: showTime ? formatChatTime(item.createdAt) : undefined,
+      });
+      if (showTime) {
+        previousIso = item.createdAt;
+      }
+    }
+
+    return result;
   },
 });
