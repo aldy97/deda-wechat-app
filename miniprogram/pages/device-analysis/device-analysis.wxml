@@ -1,162 +1,144 @@
 <view class="container device-analysis-page">
-  <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{ loading && !profile.name }}">
-    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
+  <!-- 孩子档案头部 -->
+  <view class="profile-header card">
+    <view class="profile-skeleton" wx:if="{{ loading.profile }}">
+      <van-skeleton row="2" title="{{ false }}" />
+    </view>
+    <view class="profile-info" wx:elif="{{ profile.name }}">
+      <text class="child-name">{{ profile.name }}</text>
+      <text class="child-meta text-secondary" wx:if="{{ profile.englishName }}">英文名 {{ profile.englishName }}</text>
+      <text class="child-meta text-secondary" wx:else>暂无英文名</text>
+    </view>
+    <view class="profile-info" wx:else>
+      <text class="child-name">未命名</text>
+      <text class="child-meta text-secondary">暂无档案</text>
+    </view>
   </view>
 
-  <block wx:else>
-    <!-- 孩子档案头部 -->
-    <view class="profile-header card">
-      <image class="child-avatar" src="{{ profile.avatarUrl }}" mode="aspectFill" />
-      <view class="profile-info">
-        <text class="child-name">{{ profile.name || '孩子' }}</text>
-        <text class="child-meta text-secondary">{{ profile.age || 6 }}岁 · {{ profile.deviceName || '设备' }}</text>
+  <!-- 时间范围切换 -->
+  <van-tabs active="{{ activeRange }}" bind:change="onRangeChange" custom-class="range-tabs">
+    <van-tab name="today" title="今日"></van-tab>
+    <van-tab name="week" title="本周"></van-tab>
+    <van-tab name="month" title="本月"></van-tab>
+  </van-tabs>
+
+  <!-- 核心指标卡 -->
+  <view class="metrics-grid card">
+    <block wx:if="{{ loading.metrics }}">
+      <view class="metric-item" wx:for="{{ [1,2,3,4] }}" wx:key="*this">
+        <van-skeleton row="1" row-width="60rpx" title="{{ false }}" />
+        <van-skeleton row="1" row-width="80rpx" title="{{ false }}" />
       </view>
-    </view>
-
-    <!-- 时间范围切换 -->
-    <van-tabs active="{{ activeRange }}" bind:change="onRangeChange" custom-class="range-tabs">
-      <van-tab name="today" title="今日"></van-tab>
-      <van-tab name="week" title="本周"></van-tab>
-      <van-tab name="month" title="本月"></van-tab>
-    </van-tabs>
-
-    <!-- 核心指标卡 -->
-    <view class="metrics-grid card">
+    </block>
+    <block wx:else>
       <view class="metric-item">
-        <text class="metric-value">{{ analysis.totalDuration || 0 }}</text>
+        <text class="metric-value">{{ dashboard.totalDurationMinutes || 0 }}</text>
         <text class="metric-label text-secondary">学习时长(分)</text>
       </view>
       <view class="metric-item">
-        <text class="metric-value">{{ analysis.totalSessions || 0 }}</text>
+        <text class="metric-value">{{ dashboard.totalSessions || 0 }}</text>
         <text class="metric-label text-secondary">练习次数</text>
       </view>
       <view class="metric-item">
-        <text class="metric-value">{{ analysis.totalDialogueRounds || 0 }}</text>
-        <text class="metric-label text-secondary">对话轮数</text>
+        <text class="metric-value">{{ dashboard.continuousDays || 0 }}</text>
+        <text class="metric-label text-secondary">连续天</text>
       </view>
       <view class="metric-item">
-        <text class="metric-value">{{ analysis.avgScore || 0 }}</text>
-        <text class="metric-label text-secondary">平均得分</text>
+        <text class="metric-value">{{ dashboard.topicCount || 0 }}</text>
+        <text class="metric-label text-secondary">主题数</text>
       </view>
-    </view>
+    </block>
+  </view>
 
-    <!-- 7 天学习趋势 -->
-    <view class="section card">
-      <text class="section-title">近7天学习趋势</text>
-      <view class="trend-chart">
-        <view
-          class="trend-bar-wrap"
-          wx:for="{{ trend }}"
-          wx:key="date"
-        >
-          <view class="trend-bar" style="height: {{ item.duration > 0 ? Math.min(item.duration, 60) / 60 * 160 : 4 }}rpx;"></view>
-          <text class="trend-date">{{ item.date }}</text>
-        </view>
+  <!-- 7 天学习趋势 -->
+  <view class="section card">
+    <text class="section-title">学习趋势</text>
+    <view class="trend-skeleton" wx:if="{{ loading.trend }}">
+      <van-skeleton row="1" row-width="100%" title="{{ false }}" />
+    </view>
+    <view class="trend-chart" wx:elif="{{ trend.length > 0 }}">
+      <view class="trend-bar-wrap" wx:for="{{ trend }}" wx:key="date">
+        <view class="trend-bar" style="height: {{ item.durationMinutes > 0 ? Math.min(item.durationMinutes, 60) / 60 * 160 : 4 }}rpx;"></view>
+        <text class="trend-date">{{ item.date }}</text>
       </view>
     </view>
+    <text wx:else class="empty-tip text-secondary">暂无趋势数据</text>
+  </view>
 
-    <!-- 口语能力维度 -->
-    <view class="section card">
-      <text class="section-title">口语能力</text>
-      <view class="dimension-list">
-        <view class="dimension-item">
-          <view class="dimension-header">
-            <text>发音准确度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions.accuracy || 0 }}分</text>
-          </view>
-          <van-progress percentage="{{ analysis.oralDimensions.accuracy || 0 }}" stroke-height="12rpx" color="#4a90d9" show-pivot="{{ false }}" />
+  <!-- 主题分布 -->
+  <view class="section card">
+    <text class="section-title">主题分布</text>
+    <view class="topic-skeleton" wx:if="{{ loading.topics }}">
+      <van-skeleton row="4" title="{{ false }}" />
+    </view>
+    <view class="topic-list" wx:elif="{{ topics.length > 0 }}">
+      <view class="topic-item" wx:for="{{ topics }}" wx:key="id">
+        <view class="topic-main">
+          <text class="topic-name {{ item.isActive ? 'topic-active' : '' }}">
+            {{ item.conversationModeName || item.textbookName || item.mode }}
+            <text wx:if="{{ item.unitName }}"> · {{ item.unitName }}</text>
+          </text>
+          <van-tag wx:if="{{ item.isActive }}" type="success" size="medium">当前</van-tag>
         </view>
-        <view class="dimension-item">
-          <view class="dimension-header">
-            <text>流利度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions.fluency || 0 }}分</text>
-          </view>
-          <van-progress percentage="{{ analysis.oralDimensions.fluency || 0 }}" stroke-height="12rpx" color="#07c160" show-pivot="{{ false }}" />
-        </view>
-        <view class="dimension-item">
-          <view class="dimension-header">
-            <text>完整度</text>
-            <text class="dimension-score">{{ analysis.oralDimensions.integrity || 0 }}分</text>
-          </view>
-          <van-progress percentage="{{ analysis.oralDimensions.integrity || 0 }}" stroke-height="12rpx" color="#ff976a" show-pivot="{{ false }}" />
+        <view class="topic-meta">
+          <text class="topic-score text-secondary">{{ item.avgScore != null ? item.avgScore + '分' : '--' }}</text>
+          <text class="topic-count text-secondary">{{ item.count }} 次对话</text>
         </view>
       </view>
     </view>
+    <text wx:else class="empty-tip text-secondary">暂无主题数据</text>
+  </view>
 
-    <!-- 薄弱项与建议 -->
-    <view class="section card" wx:if="{{ analysis.weakPoints.length > 0 }}">
-      <text class="section-title">提升建议</text>
-      <view class="weak-point" wx:for="{{ analysis.weakPoints }}" wx:key="index">
-        <van-tag type="warning">建议</van-tag>
-        <text class="weak-point-text">{{ item }}</text>
-      </view>
+  <!-- 单元进度 -->
+  <view class="section card">
+    <text class="section-title">单元进度</text>
+    <view class="unit-progress-skeleton" wx:if="{{ loading.unitProgress }}">
+      <van-skeleton row="4" title="{{ false }}" />
     </view>
-
-    <!-- 教材进度 -->
-    <view class="section card">
-      <text class="section-title">教材进度</text>
-      <view class="textbook-list">
-        <view class="textbook-item" wx:for="{{ textbooks }}" wx:for-item="textbook" wx:key="textbookId">
-          <text class="textbook-name">{{ textbook.textbookName }}</text>
-          <view class="module-list">
-            <view class="module-item" wx:for="{{ textbook.modules }}" wx:for-item="module" wx:key="moduleId">
-              <view
-                class="module-header"
-                data-module-id="{{ module.moduleId }}"
-                bind:tap="onToggleModule"
-              >
-                <text class="module-name">{{ module.moduleName }}</text>
-                <text class="module-toggle">{{ expandedModules[module.moduleId] ? '收起' : '展开' }}</text>
-              </view>
-              <view class="unit-list" wx:if="{{ expandedModules[module.moduleId] }}">
-                <view
-                  class="unit-item"
-                  wx:for="{{ module.units }}"
-                  wx:for-item="unit"
-                  wx:key="unitId"
-                  data-textbook-id="{{ textbook.textbookId }}"
-                  data-module-id="{{ module.moduleId }}"
-                  data-unit-id="{{ unit.unitId }}"
-                  bind:tap="onUnitTap"
-                >
-                  <view class="unit-info">
-                    <text class="unit-name">{{ unit.unitName }}</text>
-                    <text class="unit-progress text-secondary">{{ unit.completedItems }}/{{ unit.totalItems }} 项</text>
-                  </view>
-                  <view class="unit-right">
-                    <text class="unit-score" wx:if="{{ unit.completedItems > 0 }}">{{ unit.avgScore }}分</text>
-                    <text class="unit-score text-secondary" wx:else>未开始</text>
-                  </view>
-                </view>
-              </view>
-            </view>
+    <view class="unit-progress-list" wx:elif="{{ unitProgress.length > 0 }}">
+      <view class="textbook-group" wx:for="{{ unitProgress }}" wx:key="textbookId">
+        <text class="textbook-name">{{ item.textbookName }}</text>
+        <view class="unit-list">
+          <view class="unit-item" wx:for="{{ item.units }}" wx:for-item="unit" wx:key="unitId">
+            <text class="unit-name">{{ unit.unitName }}</text>
+            <text class="unit-count text-secondary">{{ unit.conversationCount }} 次对话</text>
           </view>
         </view>
       </view>
     </view>
+    <text wx:else class="empty-tip text-secondary">暂无单元进度</text>
+  </view>
 
-    <!-- 最近练习记录 -->
-    <view class="section card">
-      <text class="section-title">最近练习</text>
-      <view class="record-list">
-        <view
-          class="record-item"
-          wx:for="{{ analysis.recentRecords }}"
-          wx:key="id"
-          data-record-id="{{ item.id }}"
-          bind:tap="onRecordTap"
-        >
-          <view class="record-main">
-            <text class="record-title">{{ item.textbookName }} {{ item.moduleName }} {{ item.unitName }}</text>
-            <text class="record-sub text-secondary">{{ item.practiceType }} · {{ item.duration }}分钟</text>
+  <!-- 最近动态 -->
+  <view class="section card">
+    <text class="section-title">最近动态</text>
+    <view class="timeline-skeleton" wx:if="{{ loading.timeline }}">
+      <van-skeleton row="4" title="{{ false }}" />
+    </view>
+    <view class="timeline-list" wx:elif="{{ timeline.length > 0 }}">
+      <view class="timeline-item" wx:for="{{ timeline }}" wx:key="id">
+        <view class="timeline-dot"></view>
+        <view class="timeline-content">
+          <view class="timeline-header">
+            <text class="timeline-topic">{{ item.topicName }}</text>
+            <text class="timeline-time text-secondary">{{ item.displayTime }}</text>
           </view>
-          <view class="record-right">
-            <text class="record-score">{{ item.score }}分</text>
-            <text class="record-time text-secondary">{{ item.practicedAt }}</text>
-          </view>
+          <text class="timeline-text">{{ item.userText }}</text>
+          <text class="timeline-ai">{{ item.aiText }}</text>
         </view>
       </view>
     </view>
-  </block>
+    <text wx:else class="empty-tip text-secondary">暂无动态</text>
+
+    <van-button
+      wx:if="{{ hasMore }}"
+      type="default"
+      block
+      loading="{{ loading.timeline }}"
+      bind:click="onLoadMore"
+    >
+      加载更多
+    </van-button>
+    <text wx:elif="{{ timeline.length > 0 }}" class="no-more text-secondary">没有更多了</text>
+  </view>
 </view>

@@ -236,6 +236,76 @@
   font-size: 24rpx;
 }
 
+/* Skeleton */
+.trend-skeleton,
+.topic-skeleton,
+.unit-progress-skeleton,
+.device-skeleton,
+.timeline-skeleton {
+  padding: 16rpx 0;
+}
+
+/* 主题分布 meta */
+.topic-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+  flex-shrink: 0;
+}
+
+.topic-score {
+  font-size: 24rpx;
+}
+
+/* 单元进度 */
+.unit-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.textbook-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.textbook-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333333;
+}
+
+.unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding-left: 16rpx;
+}
+
+.unit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.unit-item:last-child {
+  border-bottom: none;
+}
+
+.unit-name {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.unit-count {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
 .empty-tip {
   display: block;
   text-align: center;

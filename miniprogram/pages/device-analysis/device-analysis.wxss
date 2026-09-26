@@ -163,10 +163,16 @@
 }
 
 /* 教材进度 */
-.textbook-list {
+.textbook-list,
+.unit-progress-list {
   display: flex;
   flex-direction: column;
   gap: 24rpx;
+}
+
+.textbook-group {
+  display: flex;
+  flex-direction: column;
 }
 
 .textbook-name {
@@ -231,6 +237,10 @@
   font-size: 24rpx;
 }
 
+.unit-count {
+  font-size: 24rpx;
+}
+
 .unit-right {
   display: flex;
   flex-direction: column;
@@ -239,6 +249,59 @@
 
 .unit-score {
   font-size: 28rpx;
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+/* 主题分布 */
+.topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.topic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.topic-item:last-child {
+  border-bottom: none;
+}
+
+.topic-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+.topic-name {
+  font-size: 28rpx;
+  margin-bottom: 4rpx;
+}
+
+.topic-active {
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+.topic-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.topic-count {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.topic-score {
+  font-size: 30rpx;
   color: #4a90d9;
   font-weight: 500;
 }
@@ -291,4 +354,101 @@
 
 .record-time {
   font-size: 22rpx;
+}
+
+/* 时间线 */
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 24rpx;
+  border-left: 2rpx solid #ebedf0;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 32rpx;
+  padding-bottom: 32rpx;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -13rpx;
+  top: 8rpx;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background-color: #4a90d9;
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.timeline-topic {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.timeline-time {
+  font-size: 22rpx;
+}
+
+.timeline-text,
+.timeline-ai {
+  font-size: 26rpx;
+  line-height: 1.5;
+  margin-bottom: 4rpx;
+}
+
+.timeline-ai {
+  color: #666666;
+}
+
+/* 骨架屏 */
+.skeleton-block {
+  padding: 24rpx 0;
+}
+
+.skeleton-row {
+  margin-bottom: 16rpx;
+}
+
+.skeleton-row:last-child {
+  margin-bottom: 0;
+}
+
+/* 空提示 */
+.empty-tip,
+.no-more {
+  display: block;
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 24rpx;
+}
+
+/* 空态/错误态 */
+.empty-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 0;
+  color: #999999;
+  font-size: 26rpx;
+}
+
+.error-state {
+  color: #ff4d4f;
 }

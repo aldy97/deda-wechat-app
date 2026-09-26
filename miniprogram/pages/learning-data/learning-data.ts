@@ -3,27 +3,49 @@ import {
   getLearningStatsDaily,
   getLearningStatsTopics,
   getLearningStatsTimeline,
+  getLearningStatsUnitProgress,
   LearningStatsDashboard,
   LearningStatsDailyPoint,
   LearningStatsTopic,
   LearningStatsTimelineEvent,
 } from "../../api/api";
 import { formatChatTime } from "../../utils/date";
+import {
+  groupUnitProgressByTextbook,
+  TextbookUnitProgress,
+} from "./learning-data.utils";
 
 interface TimelineItem extends LearningStatsTimelineEvent {
   displayTime: string;
 }
 
+interface LoadingState {
+  summary: boolean;
+  trend: boolean;
+  topics: boolean;
+  devices: boolean;
+  unitProgress: boolean;
+  timeline: boolean;
+}
+
 /**
  * 学习 Tab - 家庭全览页
- * 展示家长账号下所有设备的学习汇总、趋势、主题分布与动态时间线。
+ * 每个区块独立加载、独立 Skeleton，互不阻塞。
  */
 Page({
   data: {
-    loading: true,
+    loading: {
+      summary: true,
+      trend: true,
+      topics: true,
+      devices: true,
+      unitProgress: true,
+      timeline: true,
+    } as LoadingState,
     dashboard: {} as LearningStatsDashboard,
     trend: [] as LearningStatsDailyPoint[],
     topics: [] as LearningStatsTopic[],
+    unitProgress: [] as TextbookUnitProgress[],
     timeline: [] as TimelineItem[],
     page: 1,
     pageSize: 10,
@@ -31,37 +53,96 @@ Page({
   },
 
   onLoad() {
-    this.loadAll();
+    this.loadSummary();
+    this.loadTrend();
+    this.loadTopics();
+    this.loadTimeline(true);
   },
 
   async onPullDownRefresh() {
-    await this.loadAll();
+    this.setData({ page: 1 });
+    await Promise.all([
+      this.loadSummary(),
+      this.loadTrend(),
+      this.loadTopics(),
+      this.loadTimeline(true),
+    ]);
     wx.stopPullDownRefresh();
   },
 
+  setLoading(key: keyof LoadingState, value: boolean) {
+    this.setData({
+      [`loading.${key}`]: value,
+    });
+  },
+
   /**
-   * 加载页面全部数据
+   * 加载顶部汇总卡 + 孩子设备
    */
-  async loadAll() {
-    this.setData({ loading: true, page: 1 });
+  async loadSummary() {
+    this.setLoading("summary", true);
+    this.setLoading("devices", true);
     try {
-      const [dashboardRes, trendRes, topicsRes] = await Promise.all([
-        getLearningStatsDashboard(),
-        getLearningStatsDaily(undefined, 7),
-        getLearningStatsTopics(),
-      ]);
-
-      this.setData({
-        dashboard: dashboardRes.data,
-        trend: trendRes.data,
-        topics: topicsRes.data,
-      });
-
-      await this.loadTimeline(true);
+      const res = await getLearningStatsDashboard();
+      this.setData({ dashboard: res.data });
+      const firstDeviceId = res.data.devices[0]?.deviceId;
+      if (firstDeviceId) {
+        this.loadUnitProgress(firstDeviceId);
+      } else {
+        this.setLoading("unitProgress", false);
+      }
     } catch (error) {
-      wx.showToast({ title: "加载失败", icon: "none" });
+      wx.showToast({ title: "汇总加载失败", icon: "none" });
     } finally {
-      this.setData({ loading: false });
+      this.setLoading("summary", false);
+      this.setLoading("devices", false);
+    }
+  },
+
+  /**
+   * 加载近 7 天趋势
+   */
+  async loadTrend() {
+    this.setLoading("trend", true);
+    try {
+      const res = await getLearningStatsDaily(undefined, 7);
+      this.setData({ trend: res.data });
+    } catch (error) {
+      wx.showToast({ title: "趋势加载失败", icon: "none" });
+    } finally {
+      this.setLoading("trend", false);
+    }
+  },
+
+  /**
+   * 加载主题分布
+   */
+  async loadTopics() {
+    this.setLoading("topics", true);
+    try {
+      const res = await getLearningStatsTopics();
+      this.setData({ topics: res.data });
+    } catch (error) {
+      wx.showToast({ title: "主题加载失败", icon: "none" });
+    } finally {
+      this.setLoading("topics", false);
+    }
+  },
+
+  /**
+   * 加载单元进度
+   */
+  async loadUnitProgress(deviceId: string) {
+    this.setLoading("unitProgress", true);
+    try {
+      const res = await getLearningStatsUnitProgress(deviceId);
+      this.setData({
+        unitProgress: groupUnitProgressByTextbook(res.data),
+      });
+    } catch (error) {
+      wx.showToast({ title: "单元进度加载失败", icon: "none" });
+    } finally {
+      this.setLoading("unitProgress", false);
     }
   },
 
@@ -73,6 +154,7 @@ Page({
       this.setData({ page: 1, timeline: [] });
     }
 
+    this.setLoading("timeline", true);
     try {
       const res = await getLearningStatsTimeline(
         undefined,
@@ -92,6 +174,8 @@ Page({
       });
     } catch (error) {
       wx.showToast({ title: "时间线加载失败", icon: "none" });
+    } finally {
+      this.setLoading("timeline", false);
     }
   },
 
@@ -99,7 +183,7 @@ Page({
    * 加载更多时间线
    */
   async onLoadMore() {
-    if (!this.data.hasMore || this.data.loading) return;
+    if (!this.data.hasMore || this.data.loading.timeline) return;
     this.setData({ page: this.data.page + 1 });
     await this.loadTimeline();
   },
