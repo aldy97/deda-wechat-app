@@ -36,12 +36,12 @@ deda-wechat-app/
 
 ## 页面说明
 
-| 页面 | 路径 | 功能 |
-|------|------|------|
-| 登录页 | `pages/login/login` | 手机号 + 验证码登录骨架 |
-| 设备列表页 | `pages/device-list/device-list` | 设备卡片列表、空状态、下拉刷新 |
-| 设备控制面板页 | `pages/device-control/device-control` | 电源开关、音量、模式选择 |
-| 学习数据 & 对话记录页 | `pages/learning-data/learning-data` | 数据看板、对话记录分页、日期选择 |
+| 页面           | 路径                                  | 功能                                                          |
+| -------------- | ------------------------------------- | ------------------------------------------------------------- |
+| 登录页         | `pages/login/login`                   | 手机号 + 验证码登录骨架                                       |
+| 设备列表页     | `pages/device-list/device-list`       | 设备卡片列表、空状态、下拉刷新                                |
+| 设备控制面板页 | `pages/device-control/device-control` | 电源开关、音量、模式选择                                      |
+| 学习全览页     | `pages/learning-data/learning-data`   | 家庭多设备学习总览、AI 洞察、健康度、趋势、主题分布、学习动态 |
 
 ## Mac 环境导入与运行步骤
 

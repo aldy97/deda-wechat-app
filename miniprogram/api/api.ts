@@ -297,6 +297,10 @@ export interface LearningStatsDeviceSummary {
   topicCount: number;
   todayDurationMinutes: number;
   weekDurationMinutes: number;
+  /** 由 getDeviceStatus 校正后补充的实时状态字段 */
+  battery?: number;
+  isCharging?: boolean;
+  lastActiveAt?: string;
 }
 
 export interface LearningStatsDailyPoint {
@@ -339,6 +343,49 @@ export interface LearningStatsUnitProgress {
   conversationCount: number;
   lastSpokeAt: string;
   masteryLevel?: number | null;
+}
+
+// ==================== 智能分析扩展类型 ====================
+
+/** 洞察类型 */
+export type LearningStatsInsightType =
+  | "strength" // 优势/进步
+  | "weakness" // 薄弱点
+  | "suggestion" // 学习建议
+  | "milestone" // 里程碑
+  | "alert"; // 异常提醒
+
+/** 单条学习洞察 */
+export interface LearningStatsInsight {
+  id: string;
+  type: LearningStatsInsightType;
+  title: string;
+  content: string;
+  /** 关联设备 ID，可选 */
+  deviceId?: string | null;
+  /** 关联设备名称，可选 */
+  deviceName?: string | null;
+  /** 关联指标数值，可选 */
+  metricValue?: number | null;
+  /** 指标单位，可选 */
+  metricUnit?: string | null;
+}
+
+/** 学习健康度评分 */
+export interface LearningStatsHealth {
+  /** 综合健康分 0-100 */
+  score: number;
+  /** 评分等级 */
+  level: "excellent" | "good" | "average" | "attention";
+  /** 各维度得分 */
+  dimensions: {
+    activity: number; // 活跃度
+    consistency: number; // 坚持度
+    balance: number; // 内容均衡度
+    engagement: number; // 互动深度
+  };
+  /** 主要建议 */
+  suggestion: string;
 }
 
 // ==================== 模拟延迟工具 ====================
@@ -1103,5 +1150,43 @@ export async function getLearningStatsActivities(
   return request<PaginatedResponse<LearningStatsActivityDay>>({
     method: "GET",
     url: `/learning-stats/activities?${queryParts.join("&")}`,
+  });
+}
+
+/**
+ * 获取 AI 学习洞察
+ * 调用 deda-server GET /learning-stats/insights
+ * 不传 deviceId 时返回家庭维度洞察。
+ */
+export async function getLearningStatsInsights(
+  deviceId?: string,
+  range?: "today" | "week" | "month",
+): Promise<ApiResponse<LearningStatsInsight[]>> {
+  const queryParts: string[] = [];
+  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
+  return request<LearningStatsInsight[]>({
+    method: "GET",
+    url: `/learning-stats/insights${query}`,
+  });
+}
+
+/**
+ * 获取学习健康度评分
+ * 调用 deda-server GET /learning-stats/health
+ * 不传 deviceId 时返回家庭维度健康度。
+ */
+export async function getLearningStatsHealth(
+  deviceId?: string,
+  range?: "today" | "week" | "month",
+): Promise<ApiResponse<LearningStatsHealth>> {
+  const queryParts: string[] = [];
+  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
+  return request<LearningStatsHealth>({
+    method: "GET",
+    url: `/learning-stats/health${query}`,
   });
 }

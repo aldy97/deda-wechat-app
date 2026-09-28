@@ -34,12 +34,12 @@ var __awaiter =
   };
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("../../api/api");
-const date_1 = require("../../utils/date");
+const chat_history_utils_1 = require("./chat-history.utils");
 /**
  * 对话记录页
  * 进入页面展示最新消息并定位到底部，向上滚动加载更早消息。
- * 后端按 spokeAt 倒序返回（最新在前），前端渲染时按数组顺序展示，
- * 通过 CSS 控制消息从底部向上排列。
+ * 后端分页锚定最新（page=1 为最新一页），页内按时间正序返回
+ * （最旧在前、最新在后），前端按返回顺序直接渲染，不要自行反转。
  */
 Page({
   data: {
@@ -57,29 +57,34 @@ Page({
     contextHint: "",
   },
   onLoad(options) {
-    const deviceId =
-      (options === null || options === void 0 ? void 0 : options.deviceId) ||
-      (options === null || options === void 0 ? void 0 : options.id) ||
-      "";
-    const textbookId =
-      (options === null || options === void 0 ? void 0 : options.textbookId) ||
-      "";
-    const unitId =
-      (options === null || options === void 0 ? void 0 : options.unitId) || "";
-    const conversationModeKey =
-      (options === null || options === void 0
-        ? void 0
-        : options.conversationModeKey) || "";
-    this.setData({ deviceId, textbookId, unitId, conversationModeKey });
-    this.loadContext(deviceId, textbookId, unitId, conversationModeKey);
-    this.loadInitialRecords();
+    return __awaiter(this, void 0, void 0, function* () {
+      const deviceId =
+        (options === null || options === void 0 ? void 0 : options.deviceId) ||
+        (options === null || options === void 0 ? void 0 : options.id) ||
+        "";
+      const textbookId =
+        (options === null || options === void 0
+          ? void 0
+          : options.textbookId) || "";
+      const unitId =
+        (options === null || options === void 0 ? void 0 : options.unitId) ||
+        "";
+      const conversationModeKey =
+        (options === null || options === void 0
+          ? void 0
+          : options.conversationModeKey) || "";
+      this.setData({ deviceId, textbookId, unitId, conversationModeKey });
+      // 先完成语境解析（含配置兜底过滤）再首次查询,避免竞态发出未过滤请求
+      yield this.loadContext(deviceId, textbookId, unitId, conversationModeKey);
+      this.loadInitialRecords();
+    });
   },
   /**
    * 加载页面上下文：优先使用 URL 传入的参数，否则回退到设备当前配置
    */
   loadContext(deviceId, textbookId, unitId, conversationModeKey) {
     return __awaiter(this, void 0, void 0, function* () {
-      var _a;
+      var _a, _b, _c, _d;
       if (!deviceId) return;
       if (textbookId && unitId) {
         try {
@@ -133,8 +138,30 @@ Page({
         return;
       }
       if (!textbookId && !unitId && !conversationModeKey) {
-        wx.setNavigationBarTitle({ title: "全部对话记录" });
-        this.setData({ contextHint: "查看该设备全部历史对话" });
+        // URL 无参：按设备当前配置推导过滤,保持页面语境与设备学习状态一致;
+        // 配置拉取失败才退回「全部对话记录」
+        try {
+          const res = yield (0, api_1.getDeviceCurrentConfig)(deviceId);
+          const config = res.data;
+          const filters = (0, chat_history_utils_1.resolveHistoryFilters)(
+            {},
+            config,
+          );
+          this.setData({
+            textbookId:
+              (_b = filters.textbookId) !== null && _b !== void 0 ? _b : "",
+            unitId: (_c = filters.unitId) !== null && _c !== void 0 ? _c : "",
+            conversationModeKey:
+              (_d = filters.conversationModeKey) !== null && _d !== void 0
+                ? _d
+                : "",
+          });
+          this.applyContext(config);
+        } catch (error) {
+          console.warn("[chat-history] 加载设备配置失败", error);
+          wx.setNavigationBarTitle({ title: "全部对话记录" });
+          this.setData({ contextHint: "查看该设备全部历史对话" });
+        }
         return;
       }
       try {
@@ -184,10 +211,15 @@ Page({
         });
         const items = res.data.items || [];
         const total = res.data.total || 0;
-        const records = this.buildDisplayRecords(items);
+        const records = (0, chat_history_utils_1.buildDisplayRecords)(items);
         this.setData({
           records,
-          hasMore: records.length < total,
+          // total 按对话行计,records 是拆条后的消息数,须用行口径判断
+          hasMore: (0, chat_history_utils_1.computeHasMore)(
+            1,
+            this.data.pageSize,
+            total,
+          ),
           page: 2,
           initialLoaded: true,
           scrollIntoView: "msg-last",
@@ -212,21 +244,31 @@ Page({
           : _a.id) || "";
       this.setData({ loading: true, scrollIntoView: "" });
       try {
-        const res = yield (0, api_1.getChatRecords)({
-          page: this.data.page,
-          pageSize: this.data.pageSize,
-          deviceId: this.data.deviceId,
-          textbookId: this.data.textbookId,
-          unitId: this.data.unitId,
-          conversationModeKey: this.data.conversationModeKey,
-        });
+        // 最短展示时长：保证顶部「加载更早消息...」spinner 可被用户看见
+        const res = yield (0, chat_history_utils_1.withMinDelay)(
+          (0, api_1.getChatRecords)({
+            page: this.data.page,
+            pageSize: this.data.pageSize,
+            deviceId: this.data.deviceId,
+            textbookId: this.data.textbookId,
+            unitId: this.data.unitId,
+            conversationModeKey: this.data.conversationModeKey,
+          }),
+        );
         const items = res.data.items || [];
         const total = res.data.total || 0;
-        const olderRecords = this.buildDisplayRecords(items);
+        const olderRecords = (0, chat_history_utils_1.buildDisplayRecords)(
+          items,
+        );
         const merged = olderRecords.concat(this.data.records);
         this.setData({
           records: merged,
-          hasMore: merged.length < total,
+          // 同上:行口径,this.data.page 是刚取完的页号
+          hasMore: (0, chat_history_utils_1.computeHasMore)(
+            this.data.page,
+            this.data.pageSize,
+            total,
+          ),
           page: this.data.page + 1,
           scrollIntoView: anchorMessageId ? `msg-${anchorMessageId}` : "",
         });
@@ -236,28 +278,5 @@ Page({
         this.setData({ loading: false });
       }
     });
-  },
-  /**
-   * 为记录列表计算显示时间
-   * 后端返回倒序（最新在前），这里从旧到新遍历以判断相邻消息间隔。
-   */
-  buildDisplayRecords(items) {
-    const result = [];
-    let previousIso;
-    for (let i = items.length - 1; i >= 0; i--) {
-      const item = items[i];
-      const showTime = (0, date_1.shouldShowTime)(item.createdAt, previousIso);
-      result.unshift(
-        Object.assign(Object.assign({}, item), {
-          displayTime: showTime
-            ? (0, date_1.formatChatTime)(item.createdAt)
-            : undefined,
-        }),
-      );
-      if (showTime) {
-        previousIso = item.createdAt;
-      }
-    }
-    return result;
   },
 });

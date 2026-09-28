@@ -29,14 +29,14 @@
           <!-- 电量显示 -->
           <view wx:elif="{{ item.battery !== undefined }}" class="battery-wrap {{ item.isCharging ? 'battery-charging' : '' }}">
             <view class="battery-icon">
-              <view class="battery-level" style="width: {{ item.battery }}%; background-color: {{ item.isCharging ? '#4a90d9' : (item.battery >= 50 ? '#07c160' : (item.battery >= 20 ? '#ff976a' : '#ee0a24')) }};"></view>
+              <view class="battery-level" style="width: {{ item.battery }}; background-color: {{ item.isCharging ? '#4a90d9' : (item.battery >= 50 ? '#07c160' : (item.battery >= 20 ? '#ff976a' : '#ee0a24')) }};"></view>
             </view>
             <text class="battery-text">{{ item.isCharging ? '⚡' : '' }}{{ item.battery }}%</text>
           </view>
         </view>
 
         <!-- 孩子姓名 -->
-        <view class="child-name-top" bind:tap="{{ item.childProfile ? '' : 'onSettingsTap' }}" data-id="{{ item.id }}">
+        <view class="child-name-top" bind:tap="onChildNameTap" data-id="{{ item.id }}">
           <block wx:if="{{ item.childProfile && (item.childProfile.name || item.childProfile.englishName) }}">
             <text class="child-name-cn">{{ item.childProfile.name || item.childProfile.englishName }}</text>
             <text class="child-name-en" wx:if="{{ item.childProfile.name && item.childProfile.englishName }}">{{ item.childProfile.englishName }}</text>

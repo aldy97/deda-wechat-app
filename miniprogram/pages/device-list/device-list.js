@@ -278,6 +278,18 @@ Page({
     });
   },
   /**
+   * 孩子姓名区域：未设置孩子档案时跳转设备设置页，已设置则不响应
+   */
+  onChildNameTap(event) {
+    const { id } = event.currentTarget.dataset;
+    const device = this.data.devices.find((d) => d.id === id);
+    if (device && !device.childProfile) {
+      wx.navigateTo({
+        url: `/pages/device-setting/device-setting?id=${id}`,
+      });
+    }
+  },
+  /**
    * 设置入口：跳转设备设置页
    */
   onSettingsTap(event) {

@@ -5,6 +5,11 @@
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
     "van-button": "@vant/weapp/button/index",
-    "van-tag": "@vant/weapp/tag/index"
+    "van-tag": "@vant/weapp/tag/index",
+    "van-tabs": "@vant/weapp/tabs/index",
+    "van-tab": "@vant/weapp/tab/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-skeleton": "@vant/weapp/skeleton/index",
+    "van-progress": "@vant/weapp/progress/index"
   }
 }

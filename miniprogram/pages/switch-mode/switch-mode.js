@@ -34,6 +34,7 @@ var __awaiter =
   };
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("../../api/api");
+const switch_mode_utils_1 = require("./switch-mode.utils");
 /** 缓存键 */
 const CACHE_KEY = "switch_mode_categories_cache";
 /** 缓存有效期：10 分钟 */
@@ -143,42 +144,22 @@ Page({
     }
   },
   /**
-   * 选择模式
-   * - 自由对话模式：先保存 mode=free_chat，再跳转选择自由对话模式页
-   * - 教材学习：先保存 mode=textbook_learning，再跳转教材学习页
+   * 选择模式：点分类只做导航，不在此页保存配置。
+   * 完整载荷由子选择页提交（后端对 mode-only 载荷返回 400）。
+   * 用户未完成子选择就返回时,设备配置保持不变,这是预期行为。
    */
   onSelectMode(event) {
-    return __awaiter(this, void 0, void 0, function* () {
-      const { key } = event.currentTarget.dataset;
-      const { deviceId } = this.data;
-      if (!deviceId) {
-        wx.showToast({ title: "设备 ID 缺失", icon: "none" });
-        return;
-      }
-      this.setData({ saving: true });
-      try {
-        yield (0, api_1.ensureAuthToken)();
-        const res = yield (0, api_1.switchDeviceMode)(deviceId, { mode: key });
-        const config = res.data;
-        this.saveDeviceConfigCache(config);
-        this.setData({ currentMode: config.mode, saving: false });
-        // 先隐藏保存中遮罩，再跳转，避免与后续页面转场重叠
-        if (key === "free_chat") {
-          wx.navigateTo({
-            url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${deviceId}`,
-          });
-        } else if (key === "textbook_learning") {
-          wx.navigateTo({
-            url: `/pages/textbook-learning/textbook-learning?id=${deviceId}`,
-          });
-        }
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "保存失败，请重试";
-        console.error("[switch-mode] switch mode failed:", error);
-        this.setData({ saving: false });
-        wx.showToast({ title: message, icon: "none", duration: 2500 });
-      }
-    });
+    const { key } = event.currentTarget.dataset;
+    const { deviceId } = this.data;
+    if (!deviceId) {
+      wx.showToast({ title: "设备 ID 缺失", icon: "none" });
+      return;
+    }
+    const url = (0, switch_mode_utils_1.resolveModeRoute)(key, deviceId);
+    if (!url) {
+      wx.showToast({ title: "暂不支持该模式", icon: "none" });
+      return;
+    }
+    wx.navigateTo({ url });
   },
 });

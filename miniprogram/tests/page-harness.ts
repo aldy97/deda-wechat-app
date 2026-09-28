@@ -49,6 +49,12 @@ export function installPageHarness(): PageHarness {
       }
       const instance: any = Object.create(null);
       Object.assign(instance, captured);
+      // 绑定所有方法到实例，确保异步/嵌套调用中 this 始终指向 instance
+      for (const key of Object.keys(instance)) {
+        if (typeof instance[key] === "function") {
+          instance[key] = instance[key].bind(instance);
+        }
+      }
       instance.data = JSON.parse(JSON.stringify(captured.data ?? {}));
       instance.setData = jest.fn((patch: Record<string, any>, cb?: any) => {
         for (const [key, value] of Object.entries(patch)) {

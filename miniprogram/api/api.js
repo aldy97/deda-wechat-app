@@ -71,7 +71,21 @@ exports.getLearningStatsTimeline = getLearningStatsTimeline;
 exports.getLearningStatsUnitProgress = getLearningStatsUnitProgress;
 exports.deleteDevice = deleteDevice;
 exports.getDeviceAboutInfo = getDeviceAboutInfo;
+exports.getLearningStatsActivities = getLearningStatsActivities;
+exports.getLearningStatsInsights = getLearningStatsInsights;
+exports.getLearningStatsHealth = getLearningStatsHealth;
 const request_1 = require("../utils/request");
+function appendContextQuery(queryParts, ctx) {
+  if (!ctx) return;
+  if (ctx.textbookId)
+    queryParts.push(`textbookId=${encodeURIComponent(ctx.textbookId)}`);
+  if (ctx.unitId) queryParts.push(`unitId=${encodeURIComponent(ctx.unitId)}`);
+  if (ctx.mode) queryParts.push(`mode=${encodeURIComponent(ctx.mode)}`);
+  if (ctx.conversationModeKey)
+    queryParts.push(
+      `conversationModeKey=${encodeURIComponent(ctx.conversationModeKey)}`,
+    );
+}
 // ==================== 模拟延迟工具 ====================
 /**
  * 模拟网络延迟
@@ -610,9 +624,13 @@ function generateTrend(deviceId, days) {
  * 获取学习全览仪表盘
  * 调用 deda-server GET /learning-stats/dashboard
  */
-function getLearningStatsDashboard(deviceId) {
+function getLearningStatsDashboard(deviceId, range, ctx) {
   return __awaiter(this, void 0, void 0, function* () {
-    const query = deviceId ? `?deviceId=${encodeURIComponent(deviceId)}` : "";
+    const queryParts = [];
+    if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+    if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+    appendContextQuery(queryParts, ctx);
+    const query = queryParts.length ? `?${queryParts.join("&")}` : "";
     return (0, request_1.request)({
       method: "GET",
       url: `/learning-stats/dashboard${query}`,
@@ -624,14 +642,20 @@ function getLearningStatsDashboard(deviceId) {
  * 调用 deda-server GET /learning-stats/daily?deviceId=&days=
  */
 function getLearningStatsDaily(deviceId_1) {
-  return __awaiter(this, arguments, void 0, function* (deviceId, days = 7) {
-    const queryParts = [`days=${encodeURIComponent(String(days))}`];
-    if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-    return (0, request_1.request)({
-      method: "GET",
-      url: `/learning-stats/daily?${queryParts.join("&")}`,
-    });
-  });
+  return __awaiter(
+    this,
+    arguments,
+    void 0,
+    function* (deviceId, days = 7, ctx) {
+      const queryParts = [`days=${encodeURIComponent(String(days))}`];
+      if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+      appendContextQuery(queryParts, ctx);
+      return (0, request_1.request)({
+        method: "GET",
+        url: `/learning-stats/daily?${queryParts.join("&")}`,
+      });
+    },
+  );
 }
 /**
  * 获取主题分布
@@ -709,6 +733,64 @@ function getDeviceAboutInfo(deviceId) {
       subnetMask: "255.255.255.0",
       gateway: "192.168.3.1",
       dns: "192.168.3.1",
+    });
+  });
+}
+/**
+ * 获取学习动态（事件型卡片,按日倒序分页）
+ * 调用 deda-server GET /learning-stats/activities
+ */
+function getLearningStatsActivities(deviceId_1) {
+  return __awaiter(
+    this,
+    arguments,
+    void 0,
+    function* (deviceId, page = 1, pageSize = 10, range, ctx) {
+      const queryParts = [
+        `page=${encodeURIComponent(String(page))}`,
+        `pageSize=${encodeURIComponent(String(pageSize))}`,
+      ];
+      if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+      if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+      appendContextQuery(queryParts, ctx);
+      return (0, request_1.request)({
+        method: "GET",
+        url: `/learning-stats/activities?${queryParts.join("&")}`,
+      });
+    },
+  );
+}
+/**
+ * 获取 AI 学习洞察
+ * 调用 deda-server GET /learning-stats/insights
+ * 不传 deviceId 时返回家庭维度洞察。
+ */
+function getLearningStatsInsights(deviceId, range) {
+  return __awaiter(this, void 0, void 0, function* () {
+    const queryParts = [];
+    if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+    if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+    const query = queryParts.length ? `?${queryParts.join("&")}` : "";
+    return (0, request_1.request)({
+      method: "GET",
+      url: `/learning-stats/insights${query}`,
+    });
+  });
+}
+/**
+ * 获取学习健康度评分
+ * 调用 deda-server GET /learning-stats/health
+ * 不传 deviceId 时返回家庭维度健康度。
+ */
+function getLearningStatsHealth(deviceId, range) {
+  return __awaiter(this, void 0, void 0, function* () {
+    const queryParts = [];
+    if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+    if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+    const query = queryParts.length ? `?${queryParts.join("&")}` : "";
+    return (0, request_1.request)({
+      method: "GET",
+      url: `/learning-stats/health${query}`,
     });
   });
 }
