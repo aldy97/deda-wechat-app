@@ -152,6 +152,31 @@ describe("learning-analytics", () => {
       expect(result.score).toBeGreaterThanOrEqual(85);
       expect(result.level).toBe("excellent");
     });
+
+    it("returns default result when dashboard is empty", () => {
+      const result = calculateHealthScore({
+        dashboard: {} as LearningStatsDashboard,
+        trend: [],
+        topics: [],
+        range: "week",
+      });
+
+      expect(result.score).toBe(0);
+      expect(result.level).toBe("attention");
+      expect(result.suggestion).toContain("数据加载中");
+    });
+
+    it("returns default result when dashboard.devices is undefined", () => {
+      const result = calculateHealthScore({
+        dashboard: { totalDurationMinutes: 0 } as LearningStatsDashboard,
+        trend: [],
+        topics: [],
+        range: "week",
+      });
+
+      expect(result.score).toBe(0);
+      expect(result.level).toBe("attention");
+    });
   });
 
   describe("generateFallbackInsights", () => {
@@ -227,6 +252,17 @@ describe("learning-analytics", () => {
       });
 
       expect(result.some((i) => i.deviceName === "小明")).toBe(true);
+    });
+
+    it("handles undefined topics gracefully", () => {
+      const result = generateFallbackInsights({
+        dashboard: dashboard(),
+        trend: dailyPoints(7, 30),
+        topics: undefined as any,
+        range: "week",
+      });
+
+      expect(result.length).toBeGreaterThanOrEqual(0);
     });
   });
 

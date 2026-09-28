@@ -23,14 +23,15 @@
     bindscrolltoupper="onScrollToUpper"
     upper-threshold="80"
   >
-    <!-- 顶部加载提示 -->
-    <view class="top-loading" wx:if="{{ loading && records.length > 0 }}">
-      <van-loading type="spinner" size="32rpx">加载更早消息...</van-loading>
-    </view>
-
-    <view class="no-more-top" wx:if="{{ !hasMore && records.length > 0 }}">
-      <text class="text-secondary">没有更早的消息了</text>
-    </view>
+    <load-more
+      wx:if="{{ records.length > 0 }}"
+      loading="{{ loading }}"
+      has-more="{{ hasMore }}"
+      loading-text="加载更早消息..."
+      load-more-text="加载更早消息"
+      no-more-text="没有更早的消息了"
+      bind:loadmore="onLoadMore"
+    />
 
     <view class="chat-list">
       <view

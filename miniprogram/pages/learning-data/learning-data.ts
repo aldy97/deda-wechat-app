@@ -1,41 +1,30 @@
 import {
   getLearningStatsDashboard,
-  getLearningStatsDaily,
   getLearningStatsTopics,
   getLearningStatsTimeline,
   getLearningStatsInsights,
-  getLearningStatsHealth,
   getDeviceStatus,
   LearningStatsDashboard,
-  LearningStatsDailyPoint,
   LearningStatsDeviceSummary,
-  LearningStatsHealth,
   LearningStatsInsight,
   LearningStatsTopic,
-  LearningStatsTimelineEvent,
 } from "../../api/api";
 import { formatChatTime } from "../../utils/date";
 import {
-  aggregateFamilyTrend,
-  calculateHealthScore,
   enrichDevicesWithStatus,
   generateFallbackInsights,
-  HealthScoreResult,
-  TrendBar,
 } from "./learning-analytics";
-
-interface TimelineItem extends LearningStatsTimelineEvent {
-  displayTime: string;
-}
+import {
+  groupTimelineByDayAndDevice,
+  TimelineDayGroup,
+} from "./learning-data.utils";
 
 interface LoadingState {
   summary: boolean;
-  trend: boolean;
   topics: boolean;
   devices: boolean;
   timeline: boolean;
   insights: boolean;
-  health: boolean;
 }
 
 /**
@@ -47,32 +36,28 @@ Page({
   data: {
     loading: {
       summary: true,
-      trend: true,
       topics: true,
       devices: true,
       timeline: true,
       insights: true,
-      health: true,
     } as LoadingState,
     activeRange: "week" as "today" | "week" | "month",
     dashboard: {} as LearningStatsDashboard,
-    trendBars: [] as TrendBar[],
     topics: [] as LearningStatsTopic[],
-    timeline: [] as TimelineItem[],
+    timeline: [] as TimelineDayGroup[],
     insights: [] as LearningStatsInsight[],
-    health: {} as LearningStatsHealth,
     page: 1,
     pageSize: 10,
     hasMore: true,
   },
 
-  onLoad() {
-    this.loadAll();
+  async onLoad() {
+    await this.loadAll();
   },
 
-  onShow() {
+  async onShow() {
     // Tab 切换回来时刷新，避免设备状态与设备列表页不一致
-    this.loadAll();
+    await this.loadAll();
   },
 
   async onPullDownRefresh() {
@@ -90,10 +75,10 @@ Page({
   /**
    * 切换时间范围：今日 / 本周 / 本月
    */
-  onRangeChange(event: { detail: { name: string } }) {
+  async onRangeChange(event: { detail: { name: string } }) {
     const range = event.detail.name as "today" | "week" | "month";
     this.setData({ activeRange: range });
-    this.loadAll();
+    await this.loadAll();
   },
 
   /**
@@ -101,13 +86,11 @@ Page({
    */
   async loadAll() {
     this.setData({ page: 1 });
+    await this.loadSummary();
     await Promise.all([
-      this.loadSummary(),
-      this.loadTrend(),
       this.loadTopics(),
       this.loadTimeline(true),
       this.loadInsights(),
-      this.loadHealth(),
     ]);
   },
 
@@ -122,8 +105,15 @@ Page({
         undefined,
         this.data.activeRange,
       );
-      this.setData({ dashboard: res.data });
-      await this.enrichDeviceStatuses(res.data.devices);
+      const dashboard = {
+        ...res.data,
+        maxContinuousDays: Math.max(
+          0,
+          ...(res.data.devices || []).map((d) => d.continuousDays || 0),
+        ),
+      };
+      this.setData({ dashboard });
+      await this.enrichDeviceStatuses(dashboard.devices);
     } catch (error) {
       wx.showToast({ title: "汇总加载失败", icon: "none" });
     } finally {
@@ -158,36 +148,6 @@ Page({
         devices: enriched,
       },
     });
-  },
-
-  /**
-   * 加载学习趋势
-   */
-  async loadTrend() {
-    this.setLoading("trend", true);
-    try {
-      const days = this.getTrendDays();
-      const res = await getLearningStatsDaily(undefined, days);
-      this.setData({
-        trendBars: aggregateFamilyTrend(res.data, this.data.activeRange),
-      });
-    } catch (error) {
-      wx.showToast({ title: "趋势加载失败", icon: "none" });
-    } finally {
-      this.setLoading("trend", false);
-    }
-  },
-
-  /**
-   * 根据当前范围返回趋势图所需天数
-   */
-  getTrendDays(): number {
-    const map: Record<"today" | "week" | "month", number> = {
-      today: 1,
-      week: 7,
-      month: 30,
-    };
-    return map[this.data.activeRange];
   },
 
   /**
@@ -228,56 +188,15 @@ Page({
   },
 
   /**
-   * 加载学习健康度
-   * 后端不可用时，使用前端兜底计算。
-   */
-  async loadHealth() {
-    this.setLoading("health", true);
-    try {
-      const res = await getLearningStatsHealth(
-        undefined,
-        this.data.activeRange,
-      );
-      this.setData({ health: res.data });
-    } catch (error) {
-      this.setData({ health: this.buildFallbackHealth() });
-    } finally {
-      this.setLoading("health", false);
-    }
-  },
-
-  /**
    * 基于当前已有数据生成兜底洞察
    */
   buildFallbackInsights(): LearningStatsInsight[] {
-    const { dashboard, trendBars, topics, activeRange } = this.data;
-    if (!dashboard.devices) return [];
+    const { dashboard, topics, activeRange } = this.data;
+    if (!dashboard || !dashboard.devices) return [];
 
     return generateFallbackInsights({
       dashboard,
-      trend: trendBars.map((bar) => ({
-        date: bar.label,
-        durationMinutes: bar.value,
-        sessionCount: 0,
-      })),
-      topics,
-      range: activeRange,
-    });
-  },
-
-  /**
-   * 基于当前已有数据生成兜底健康度
-   */
-  buildFallbackHealth(): HealthScoreResult {
-    const { dashboard, trendBars, topics, activeRange } = this.data;
-
-    return calculateHealthScore({
-      dashboard,
-      trend: trendBars.map((bar) => ({
-        date: bar.label,
-        durationMinutes: bar.value,
-        sessionCount: 0,
-      })),
+      trend: [],
       topics,
       range: activeRange,
     });
@@ -285,6 +204,7 @@ Page({
 
   /**
    * 加载动态时间线
+   * 后端返回扁平列表，前端按日期 + 设备分组渲染。
    */
   async loadTimeline(reset = false) {
     if (reset) {
@@ -304,9 +224,14 @@ Page({
         displayTime: formatChatTime(item.createdAt),
       }));
 
+      const newGroups = groupTimelineByDayAndDevice(formatted);
+      const merged = reset
+        ? newGroups
+        : this.mergeTimelineGroups(this.data.timeline, newGroups);
+
       this.setData({
-        timeline: reset ? formatted : this.data.timeline.concat(formatted),
-        hasMore: this.data.timeline.length + formatted.length < total,
+        timeline: merged,
+        hasMore: this.countTimelineEvents(merged) < total,
         page: this.data.page,
       });
     } catch (error) {
@@ -314,6 +239,71 @@ Page({
     } finally {
       this.setLoading("timeline", false);
     }
+  },
+
+  /**
+   * 合并新旧分组时间线：同日期同设备的事件追加，新日期插入队首。
+   */
+  mergeTimelineGroups(
+    existing: TimelineDayGroup[],
+    incoming: TimelineDayGroup[],
+  ): TimelineDayGroup[] {
+    const map = new Map<string, TimelineDayGroup>();
+    for (const day of existing) {
+      map.set(day.date, day);
+    }
+
+    for (const day of incoming) {
+      const current = map.get(day.date);
+      if (!current) {
+        map.set(day.date, day);
+        continue;
+      }
+
+      const deviceMap = new Map<string, (typeof current.devices)[0]>();
+      for (const d of current.devices) deviceMap.set(d.deviceId, d);
+      for (const d of day.devices) {
+        const existingDevice = deviceMap.get(d.deviceId);
+        if (existingDevice) {
+          existingDevice.events.push(...d.events);
+          existingDevice.totalDurationMinutes += d.totalDurationMinutes;
+        } else {
+          current.devices.push(d);
+        }
+      }
+    }
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  },
+
+  countTimelineEvents(groups: TimelineDayGroup[]): number {
+    return groups.reduce(
+      (sum, day) =>
+        sum +
+        day.devices.reduce((dSum, device) => dSum + device.events.length, 0),
+      0,
+    );
+  },
+
+  /**
+   * 切换某一天某一设备的展开/折叠状态
+   */
+  onToggleDeviceGroup(event: WechatMiniprogram.TouchEvent) {
+    const { date, deviceId } = event.currentTarget.dataset;
+    const groups = this.data.timeline.map((day) => {
+      if (day.date !== date) return day;
+      return {
+        ...day,
+        devices: day.devices.map((device) =>
+          device.deviceId === deviceId
+            ? { ...device, expanded: !device.expanded }
+            : device,
+        ),
+      };
+    });
+    this.setData({ timeline: groups });
   },
 
   /**

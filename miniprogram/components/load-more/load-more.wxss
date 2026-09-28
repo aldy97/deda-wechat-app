@@ -1,0 +1,56 @@
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 32rpx 0;
+  min-height: 88rpx;
+}
+
+.load-more__spinner {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.load-more__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background-color: var(--primary-color, #1989fa);
+  animation: load-more-bounce 1.4s infinite ease-in-out both;
+}
+
+.load-more__dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.load-more__dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes load-more-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.load-more__text {
+  font-size: 26rpx;
+  color: #333333;
+}
+
+.load-more__text--link {
+  color: var(--primary-color, #1989fa);
+}
+
+.load-more__text--muted {
+  color: #999999;
+}

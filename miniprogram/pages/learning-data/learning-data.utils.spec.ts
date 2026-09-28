@@ -7,11 +7,13 @@ import {
   aggregateDailyToWeekly,
   scaleBarHeights,
   buildContextOptions,
+  groupTimelineByDayAndDevice,
 } from "./learning-data.utils";
 import {
   LearningStatsUnitProgress,
   LearningStatsTopic,
   LearningStatsDailyPoint,
+  LearningStatsTimelineEvent,
 } from "../../api/api";
 
 describe("learning-data utils", () => {
@@ -292,6 +294,68 @@ describe("learning-data utils", () => {
 
     it("returns empty for empty input", () => {
       expect(scaleBarHeights([], 160, 60)).toEqual([]);
+    });
+  });
+
+  describe("groupTimelineByDayAndDevice", () => {
+    const event = (
+      id: string,
+      deviceId: string,
+      deviceName: string,
+      createdAt: string,
+    ): LearningStatsTimelineEvent => ({
+      id,
+      deviceId,
+      deviceName,
+      mode: "locked_unit",
+      topicName: "Food",
+      userText: "Hello",
+      aiText: "Hi",
+      createdAt,
+    });
+
+    it("returns empty array for empty input", () => {
+      expect(groupTimelineByDayAndDevice([])).toEqual([]);
+    });
+
+    it("groups events by date and device", () => {
+      const items = [
+        event("e1", "d1", "Device A", "2026-09-28T10:00:00Z"),
+        event("e2", "d1", "Device A", "2026-09-28T11:00:00Z"),
+        event("e3", "d2", "Device B", "2026-09-28T12:00:00Z"),
+        event("e4", "d1", "Device A", "2026-09-27T10:00:00Z"),
+      ];
+
+      const result = groupTimelineByDayAndDevice(items);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].date).toBe("2026-09-28");
+      expect(result[0].devices).toHaveLength(2);
+      expect(result[0].devices[0].events).toHaveLength(2);
+      expect(result[1].date).toBe("2026-09-27");
+      expect(result[1].devices).toHaveLength(1);
+    });
+
+    it("sorts days in descending order", () => {
+      const items = [
+        event("e1", "d1", "Device A", "2026-09-25T10:00:00Z"),
+        event("e2", "d1", "Device A", "2026-09-27T10:00:00Z"),
+        event("e3", "d1", "Device A", "2026-09-26T10:00:00Z"),
+      ];
+
+      const result = groupTimelineByDayAndDevice(items);
+
+      expect(result.map((d) => d.date)).toEqual([
+        "2026-09-27",
+        "2026-09-26",
+        "2026-09-25",
+      ]);
+    });
+
+    it("sets expanded true by default", () => {
+      const items = [event("e1", "d1", "Device A", "2026-09-28T10:00:00Z")];
+      const result = groupTimelineByDayAndDevice(items);
+      expect(result[0].devices[0].expanded).toBe(true);
     });
   });
 });

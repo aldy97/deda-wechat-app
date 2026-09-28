@@ -258,6 +258,8 @@ export interface LearningStatsDashboard {
   activeDeviceCount: number;
   boundDeviceCount: number;
   continuousDays: number;
+  /** 各设备连续天中的最大值，用于家庭总览展示 */
+  maxContinuousDays?: number;
   topicCount: number;
   /** 范围内对话轮数,仅带 range 参数时返回 */
   practiceCount?: number | null;
@@ -290,6 +292,7 @@ export interface LearningStatsDeviceSummary {
   deviceId: string;
   deviceName: string;
   childName?: string | null;
+  childEnglishName?: string | null;
   status: "online" | "offline" | "sleeping";
   totalDurationMinutes: number;
   totalSessions: number;

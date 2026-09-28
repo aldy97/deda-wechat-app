@@ -10,6 +10,7 @@
     "van-tab": "@vant/weapp/tab/index",
     "van-icon": "@vant/weapp/icon/index",
     "van-skeleton": "@vant/weapp/skeleton/index",
-    "van-progress": "@vant/weapp/progress/index"
+    "van-progress": "@vant/weapp/progress/index",
+    "load-more": "/components/load-more/load-more"
   }
 }

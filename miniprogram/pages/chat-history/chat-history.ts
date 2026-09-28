@@ -12,7 +12,6 @@ import {
   computeHasMore,
   DisplayRecord,
   resolveHistoryFilters,
-  withMinDelay,
 } from "./chat-history.utils";
 
 interface ChatHistoryData {
@@ -207,24 +206,32 @@ Page<ChatHistoryData, Record<string, any>>({
   /**
    * 向上滚动到顶部时加载更早消息（下一页）
    */
-  async onScrollToUpper() {
+  onScrollToUpper() {
+    this.loadOlderRecords();
+  },
+
+  /**
+   * 点击顶部「加载更多」时加载更早消息
+   */
+  onLoadMore() {
+    this.loadOlderRecords();
+  },
+
+  async loadOlderRecords() {
     if (!this.data.hasMore || this.data.loading) return;
 
     const anchorMessageId = this.data.records[0]?.id || "";
     this.setData({ loading: true, scrollIntoView: "" });
 
     try {
-      // 最短展示时长：保证顶部「加载更早消息...」spinner 可被用户看见
-      const res = await withMinDelay(
-        getChatRecords({
-          page: this.data.page,
-          pageSize: this.data.pageSize,
-          deviceId: this.data.deviceId,
-          textbookId: this.data.textbookId,
-          unitId: this.data.unitId,
-          conversationModeKey: this.data.conversationModeKey,
-        }),
-      );
+      const res = await getChatRecords({
+        page: this.data.page,
+        pageSize: this.data.pageSize,
+        deviceId: this.data.deviceId,
+        textbookId: this.data.textbookId,
+        unitId: this.data.unitId,
+        conversationModeKey: this.data.conversationModeKey,
+      });
       const items = res.data.items || [];
       const total = res.data.total || 0;
       const olderRecords = buildDisplayRecords(items);

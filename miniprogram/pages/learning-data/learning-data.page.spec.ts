@@ -1,16 +1,14 @@
 /**
  * learning-data 页面装配测试。
- * 验证家庭全览页：默认本周、时间切换、AI 洞察/健康度兜底、设备卡片下钻。
+ * 验证家庭全览页：默认本周、时间切换、AI 洞察兜底、设备卡片下钻、学习动态。
  */
 import { installPageHarness } from "../../tests/page-harness";
 
 const mockApi = {
   getLearningStatsDashboard: jest.fn(),
-  getLearningStatsDaily: jest.fn(),
   getLearningStatsTopics: jest.fn(),
   getLearningStatsTimeline: jest.fn(),
   getLearningStatsInsights: jest.fn(),
-  getLearningStatsHealth: jest.fn(),
   getDeviceStatus: jest.fn(),
 };
 jest.mock("../../api/api", () => mockApi);
@@ -51,17 +49,6 @@ describe("learning-data page wiring", () => {
         ],
       },
     });
-    mockApi.getLearningStatsDaily.mockResolvedValue({
-      data: [
-        { date: "9/21", durationMinutes: 30, sessionCount: 2 },
-        { date: "9/22", durationMinutes: 45, sessionCount: 3 },
-        { date: "9/23", durationMinutes: 60, sessionCount: 4 },
-        { date: "9/24", durationMinutes: 30, sessionCount: 2 },
-        { date: "9/25", durationMinutes: 50, sessionCount: 3 },
-        { date: "9/26", durationMinutes: 40, sessionCount: 2 },
-        { date: "9/27", durationMinutes: 45, sessionCount: 3 },
-      ],
-    });
     mockApi.getLearningStatsTopics.mockResolvedValue({
       data: [
         {
@@ -91,19 +78,6 @@ describe("learning-data page wiring", () => {
         },
       ],
     });
-    mockApi.getLearningStatsHealth.mockResolvedValue({
-      data: {
-        score: 88,
-        level: "good",
-        dimensions: {
-          activity: 90,
-          consistency: 85,
-          balance: 80,
-          engagement: 95,
-        },
-        suggestion: "学习状态良好。",
-      },
-    });
     mockApi.getDeviceStatus.mockResolvedValue({
       data: {
         deviceId: "d1",
@@ -123,12 +97,7 @@ describe("learning-data page wiring", () => {
       undefined,
       "week",
     );
-    expect(mockApi.getLearningStatsDaily).toHaveBeenCalledWith(undefined, 7);
     expect(mockApi.getLearningStatsInsights).toHaveBeenCalledWith(
-      undefined,
-      "week",
-    );
-    expect(mockApi.getLearningStatsHealth).toHaveBeenCalledWith(
       undefined,
       "week",
     );
@@ -145,7 +114,6 @@ describe("learning-data page wiring", () => {
       undefined,
       "month",
     );
-    expect(mockApi.getLearningStatsDaily).toHaveBeenCalledWith(undefined, 30);
   });
 
   it("falls back to local insights when backend insights fail", async () => {
@@ -157,16 +125,6 @@ describe("learning-data page wiring", () => {
     expect(page.data.loading.insights).toBe(false);
   });
 
-  it("falls back to local health when backend health fails", async () => {
-    mockApi.getLearningStatsHealth.mockRejectedValue(new Error("timeout"));
-
-    await page.onLoad();
-
-    expect(page.data.health.score).toBeGreaterThanOrEqual(0);
-    expect(page.data.health.score).toBeLessThanOrEqual(100);
-    expect(page.data.loading.health).toBe(false);
-  });
-
   it("navigates to device-analysis when device card tapped", async () => {
     await page.onLoad();
 
@@ -175,14 +133,6 @@ describe("learning-data page wiring", () => {
     expect(harness.wx.navigateTo).toHaveBeenCalledWith({
       url: "/pages/device-analysis/device-analysis?id=d1",
     });
-  });
-
-  it("renders trend bars after daily data loaded", async () => {
-    await page.onLoad();
-
-    expect(page.data.trendBars.length).toBe(7);
-    expect(page.data.trendBars[0].label).toBe("9/21");
-    expect(page.data.trendBars[0].value).toBe(30);
   });
 
   it("refreshes data on onShow when switching back from other tabs", async () => {
@@ -230,5 +180,55 @@ describe("learning-data page wiring", () => {
     const statusCalls = mockApi.getDeviceStatus.mock.calls.length;
     expect(dashboardCalls).toBeLessThanOrEqual(2);
     expect(statusCalls).toBeLessThanOrEqual(2);
+  });
+
+  it("loads next timeline page when onLoadMore is triggered", async () => {
+    mockApi.getLearningStatsTimeline
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "e1",
+              deviceId: "d1",
+              deviceName: "小象学习机",
+              topicName: "百科问答",
+              userText: "什么是恐龙？",
+              aiText: "恐龙是史前爬行动物。",
+              createdAt: "2026-09-27T10:00:00Z",
+            },
+          ],
+          total: 2,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "e2",
+              deviceId: "d1",
+              deviceName: "小象学习机",
+              topicName: "百科问答",
+              userText: "恐龙吃什么？",
+              aiText: "不同恐龙食性不同。",
+              createdAt: "2026-09-27T09:00:00Z",
+            },
+          ],
+          total: 2,
+        },
+      });
+
+    await page.onLoad();
+    expect(page.data.timeline.length).toBe(1);
+    expect(page.data.timeline[0].devices[0].events.length).toBe(1);
+    expect(page.data.hasMore).toBe(true);
+
+    await page.onLoadMore();
+
+    expect(mockApi.getLearningStatsTimeline).toHaveBeenLastCalledWith(
+      undefined,
+      2,
+      expect.any(Number),
+    );
+    expect(page.data.timeline[0].devices[0].events.length).toBe(2);
   });
 });

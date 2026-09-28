@@ -1,0 +1,16 @@
+<view class="load-more {{ internalLoading ? 'loading' : '' }} {{ !hasMore ? 'no-more' : '' }}" bindtap="onTap">
+  <block wx:if="{{ internalLoading }}">
+    <view class="load-more__spinner">
+      <view class="load-more__dot"></view>
+      <view class="load-more__dot"></view>
+      <view class="load-more__dot"></view>
+    </view>
+    <text class="load-more__text">{{ loadingText }}</text>
+  </block>
+  <block wx:elif="{{ hasMore }}">
+    <text class="load-more__text load-more__text--link">{{ loadMoreText }}</text>
+  </block>
+  <block wx:else>
+    <text class="load-more__text load-more__text--muted">{{ noMoreText }}</text>
+  </block>
+</view>

@@ -94,4 +94,52 @@ describe("chat-history page wiring", () => {
     expect(callArg.textbookId).toBeFalsy();
     expect(callArg.unitId).toBeFalsy();
   });
+
+  it("loads older records when onLoadMore is triggered", async () => {
+    mockApi.getDeviceCurrentConfig.mockResolvedValue({
+      data: {
+        deviceId: "dev-001",
+        mode: "free_chat",
+        conversationModeKey: "free_chat_qa",
+      },
+    });
+    mockApi.getChatRecords
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "m2",
+              role: "user",
+              content: "hi",
+              createdAt: "2026-09-27T10:00:00Z",
+            },
+          ],
+          total: 25,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "m1",
+              role: "device",
+              content: "hello",
+              createdAt: "2026-09-27T09:00:00Z",
+            },
+          ],
+          total: 25,
+        },
+      });
+
+    await page.onLoad({ id: "dev-001" });
+    expect(page.data.records.length).toBe(1);
+    expect(page.data.hasMore).toBe(true);
+
+    await page.onLoadMore();
+
+    expect(mockApi.getChatRecords).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2, deviceId: "dev-001" }),
+    );
+    expect(page.data.records.length).toBe(2);
+  });
 });

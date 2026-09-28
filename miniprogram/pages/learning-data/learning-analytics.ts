@@ -65,6 +65,21 @@ export function calculateHealthScore(
 ): HealthScoreResult {
   const { dashboard, trend, topics, range } = input;
 
+  // 防御：dashboard 未加载时返回默认状态
+  if (!dashboard || !dashboard.devices) {
+    return {
+      score: 0,
+      level: "attention",
+      dimensions: {
+        activity: 0,
+        consistency: 0,
+        balance: 0,
+        engagement: 0,
+      },
+      suggestion: "数据加载中，请稍后再试。",
+    };
+  }
+
   // 活跃度：基于总时长和练习次数，按范围归一化
   const referenceDuration =
     range === "today" ? 30 : range === "week" ? 180 : 600;
@@ -224,11 +239,12 @@ export function generateFallbackInsights(
   });
 
   // 4. 内容均衡度
-  const balance = calculateBalanceScore(topics);
-  if (topics.length > 1 && balance < 50) {
-    const dominant = topics.reduce(
+  const safeTopics = topics || [];
+  const balance = calculateBalanceScore(safeTopics);
+  if (safeTopics.length > 1 && balance < 50) {
+    const dominant = safeTopics.reduce(
       (max, t) => (t.count > max.count ? t : max),
-      topics[0],
+      safeTopics[0],
     );
     insights.push({
       id: "weakness-balance",
