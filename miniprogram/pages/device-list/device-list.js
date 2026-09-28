@@ -1,214 +1,307 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+var __awaiter =
+  (this && this.__awaiter) ||
+  function (thisArg, _arguments, P, generator) {
+    function adopt(value) {
+      return value instanceof P
+        ? value
+        : new P(function (resolve) {
+            resolve(value);
+          });
+    }
     return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function rejected(value) {
+        try {
+          step(generator["throw"](value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function step(result) {
+        result.done
+          ? resolve(result.value)
+          : adopt(result.value).then(fulfilled, rejected);
+      }
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
-};
+  };
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("../../api/api");
-/** 缓存键 */
-const CACHE_KEY = 'device_list_cache';
-/** 缓存有效期：5 分钟 */
-const CACHE_TTL = 5 * 60 * 1000;
+/** 本地联调样机 DEV001 */
+const DEV001_DEVICE = {
+  id: "dev-local-001",
+  name: "DEV001（联调样机）",
+  deviceId: "dev-local-001",
+  deviceCode: "DEV001",
+  networkType: "4G",
+};
+/** 模式展示名映射 */
+const MODE_DISPLAY_MAP = {
+  free_chat: "自由对话",
+  textbook_learning: "教材学习",
+  locked_unit: "教材单元",
+  free_textbook: "自由教材",
+};
 /**
  * 设备列表页
- * 展示用户绑定的设备卡片，点击卡片进入控制面板。
- *
- * 加载策略：
- * 1. 优先读取本地缓存并立即渲染，减少等待时间。
- * 2. 无缓存或缓存过期时显示 loading。
- * 3. 每次进入页面都会在后台静默刷新，保证数据最新。
+ * 从后端拉取当前登录用户的真实绑定设备；若为空则自动绑定本地联调样机 DEV001。
  */
 Page({
-    data: {
-        loading: true,
-        devices: [],
-    },
-    onLoad() {
-        this.loadDeviceList();
-    },
-    onShow() {
-        // 每次显示页面时后台刷新，方便从控制页/设置页返回后看到最新状态
-        this.loadDeviceList();
-    },
-    /**
-     * 加载设备列表：优先缓存，后台刷新
-     */
-    loadDeviceList() {
-        const cache = this.getCache();
-        const cacheValid = cache && Date.now() - cache.timestamp < CACHE_TTL;
-        if (cacheValid) {
-            // 有有效缓存：先渲染缓存，再静默刷新
-            this.setData({ devices: cache.data, loading: false });
-            this.fetchDeviceList({ silent: true });
+  data: {
+    loading: true,
+    devices: [],
+  },
+  onLoad() {
+    this.loadDeviceList();
+  },
+  onShow() {
+    this.loadDeviceList();
+  },
+  /**
+   * 加载设备列表：优先真实绑定，空则自动绑定 DEV001
+   */
+  loadDeviceList() {
+    return __awaiter(this, void 0, void 0, function* () {
+      this.setData({ loading: true });
+      try {
+        yield (0, api_1.ensureAuthToken)();
+        let devices = yield this.fetchBoundDevices();
+        if (devices.length === 0) {
+          console.log("[device-list] no bound devices, auto-bind DEV001");
+          yield (0, api_1.bindDevice)({ deviceId: DEV001_DEVICE.deviceId });
+          devices = yield this.fetchBoundDevices();
         }
-        else {
-            // 无缓存或已过期：显示 loading 重新加载
-            this.fetchDeviceList({ silent: false });
-        }
-    },
-    /**
-     * 读取本地缓存
-     */
-    getCache() {
-        try {
-            const cache = wx.getStorageSync(CACHE_KEY);
-            return cache || null;
-        }
-        catch (error) {
-            return null;
-        }
-    },
-    /**
-     * 写入本地缓存
-     */
-    saveCache(devices) {
-        try {
-            wx.setStorageSync(CACHE_KEY, { data: devices, timestamp: Date.now() });
-        }
-        catch (error) {
-            console.warn('[device-list] 缓存写入失败', error);
-        }
-    },
-    /**
-     * 清除本地缓存
-     */
-    clearCache() {
-        try {
-            wx.removeStorageSync(CACHE_KEY);
-        }
-        catch (error) {
-            console.warn('[device-list] 缓存清除失败', error);
-        }
-    },
-    /**
-     * 判断两个设备列表是否相等（仅比较关键字段，避免无意义刷新）
-     */
-    isSameDevices(a, b) {
-        if (a.length !== b.length)
-            return false;
-        return a.every((device, index) => {
-            const other = b[index];
-            return (device.id === other.id &&
-                device.name === other.name &&
-                device.status === other.status &&
-                device.battery === other.battery &&
-                device.isCharging === other.isCharging);
+        const displayItems = yield this.enrichDevices(devices);
+        this.setData({ devices: displayItems, loading: false });
+      } catch (error) {
+        console.error("[device-list] load device list failed:", error);
+        wx.showToast({
+          title: error instanceof Error ? error.message : "加载设备失败",
+          icon: "none",
         });
-    },
-    /**
-     * 拉取设备列表，并并发获取每个设备的状态/电量
-     * @param silent true 表示后台静默刷新，不显示 loading
-     */
-    fetchDeviceList() {
-        return __awaiter(this, arguments, void 0, function* (options = { silent: false }) {
-            if (!options.silent) {
-                this.setData({ loading: true });
+        this.setData({ devices: [], loading: false });
+      }
+    });
+  },
+  /**
+   * 从后端获取当前用户已绑定设备
+   */
+  fetchBoundDevices() {
+    return __awaiter(this, void 0, void 0, function* () {
+      const res = yield (0, api_1.getDeviceList)();
+      return res.data || [];
+    });
+  },
+  /**
+   * 为设备列表补充状态与当前配置
+   */
+  enrichDevices(devices) {
+    return __awaiter(this, void 0, void 0, function* () {
+      return Promise.all(
+        devices.map((device) =>
+          __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const item = Object.assign(Object.assign({}, device), {
+              statusLoading: true,
+            });
+            const cachedConfig = this.getDeviceConfigCache(item.id);
+            if (cachedConfig) {
+              this.applyConfigToDevice(item, cachedConfig);
             }
             try {
-                const listRes = yield (0, api_1.getDeviceList)();
-                const devices = listRes.data.map((device) => (Object.assign(Object.assign({}, device), { statusLoading: true })));
-                // 并发获取每个设备的状态/电量，等待全部完成后一次性合并
-                const statusList = yield Promise.all(devices.map((device) => this.fetchDeviceStatus(device.id)));
-                statusList.forEach((status) => {
-                    const device = devices.find((d) => d.id === status.deviceId);
-                    if (device) {
-                        device.status = status.status;
-                        device.battery = status.battery;
-                        device.isCharging = status.isCharging;
-                        device.lastActiveAt = status.lastActiveAt;
-                        device.statusLoading = false;
-                    }
-                });
-                // 仅当数据发生变化时才更新 UI，避免闪烁
-                if (!this.isSameDevices(this.data.devices, devices)) {
-                    this.setData({ devices });
-                }
-                this.saveCache(devices);
+              const [status, serverConfig] = yield Promise.all([
+                this.fetchDeviceStatus(item.id),
+                this.fetchDeviceCurrentConfig(item.id),
+              ]);
+              item.status = status.status;
+              item.battery = status.battery;
+              item.isCharging = status.isCharging;
+              item.lastActiveAt = status.lastActiveAt;
+              if (serverConfig) {
+                // 服务端配置不含 name/description，需与本地缓存合并保留
+                const mergedConfig = Object.assign(
+                  Object.assign({}, serverConfig),
+                  {
+                    conversationModeName:
+                      serverConfig.conversationModeName ||
+                      (cachedConfig === null || cachedConfig === void 0
+                        ? void 0
+                        : cachedConfig.conversationModeName),
+                    conversationModeDescription:
+                      serverConfig.conversationModeDescription ||
+                      (cachedConfig === null || cachedConfig === void 0
+                        ? void 0
+                        : cachedConfig.conversationModeDescription),
+                    unitDescription:
+                      serverConfig.unitDescription ||
+                      (cachedConfig === null || cachedConfig === void 0
+                        ? void 0
+                        : cachedConfig.unitDescription),
+                  },
+                );
+                this.applyConfigToDevice(item, mergedConfig);
+                this.saveDeviceConfigCache(mergedConfig);
+              }
+            } catch (error) {
+              item.status = item.status || "offline";
+              item.battery =
+                (_a = item.battery) !== null && _a !== void 0 ? _a : 0;
+              item.isCharging =
+                (_b = item.isCharging) !== null && _b !== void 0 ? _b : false;
+            } finally {
+              item.statusLoading = false;
             }
-            catch (error) {
-                // 静默刷新失败时，若已有缓存则不打扰用户；否则提示错误
-                if (!options.silent || this.data.devices.length === 0) {
-                    wx.showToast({ title: '加载失败', icon: 'none' });
-                }
-            }
-            finally {
-                if (!options.silent) {
-                    this.setData({ loading: false });
-                }
-            }
-        });
-    },
-    /**
-     * 获取单个设备状态/电量
-     * @param deviceId 设备 ID
-     * @returns 设备状态数据，失败时返回离线默认值
-     */
-    fetchDeviceStatus(deviceId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const res = yield (0, api_1.getDeviceStatus)(deviceId);
-                return res.data;
-            }
-            catch (error) {
-                // 单个设备状态获取失败，不影响其他设备
-                return {
-                    deviceId,
-                    status: 'offline',
-                    battery: 0,
-                    isCharging: false,
-                    lastActiveAt: '',
-                };
-            }
-        });
-    },
-    /**
-     * 查看对话：跳转对话记录页
-     */
-    onViewChat(event) {
-        const { id } = event.currentTarget.dataset;
-        wx.navigateTo({
-            url: `/pages/chat-history/chat-history?id=${id}`,
-        });
-    },
-    /**
-     * 智能分析：跳转单设备智能分析页
-     */
-    onViewAnalysis(event) {
-        const { id } = event.currentTarget.dataset;
-        wx.navigateTo({
-            url: `/pages/device-analysis/device-analysis?id=${id}`,
-        });
-    },
-    /**
-     * 设置入口：跳转设备设置页
-     */
-    onSettingsTap(event) {
-        const { id } = event.currentTarget.dataset;
-        wx.navigateTo({
-            url: `/pages/device-setting/device-setting?id=${id}`,
-        });
-    },
-    /**
-     * 切换模式：跳转切换模式页
-     */
-    onSwitchMode(event) {
-        const { id } = event.currentTarget.dataset;
-        wx.navigateTo({
-            url: `/pages/switch-mode/switch-mode?id=${id}`,
-        });
-    },
-    /**
-     * 下拉刷新
-     */
-    onPullDownRefresh() {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.fetchDeviceList();
-            wx.stopPullDownRefresh();
-        });
-    },
+            return item;
+          }),
+        ),
+      );
+    });
+  },
+  /**
+   * 获取单个设备状态/电量
+   */
+  fetchDeviceStatus(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+      try {
+        const res = yield (0, api_1.getDeviceStatus)(deviceId);
+        return res.data;
+      } catch (error) {
+        return {
+          deviceId,
+          status: "offline",
+          battery: 0,
+          isCharging: false,
+          lastActiveAt: "",
+        };
+      }
+    });
+  },
+  /**
+   * 获取设备当前生效配置
+   */
+  fetchDeviceCurrentConfig(deviceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+      try {
+        yield (0, api_1.ensureAuthToken)();
+        const res = yield (0, api_1.getDeviceCurrentConfig)(deviceId);
+        return res.data;
+      } catch (error) {
+        console.error("[device-list] fetch current config failed:", error);
+        return null;
+      }
+    });
+  },
+  /**
+   * 将配置应用到设备展示项
+   */
+  applyConfigToDevice(device, config) {
+    const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
+    if (config.mode === "free_chat") {
+      // 自由对话：标题显示子模式中文名，描述显示子模式描述
+      device.cardTitle =
+        config.conversationModeName || config.conversationModeKey || modeName;
+      device.cardSubtitle = "";
+      device.cardDesc =
+        config.conversationModeDescription ||
+        "自由对话模式，随时陪伴孩子聊天互动。";
+    } else if (config.textbookId) {
+      // 教材模式：标题显示教材名，副标题显示单元名，描述显示单元描述
+      device.cardTitle = config.textbookName || config.textbookId;
+      device.cardSubtitle = config.unitName || config.unitId || "";
+      device.cardDesc =
+        config.unitDescription ||
+        config.textbookName ||
+        config.textbookId ||
+        "教材学习模式，系统化提升英语能力。";
+    } else {
+      // 兜底
+      device.cardTitle = modeName;
+      device.cardSubtitle = "";
+      device.cardDesc = "DEDA AI 玩偶，随时在线陪伴孩子学习与成长。";
+    }
+  },
+  /**
+   * 读取本地配置缓存
+   */
+  getDeviceConfigCache(deviceId) {
+    try {
+      return wx.getStorageSync(`device_config_${deviceId}`) || null;
+    } catch (error) {
+      return null;
+    }
+  },
+  /**
+   * 写入本地配置缓存
+   */
+  saveDeviceConfigCache(config) {
+    try {
+      wx.setStorageSync(`device_config_${config.deviceId}`, config);
+    } catch (error) {
+      console.warn("[device-list] save config cache failed:", error);
+    }
+  },
+  /**
+   * 供其他页面调用，直接更新设备列表中的配置显示
+   */
+  updateDeviceConfig(config) {
+    const { devices } = this.data;
+    const index = devices.findIndex((d) => d.id === config.deviceId);
+    if (index === -1) return;
+    const device = Object.assign({}, devices[index]);
+    this.applyConfigToDevice(device, config);
+    this.setData({ [`devices[${index}]`]: device });
+    this.saveDeviceConfigCache(config);
+  },
+  /**
+   * 查看对话：跳转对话记录页
+   */
+  onViewChat(event) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/chat-history/chat-history?id=${id}`,
+    });
+  },
+  /**
+   * 智能分析：跳转单设备智能分析页
+   */
+  onViewAnalysis(event) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/device-analysis/device-analysis?id=${id}`,
+    });
+  },
+  /**
+   * 设置入口：跳转设备设置页
+   */
+  onSettingsTap(event) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/device-setting/device-setting?id=${id}`,
+    });
+  },
+  /**
+   * 切换模式：跳转切换模式页
+   */
+  onSwitchMode(event) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/switch-mode/switch-mode?id=${id}`,
+    });
+  },
+  /**
+   * 下拉刷新
+   */
+  onPullDownRefresh() {
+    return __awaiter(this, void 0, void 0, function* () {
+      yield this.loadDeviceList();
+      wx.stopPullDownRefresh();
+    });
+  },
 });
