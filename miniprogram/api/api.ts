@@ -39,6 +39,10 @@ export interface Device {
   deviceCode?: string;
   networkType?: string;
   firmwareVersion?: string;
+  childProfile?: {
+    name?: string | null;
+    englishName?: string | null;
+  } | null;
 }
 
 /** 设备实时状态（电量、在线状态等） */
@@ -255,7 +259,31 @@ export interface LearningStatsDashboard {
   boundDeviceCount: number;
   continuousDays: number;
   topicCount: number;
+  /** 范围内对话轮数,仅带 range 参数时返回 */
+  practiceCount?: number | null;
   devices: LearningStatsDeviceSummary[];
+}
+
+export interface LearningStatsContext {
+  textbookId?: string;
+  unitId?: string;
+  mode?: string;
+  conversationModeKey?: string;
+}
+
+function appendContextQuery(
+  queryParts: string[],
+  ctx?: LearningStatsContext,
+): void {
+  if (!ctx) return;
+  if (ctx.textbookId)
+    queryParts.push(`textbookId=${encodeURIComponent(ctx.textbookId)}`);
+  if (ctx.unitId) queryParts.push(`unitId=${encodeURIComponent(ctx.unitId)}`);
+  if (ctx.mode) queryParts.push(`mode=${encodeURIComponent(ctx.mode)}`);
+  if (ctx.conversationModeKey)
+    queryParts.push(
+      `conversationModeKey=${encodeURIComponent(ctx.conversationModeKey)}`,
+    );
 }
 
 export interface LearningStatsDeviceSummary {
@@ -600,17 +628,45 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
+interface GetChatRecordsParams {
+  page?: number;
+  pageSize?: number;
+  deviceId?: string;
+  textbookId?: string;
+  unitId?: string;
+  conversationModeKey?: string;
+}
+
 /**
  * 获取对话记录列表
  * 调用 deda-server GET /conversations
  */
 export async function getChatRecords(
-  page = 1,
-  pageSize = 100,
+  params: GetChatRecordsParams = {},
 ): Promise<ApiResponse<PaginatedResponse<ChatRecord>>> {
+  const {
+    page = 1,
+    pageSize = 100,
+    deviceId,
+    textbookId,
+    unitId,
+    conversationModeKey,
+  } = params;
+  const queryParts = [
+    `page=${encodeURIComponent(String(page))}`,
+    `pageSize=${encodeURIComponent(String(pageSize))}`,
+  ];
+  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (textbookId)
+    queryParts.push(`textbookId=${encodeURIComponent(textbookId)}`);
+  if (unitId) queryParts.push(`unitId=${encodeURIComponent(unitId)}`);
+  if (conversationModeKey)
+    queryParts.push(
+      `conversationModeKey=${encodeURIComponent(conversationModeKey)}`,
+    );
   return request<PaginatedResponse<ChatRecord>>({
     method: "GET",
-    url: `/conversations?page=${page}&pageSize=${pageSize}`,
+    url: `/conversations?${queryParts.join("&")}`,
   });
 }
 
@@ -882,8 +938,14 @@ function generateTrend(deviceId: string, days: number): TrendPoint[] {
  */
 export async function getLearningStatsDashboard(
   deviceId?: string,
+  range?: "today" | "week" | "month",
+  ctx?: LearningStatsContext,
 ): Promise<ApiResponse<LearningStatsDashboard>> {
-  const query = deviceId ? `?deviceId=${encodeURIComponent(deviceId)}` : "";
+  const queryParts: string[] = [];
+  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+  appendContextQuery(queryParts, ctx);
+  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
   return request<LearningStatsDashboard>({
     method: "GET",
     url: `/learning-stats/dashboard${query}`,
@@ -897,9 +959,11 @@ export async function getLearningStatsDashboard(
 export async function getLearningStatsDaily(
   deviceId?: string,
   days = 7,
+  ctx?: LearningStatsContext,
 ): Promise<ApiResponse<LearningStatsDailyPoint[]>> {
   const queryParts: string[] = [`days=${encodeURIComponent(String(days))}`];
   if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  appendContextQuery(queryParts, ctx);
   return request<LearningStatsDailyPoint[]>({
     method: "GET",
     url: `/learning-stats/daily?${queryParts.join("&")}`,
@@ -999,5 +1063,45 @@ export async function getDeviceAboutInfo(
     subnetMask: "255.255.255.0",
     gateway: "192.168.3.1",
     dns: "192.168.3.1",
+  });
+}
+
+export interface LearningStatsActivityEvent {
+  type: "study" | "streak" | "unlock";
+  mode?: string | null;
+  textbookId?: string | null;
+  textbookName?: string | null;
+  unitId?: string | null;
+  unitName?: string | null;
+  turnCount?: number;
+  streakDays?: number;
+}
+
+export interface LearningStatsActivityDay {
+  date: string;
+  events: LearningStatsActivityEvent[];
+}
+
+/**
+ * 获取学习动态（事件型卡片,按日倒序分页）
+ * 调用 deda-server GET /learning-stats/activities
+ */
+export async function getLearningStatsActivities(
+  deviceId?: string,
+  page = 1,
+  pageSize = 10,
+  range?: "today" | "week" | "month",
+  ctx?: LearningStatsContext,
+): Promise<ApiResponse<PaginatedResponse<LearningStatsActivityDay>>> {
+  const queryParts: string[] = [
+    `page=${encodeURIComponent(String(page))}`,
+    `pageSize=${encodeURIComponent(String(pageSize))}`,
+  ];
+  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
+  appendContextQuery(queryParts, ctx);
+  return request<PaginatedResponse<LearningStatsActivityDay>>({
+    method: "GET",
+    url: `/learning-stats/activities?${queryParts.join("&")}`,
   });
 }

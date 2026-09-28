@@ -22,6 +22,19 @@
     <van-tab name="month" title="本月"></van-tab>
   </van-tabs>
 
+  <!-- 语境选择器：查看任何教材/单元/自由对话都是只读,不修改设备配置 -->
+  <view class="context-bar" bind:tap="onOpenContextSheet">
+    <van-icon name="records-o" size="28rpx" color="#4a90d9" />
+    <text class="context-label">{{ contextLabel }}</text>
+    <van-icon name="arrow-down" size="24rpx" color="#999999" />
+  </view>
+  <van-action-sheet
+    show="{{ showContextSheet }}"
+    actions="{{ contextActions }}"
+    bind:select="onContextSelect"
+    bind:close="onCloseContextSheet"
+  />
+
   <!-- 核心指标卡 -->
   <view class="metrics-grid card">
     <block wx:if="{{ loading.metrics }}">
@@ -36,7 +49,7 @@
         <text class="metric-label text-secondary">学习时长(分)</text>
       </view>
       <view class="metric-item">
-        <text class="metric-value">{{ dashboard.totalSessions || 0 }}</text>
+        <text class="metric-value">{{ practiceDisplay }}</text>
         <text class="metric-label text-secondary">练习次数</text>
       </view>
       <view class="metric-item">
@@ -50,19 +63,39 @@
     </block>
   </view>
 
-  <!-- 7 天学习趋势 -->
+  <!-- 学习趋势（今日=摘要卡 / 本周=7天柱 / 本月=周聚合柱） -->
   <view class="section card">
-    <text class="section-title">学习趋势</text>
+    <view class="section-title-row">
+      <text class="section-title">学习趋势</text>
+      <text class="trend-caption text-secondary">{{ trendCaption }}</text>
+    </view>
     <view class="trend-skeleton" wx:if="{{ loading.trend }}">
       <van-skeleton row="1" row-width="100%" title="{{ false }}" />
     </view>
-    <view class="trend-chart" wx:elif="{{ trend.length > 0 }}">
-      <view class="trend-bar-wrap" wx:for="{{ trend }}" wx:key="date">
-        <view class="trend-bar" style="height: {{ item.durationMinutes > 0 ? Math.min(item.durationMinutes, 60) / 60 * 160 : 4 }}rpx;"></view>
-        <text class="trend-date">{{ item.date }}</text>
+    <block wx:else>
+      <view wx:if="{{ activeRange === 'today' }}" class="today-summary">
+        <view class="today-metric">
+          <text class="today-value">{{ todayMinutes }}</text>
+          <text class="today-label text-secondary">今日时长(分)</text>
+        </view>
+        <view class="today-metric">
+          <text class="today-value">{{ todaySessions }}</text>
+          <text class="today-label text-secondary">今日对话(轮)</text>
+        </view>
+        <view class="today-metric">
+          <text class="today-value">{{ dashboard.continuousDays || 0 }}</text>
+          <text class="today-label text-secondary">连续学习(天)</text>
+        </view>
       </view>
-    </view>
-    <text wx:else class="empty-tip text-secondary">暂无趋势数据</text>
+      <view class="trend-chart" wx:elif="{{ trendBars.length > 0 }}">
+        <view class="trend-bar-wrap" wx:for="{{ trendBars }}" wx:key="label">
+          <text class="trend-value" wx:if="{{ item.value > 0 }}">{{ item.value }}</text>
+          <view class="trend-bar" style="height: {{ item.height }}rpx;"></view>
+          <text class="trend-date">{{ item.label }}</text>
+        </view>
+      </view>
+      <text wx:else class="empty-tip text-secondary">暂无趋势数据</text>
+    </block>
   </view>
 
   <!-- 主题分布 -->
@@ -81,7 +114,7 @@
           <van-tag wx:if="{{ item.isActive }}" type="success" size="medium">当前</van-tag>
         </view>
         <view class="topic-meta">
-          <text class="topic-score text-secondary">{{ item.avgScore != null ? item.avgScore + '分' : '--' }}</text>
+          <text class="topic-score text-secondary" wx:if="{{ item.avgScore != null }}">{{ item.avgScore }}分</text>
           <text class="topic-count text-secondary">{{ item.count }} 次对话</text>
         </view>
       </view>
@@ -89,8 +122,8 @@
     <text wx:else class="empty-tip text-secondary">暂无主题数据</text>
   </view>
 
-  <!-- 单元进度 -->
-  <view class="section card">
+  <!-- 单元进度（自由对话语境下隐藏） -->
+  <view class="section card" wx:if="{{ !isFreeChatContext }}">
     <text class="section-title">单元进度</text>
     <view class="unit-progress-skeleton" wx:if="{{ loading.unitProgress }}">
       <van-skeleton row="4" title="{{ false }}" />
@@ -109,36 +142,40 @@
     <text wx:else class="empty-tip text-secondary">暂无单元进度</text>
   </view>
 
-  <!-- 最近动态 -->
+  <!-- 学习动态（事件卡：练习/连续学习/解锁单元） -->
   <view class="section card">
-    <text class="section-title">最近动态</text>
-    <view class="timeline-skeleton" wx:if="{{ loading.timeline }}">
+    <text class="section-title">学习动态</text>
+    <view class="timeline-skeleton" wx:if="{{ loading.activities }}">
       <van-skeleton row="4" title="{{ false }}" />
     </view>
-    <view class="timeline-list" wx:elif="{{ timeline.length > 0 }}">
-      <view class="timeline-item" wx:for="{{ timeline }}" wx:key="id">
-        <view class="timeline-dot"></view>
-        <view class="timeline-content">
-          <view class="timeline-header">
-            <text class="timeline-topic">{{ item.topicName }}</text>
-            <text class="timeline-time text-secondary">{{ item.displayTime }}</text>
+    <block wx:elif="{{ activities.length > 0 }}">
+      <view class="activity-day" wx:for="{{ activities }}" wx:key="date">
+        <text class="activity-date">{{ item.date }}</text>
+        <view
+          class="activity-event"
+          wx:for="{{ item.views }}"
+          wx:for-item="ev"
+          wx:key="text"
+        >
+          <van-icon name="{{ ev.icon }}" size="36rpx" color="#4a90d9" />
+          <view class="activity-text-wrap">
+            <text class="activity-text">{{ ev.text }}</text>
+            <text class="activity-sub text-secondary" wx:if="{{ ev.sub }}">{{ ev.sub }}</text>
           </view>
-          <text class="timeline-text">{{ item.userText }}</text>
-          <text class="timeline-ai">{{ item.aiText }}</text>
         </view>
       </view>
-    </view>
-    <text wx:else class="empty-tip text-secondary">暂无动态</text>
+    </block>
+    <text wx:else class="empty-tip text-secondary">暂无学习动态</text>
 
     <van-button
       wx:if="{{ hasMore }}"
       type="default"
       block
-      loading="{{ loading.timeline }}"
+      loading="{{ loading.activities }}"
       bind:click="onLoadMore"
     >
       加载更多
     </van-button>
-    <text wx:elif="{{ timeline.length > 0 }}" class="no-more text-secondary">没有更多了</text>
+    <text wx:elif="{{ activities.length > 0 }}" class="no-more text-secondary">没有更多了</text>
   </view>
 </view>

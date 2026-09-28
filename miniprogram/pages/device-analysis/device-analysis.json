@@ -10,6 +10,8 @@
     "van-progress": "@vant/weapp/progress/index",
     "van-tag": "@vant/weapp/tag/index",
     "van-tabs": "@vant/weapp/tabs/index",
-    "van-tab": "@vant/weapp/tab/index"
+    "van-tab": "@vant/weapp/tab/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-action-sheet": "@vant/weapp/action-sheet/index"
   }
 }
