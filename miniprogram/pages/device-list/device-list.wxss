@@ -20,6 +20,40 @@
   overflow: hidden;
 }
 
+/* 卡片顶部孩子姓名 */
+.child-name-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  margin: 0 16rpx;
+  min-width: 0;
+}
+
+.child-name-cn {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.child-name-en {
+  font-size: 22rpx;
+  color: #999999;
+  margin-left: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.child-name-empty {
+  font-size: 24rpx;
+  color: #999999;
+  white-space: nowrap;
+}
+
 /* 卡片顶部 */
 .card-top {
   display: flex;
@@ -100,7 +134,7 @@
 }
 
 .battery-icon::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -5rpx;
   top: 4rpx;
@@ -147,6 +181,7 @@
 
 .settings-text {
   font-size: 24rpx;
+  font-weight: bold;
   color: #999999;
 }
 
