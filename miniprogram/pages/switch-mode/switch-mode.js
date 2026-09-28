@@ -1,44 +1,184 @@
 "use strict";
+var __awaiter =
+  (this && this.__awaiter) ||
+  function (thisArg, _arguments, P, generator) {
+    function adopt(value) {
+      return value instanceof P
+        ? value
+        : new P(function (resolve) {
+            resolve(value);
+          });
+    }
+    return new (P || (P = Promise))(function (resolve, reject) {
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function rejected(value) {
+        try {
+          step(generator["throw"](value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function step(result) {
+        result.done
+          ? resolve(result.value)
+          : adopt(result.value).then(fulfilled, rejected);
+      }
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  };
+Object.defineProperty(exports, "__esModule", { value: true });
+const api_1 = require("../../api/api");
+/** 缓存键 */
+const CACHE_KEY = "switch_mode_categories_cache";
+/** 缓存有效期：10 分钟 */
+const CACHE_TTL = 10 * 60 * 1000;
 /**
  * 切换模式页
- * 展示设备可切换的两种学习/对话模式。
+ * 从服务端动态获取学习/对话模式分类，支持缓存与加载态。
  */
 Page({
-    data: {
-        deviceId: '',
-        modes: [
-            {
-                key: 'free-chat',
-                title: '自由对话模式',
-                description: 'AI 伙伴随时在线，陪孩子畅聊感兴趣的话题，在轻松对话中锻炼表达与思维能力。',
-            },
-            {
-                key: 'textbook',
-                title: '教材学习',
-                description: '按照教材模块与单元进行系统学习，帮助孩子巩固课堂知识，循序渐进提升听说能力。',
-            },
-        ],
-    },
-    onLoad(options) {
-        const deviceId = (options === null || options === void 0 ? void 0 : options.id) || '';
-        this.setData({ deviceId });
-    },
-    /**
-     * 选择模式
-     * - 自由对话模式：跳转选择自由对话模式页
-     * - 教材学习：跳转教材学习页
-     */
-    onSelectMode(event) {
-        const { key } = event.currentTarget.dataset;
-        if (key === 'free-chat') {
-            wx.navigateTo({
-                url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${this.data.deviceId}`,
-            });
+  data: {
+    deviceId: "",
+    loading: true,
+    saving: false,
+    currentMode: "",
+    modes: [],
+  },
+  onLoad(options) {
+    const deviceId =
+      (options === null || options === void 0 ? void 0 : options.id) || "";
+    this.setData({ deviceId });
+    this.loadCategories();
+    this.loadCurrentConfig();
+  },
+  /**
+   * 加载模式分类：优先缓存，后台刷新
+   */
+  loadCategories() {
+    return __awaiter(this, void 0, void 0, function* () {
+      const cache = this.getCache();
+      if (cache) {
+        this.setData({ modes: cache.data, loading: false });
+      }
+      try {
+        yield (0, api_1.ensureAuthToken)();
+        const res = yield (0, api_1.getConversationModeCategories)();
+        const modes = res.data.map(this.mapCategoryToDisplay);
+        this.setData({ modes, loading: false });
+        this.saveCache(modes);
+      } catch (error) {
+        console.error("[switch-mode] load categories failed:", error);
+        if (!cache) {
+          wx.showToast({ title: "加载失败", icon: "none" });
+          this.setData({ loading: false });
         }
-        else if (key === 'textbook') {
-            wx.navigateTo({
-                url: `/pages/textbook-learning/textbook-learning?id=${this.data.deviceId}`,
-            });
+      }
+    });
+  },
+  /**
+   * 加载当前生效配置，用于高亮已选分类
+   */
+  loadCurrentConfig() {
+    return __awaiter(this, void 0, void 0, function* () {
+      if (!this.data.deviceId) return;
+      try {
+        yield (0, api_1.ensureAuthToken)();
+        const res = yield (0, api_1.getDeviceCurrentConfig)(this.data.deviceId);
+        const config = res.data;
+        this.setData({ currentMode: config.mode });
+        this.saveDeviceConfigCache(config);
+      } catch (error) {
+        console.error("[switch-mode] load current config failed:", error);
+      }
+    });
+  },
+  /**
+   * 将服务端分类映射为页面展示项
+   */
+  mapCategoryToDisplay(category) {
+    return {
+      key: category.key,
+      title: category.name,
+      description: category.description || "",
+    };
+  },
+  /**
+   * 读取本地缓存
+   */
+  getCache() {
+    try {
+      const cache = wx.getStorageSync(CACHE_KEY);
+      if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
+        return cache;
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  },
+  /**
+   * 写入本地缓存
+   */
+  saveCache(modes) {
+    try {
+      wx.setStorageSync(CACHE_KEY, { data: modes, timestamp: Date.now() });
+    } catch (error) {
+      console.warn("[switch-mode] cache save failed:", error);
+    }
+  },
+  /**
+   * 保存设备配置到本地缓存
+   */
+  saveDeviceConfigCache(config) {
+    try {
+      wx.setStorageSync(`device_config_${config.deviceId}`, config);
+    } catch (error) {
+      console.warn("[switch-mode] device config cache save failed:", error);
+    }
+  },
+  /**
+   * 选择模式
+   * - 自由对话模式：先保存 mode=free_chat，再跳转选择自由对话模式页
+   * - 教材学习：先保存 mode=textbook_learning，再跳转教材学习页
+   */
+  onSelectMode(event) {
+    return __awaiter(this, void 0, void 0, function* () {
+      const { key } = event.currentTarget.dataset;
+      const { deviceId } = this.data;
+      if (!deviceId) {
+        wx.showToast({ title: "设备 ID 缺失", icon: "none" });
+        return;
+      }
+      this.setData({ saving: true });
+      try {
+        yield (0, api_1.ensureAuthToken)();
+        const res = yield (0, api_1.switchDeviceMode)(deviceId, { mode: key });
+        const config = res.data;
+        this.saveDeviceConfigCache(config);
+        this.setData({ currentMode: config.mode, saving: false });
+        // 先隐藏保存中遮罩，再跳转，避免与后续页面转场重叠
+        if (key === "free_chat") {
+          wx.navigateTo({
+            url: `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${deviceId}`,
+          });
+        } else if (key === "textbook_learning") {
+          wx.navigateTo({
+            url: `/pages/textbook-learning/textbook-learning?id=${deviceId}`,
+          });
         }
-    },
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "保存失败，请重试";
+        console.error("[switch-mode] switch mode failed:", error);
+        this.setData({ saving: false });
+        wx.showToast({ title: message, icon: "none", duration: 2500 });
+      }
+    });
+  },
 });
