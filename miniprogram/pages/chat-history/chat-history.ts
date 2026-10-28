@@ -12,6 +12,7 @@ import {
   computeHasMore,
   DisplayRecord,
   resolveHistoryFilters,
+  withMinDelay,
 } from "./chat-history.utils";
 
 interface ChatHistoryData {
@@ -207,14 +208,14 @@ Page<ChatHistoryData, Record<string, any>>({
    * 向上滚动到顶部时加载更早消息（下一页）
    */
   onScrollToUpper() {
-    this.loadOlderRecords();
+    return this.loadOlderRecords();
   },
 
   /**
    * 点击顶部「加载更多」时加载更早消息
    */
   onLoadMore() {
-    this.loadOlderRecords();
+    return this.loadOlderRecords();
   },
 
   async loadOlderRecords() {
@@ -224,14 +225,18 @@ Page<ChatHistoryData, Record<string, any>>({
     this.setData({ loading: true, scrollIntoView: "" });
 
     try {
-      const res = await getChatRecords({
-        page: this.data.page,
-        pageSize: this.data.pageSize,
-        deviceId: this.data.deviceId,
-        textbookId: this.data.textbookId,
-        unitId: this.data.unitId,
-        conversationModeKey: this.data.conversationModeKey,
-      });
+      // 最短特效时长：保证顶部「加载更早消息...」spinner 至少展示 400ms，
+      // 本地/快网返回也不会一闪而过
+      const res = await withMinDelay(
+        getChatRecords({
+          page: this.data.page,
+          pageSize: this.data.pageSize,
+          deviceId: this.data.deviceId,
+          textbookId: this.data.textbookId,
+          unitId: this.data.unitId,
+          conversationModeKey: this.data.conversationModeKey,
+        }),
+      );
       const items = res.data.items || [];
       const total = res.data.total || 0;
       const olderRecords = buildDisplayRecords(items);

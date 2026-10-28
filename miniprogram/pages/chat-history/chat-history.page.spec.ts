@@ -142,4 +142,60 @@ describe("chat-history page wiring", () => {
     );
     expect(page.data.records.length).toBe(2);
   });
+
+  it("keeps the loading spinner visible for at least 400ms during pagination", async () => {
+    jest.useFakeTimers();
+    try {
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        data: {
+          deviceId: "dev-001",
+          mode: "free_chat",
+          conversationModeKey: "free_chat_qa",
+        },
+      });
+      mockApi.getChatRecords
+        .mockResolvedValueOnce({
+          data: {
+            items: [
+              {
+                id: "m2",
+                role: "user",
+                content: "hi",
+                createdAt: "2026-09-27T10:00:00Z",
+              },
+            ],
+            total: 25,
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            items: [
+              {
+                id: "m1",
+                role: "device",
+                content: "hello",
+                createdAt: "2026-09-27T09:00:00Z",
+              },
+            ],
+            total: 25,
+          },
+        });
+
+      await page.onLoad({ id: "dev-001" });
+      expect(page.data.records.length).toBe(1);
+
+      const pending = page.onLoadMore();
+      // 接口即使立即返回，399ms 时记录仍不应合并、spinner 仍在
+      await jest.advanceTimersByTimeAsync(399);
+      expect(page.data.loading).toBe(true);
+      expect(page.data.records.length).toBe(1);
+
+      await jest.advanceTimersByTimeAsync(1);
+      await pending;
+      expect(page.data.records.length).toBe(2);
+      expect(page.data.loading).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
