@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config/api.config';
+import { API_BASE_URL } from "../config/api.config";
 
 /**
  * 小程序统一请求封装
@@ -14,13 +14,33 @@ export interface ApiResponse<T> {
 }
 
 export interface RequestOptions {
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   url: string;
   data?: any;
 }
 
+/** 401 全局重定向守卫：并发请求同时 401 时只 reLaunch 一次 */
+let isRedirectingToLogin = false;
+
+/**
+ * 401 统一处理：清除失效 token 并回到登录页。
+ * 开发/生产环境行为一致，不允许页面停留在白屏或只弹 toast。
+ */
+function handleUnauthorized(): void {
+  if (isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+
+  wx.removeStorageSync("token");
+  wx.reLaunch({
+    url: "/pages/login/login",
+    complete: () => {
+      isRedirectingToLogin = false;
+    },
+  });
+}
+
 export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
-  const token = wx.getStorageSync('token') || '';
+  const token = wx.getStorageSync("token") || "";
 
   const url = `${API_BASE_URL}${options.url}`;
 
@@ -30,17 +50,25 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
       method: options.method as any,
       data: options.data,
       header: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
       },
       success: (res) => {
         const statusCode = res.statusCode || 0;
         const body = res.data as any;
 
+        // 401 无论以 HTTP 状态码还是业务 code 返回，都统一走全局重登录
+        if (statusCode === 401 || body?.code === 401) {
+          console.warn(`[request] unauthorized: ${url}`);
+          handleUnauthorized();
+          reject(new Error("登录已过期，请重新登录"));
+          return;
+        }
+
         if (statusCode >= 200 && statusCode < 300) {
-          if (body && typeof body.code === 'number' && body.code !== 0) {
+          if (body && typeof body.code === "number" && body.code !== 0) {
             console.warn(`[request] business error: ${url}`, body);
-            reject(new Error(body.message || 'Request failed'));
+            reject(new Error(body.message || "Request failed"));
           } else {
             resolve(body as ApiResponse<T>);
           }
@@ -52,7 +80,7 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
       },
       fail: (err) => {
         console.error(`[request] network error: ${url}`, err);
-        reject(new Error(err.errMsg || 'Network error'));
+        reject(new Error(err.errMsg || "Network error"));
       },
     });
   });

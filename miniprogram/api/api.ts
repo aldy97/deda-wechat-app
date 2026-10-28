@@ -15,9 +15,8 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-/** 登录参数 */
+/** 登录参数（微信静默登录：仅需 wx.login 的临时 code） */
 export interface LoginParams {
-  phone?: string;
   code: string;
 }
 
@@ -426,13 +425,20 @@ export async function login(
  * 确保已获取 JWT token
  * 若 storage 中无 token，则自动调用 wx.login 换取。
  */
+/** 进行中的静默登录（并发去重：多页面同时调用只触发一次 wx.login） */
+let pendingAuthToken: Promise<string> | null = null;
+
 export function ensureAuthToken(): Promise<string> {
   const existingToken = wx.getStorageSync("token") || "";
   if (existingToken) {
     return Promise.resolve(existingToken);
   }
 
-  return new Promise((resolve, reject) => {
+  if (pendingAuthToken) {
+    return pendingAuthToken;
+  }
+
+  const authPromise = new Promise<string>((resolve, reject) => {
     wx.login({
       success: async (wxLoginRes) => {
         try {
@@ -447,6 +453,15 @@ export function ensureAuthToken(): Promise<string> {
       fail: (err) => reject(new Error(err.errMsg || "wx.login failed")),
     });
   });
+
+  // 成功/失败都清掉 pending（不依赖 Promise.finally，兼容当前 ES2017 lib 配置）
+  const clearPending = () => {
+    pendingAuthToken = null;
+  };
+  authPromise.then(clearPending, clearPending);
+
+  pendingAuthToken = authPromise;
+  return authPromise;
 }
 
 /**

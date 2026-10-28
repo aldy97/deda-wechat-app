@@ -1,4 +1,5 @@
-import { request } from './utils/request';
+import { request } from "./utils/request";
+import { ensureAuthToken } from "./api/api";
 
 /**
  * 连通性检查：调用 /health 确认服务端可达
@@ -6,18 +7,19 @@ import { request } from './utils/request';
 async function checkServerHealth() {
   try {
     const res = await request<{ status: string }>({
-      method: 'GET',
-      url: '/health',
+      method: "GET",
+      url: "/health",
     });
-    console.log('[App] server health:', res.data);
+    console.log("[App] server health:", res.data);
   } catch (error) {
-    console.error('[App] server health check failed:', error);
+    console.error("[App] server health check failed:", error);
   }
 }
 
 /**
  * 小程序全局入口
- * 已登录用户直接进入设备列表；未登录用户留在登录页走 wx.login 流程。
+ * 首屏即设备列表；token 缺失时由 ensureAuthToken 静默换取（wx.login → JWT），
+ * 登录页仅作为 wx.login 失败/401 时的兜底。
  */
 App<{
   globalData: {
@@ -30,23 +32,20 @@ App<{
   },
 
   onLaunch() {
-    console.log('[App] onLaunch');
+    console.log("[App] onLaunch");
     checkServerHealth();
 
-    const token = wx.getStorageSync('token');
-    if (token) {
-      console.log('[App] token exists, redirect to device list');
-      wx.switchTab({ url: '/pages/device-list/device-list' });
-    } else {
-      console.log('[App] no token, stay on login page');
-    }
+    // 预热静默登录：token 缺失时后台换取，页面请求经 ensureAuthToken 自动等待
+    ensureAuthToken().catch((error) => {
+      console.warn("[App] silent auth warm-up failed:", error);
+    });
   },
 
   onShow() {
-    console.log('[App] onShow');
+    console.log("[App] onShow");
   },
 
   onHide() {
-    console.log('[App] onHide');
+    console.log("[App] onHide");
   },
 });
