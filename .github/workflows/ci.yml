@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查（替代人工审查编译产物）
+        run: cd miniprogram && npx tsc --noEmit
+
+      - name: 单元测试
+        run: npm test
+
+      - name: 构建（tsc 编译产物，仅存在于 CI 环境，不进仓库）
+        run: npm run build
+
+      - name: diff 门禁：禁止混入 .js
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.js$' \
+            && { echo '❌ PR 中包含 .js 编译产物，请移除'; exit 1; } || exit 0
+
+      - name: 上传构建产物（供审查/下载，非发布）
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniprogram-build
+          path: miniprogram
+          retention-days: 7

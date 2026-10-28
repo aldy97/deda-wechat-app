@@ -19,3 +19,10 @@ yarn-error.log*
 # macOS
 .DS_Store
 coverage/
+
+# TypeScript 编译产物 —— 由微信开发者工具 / tsc 自动生成，禁止提交
+# 本仓库唯一事实源是 .ts；提交 .js 会导致源码与产物脱节（曾出现 .js 陈旧 6 个文件的事故）
+miniprogram/**/*.js
+
+# 根目录级编译产物（**/ 不匹配零级目录，需单独声明）
+miniprogram/*.js

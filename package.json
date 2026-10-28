@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "echo '请使用微信开发者工具导入项目并开启热更新预览'",
     "build:npm": "echo '请在微信开发者工具中执行：工具 -> 构建 npm'",
+    "build": "tsc -p tsconfig.json",
     "test": "jest",
     "prepare": "husky",
+    "guard:no-js": "git diff --cached --name-only --diff-filter=AM | grep -E '\\.js$' >/dev/null && { echo '❌ 禁止提交 .js 编译产物（路线二：仓库只存 .ts 源码，产物由构建生成）'; exit 1; } || exit 0",
     "pre-commit": "cd miniprogram && npx tsc --noEmit"
   },
   "lint-staged": {

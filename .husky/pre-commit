@@ -1,2 +1,3 @@
+npm run guard:no-js
 npx lint-staged
 npm run pre-commit
