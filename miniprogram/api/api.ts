@@ -1,7 +1,7 @@
 /**
  * 接口请求统一封装
- * 当前所有接口均返回模拟数据，便于本地开发与页面骨架搭建。
- * 后续替换真实接口时，只需修改本文件内部实现，页面层无需改动。
+ * 部分接口仍为模拟数据（见各函数标注及文件内「模拟数据」注释块），
+ * 其余已切换为真实 HTTPS 请求；替换实现时只需修改本文件，页面层无需改动。
  */
 
 import { request } from "../utils/request";
@@ -140,14 +140,12 @@ export interface ChatRecord {
   createdAt: string;
 }
 
-/** 孩子档案 */
+/** 孩子档案（对齐后端 GET /child-profiles/device/:deviceId 返回） */
 export interface ChildProfile {
-  childId: string;
-  name: string;
-  age: number;
-  avatarUrl: string;
-  deviceId: string;
-  deviceName: string;
+  id: string;
+  name: string | null;
+  birthday: string | null; // YYYY-MM-DD；年龄由消费方按需推算
+  englishName: string | null;
 }
 
 /** 设备主人信息（owner info） */
@@ -720,29 +718,20 @@ export async function getChatRecords(
   });
 }
 
-// ==================== 智能分析相关接口（模拟数据） ====================
-
 /**
  * 获取孩子档案
+ * 调用 deda-server GET /child-profiles/device/:deviceId（未填写档案时返回 null）
  */
 export async function getChildProfile(
   deviceId: string,
-): Promise<ApiResponse<ChildProfile>> {
-  await mockDelay();
-  return success({
-    childId: `C${deviceId}`,
-    name: deviceId === "D001" ? "小明" : deviceId === "D002" ? "小红" : "小宝",
-    age: deviceId === "D001" ? 7 : deviceId === "D002" ? 5 : 6,
-    avatarUrl: "",
-    deviceId,
-    deviceName:
-      deviceId === "D001"
-        ? "小象学习机"
-        : deviceId === "D002"
-          ? "绘本阅读器"
-          : "智能音箱",
+): Promise<ApiResponse<ChildProfile | null>> {
+  return request<ChildProfile | null>({
+    method: "GET",
+    url: `/child-profiles/device/${deviceId}`,
   });
 }
+
+// ==================== 智能分析相关接口（模拟数据） ====================
 
 /**
  * 获取单设备智能分析
