@@ -26,3 +26,6 @@ miniprogram/**/*.js
 
 # 根目录级编译产物（**/ 不匹配零级目录，需单独声明）
 miniprogram/*.js
+
+# 本地运行时/调试目录（含 npm 缓存与临时脚本），禁止提交
+.runtime/
