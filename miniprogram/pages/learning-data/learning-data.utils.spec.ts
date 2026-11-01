@@ -8,6 +8,7 @@ import {
   scaleBarHeights,
   buildContextOptions,
   groupTimelineByDayAndDevice,
+  allocateIntegerPercentages,
 } from "./learning-data.utils";
 import {
   LearningStatsUnitProgress,
@@ -17,6 +18,69 @@ import {
 } from "../../api/api";
 
 describe("learning-data utils", () => {
+  describe("allocateIntegerPercentages", () => {
+    it("uses largest remainders and keeps the displayed total at 100", () => {
+      expect(allocateIntegerPercentages([2, 2, 2, 1])).toEqual([
+        29, 29, 28, 14,
+      ]);
+    });
+
+    it("uses the original order to break equal-remainder ties", () => {
+      expect(allocateIntegerPercentages([1, 1, 1])).toEqual([34, 33, 33]);
+    });
+
+    it("returns zero percentages when there is no activity", () => {
+      expect(allocateIntegerPercentages([])).toEqual([]);
+      expect(allocateIntegerPercentages([0, 0, 0])).toEqual([0, 0, 0]);
+    });
+
+    it("keeps the total at 100 for every small non-negative count combination", () => {
+      for (let length = 1; length <= 5; length += 1) {
+        const combinationCount = 6 ** length;
+        for (let encoded = 0; encoded < combinationCount; encoded += 1) {
+          let value = encoded;
+          const counts = Array.from({ length }, () => {
+            const count = value % 6;
+            value = Math.floor(value / 6);
+            return count;
+          });
+          const percentages = allocateIntegerPercentages(counts);
+          const total = counts.reduce((sum, count) => sum + count, 0);
+          const expectedTotal = total > 0 ? 100 : 0;
+
+          expect(percentages.reduce((sum, percent) => sum + percent, 0)).toBe(
+            expectedTotal,
+          );
+          expect(
+            percentages.every(
+              (percent) =>
+                Number.isInteger(percent) && percent >= 0 && percent <= 100,
+            ),
+          ).toBe(true);
+        }
+      }
+    });
+
+    it("keeps the total at 100 for varied larger count combinations", () => {
+      let seed = 20261101;
+      const nextRandom = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed;
+      };
+
+      for (let caseIndex = 0; caseIndex < 500; caseIndex += 1) {
+        const length = 1 + (nextRandom() % 12);
+        const counts = Array.from({ length }, () => nextRandom() % 100000);
+        if (!counts.some((count) => count > 0)) counts[0] = 1;
+        const percentages = allocateIntegerPercentages(counts);
+
+        expect(percentages.reduce((sum, percent) => sum + percent, 0)).toBe(
+          100,
+        );
+      }
+    });
+  });
+
   describe("groupUnitProgressByTextbook", () => {
     it("groups units by textbook and preserves order", () => {
       const items: LearningStatsUnitProgress[] = [

@@ -1,0 +1,91 @@
+import {
+  getLearningStatsDaily,
+  getLearningStatsModeUsage,
+  getWechatPhoneNumber,
+  submitFeedback,
+  updateDeviceOrder,
+} from "./api";
+import { request } from "../utils/request";
+
+jest.mock("../utils/request", () => ({ request: jest.fn() }));
+
+const mockRequest = request as jest.Mock;
+
+describe("learning stats daily request", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequest.mockResolvedValue({ code: 0, message: "success", data: [] });
+  });
+
+  it("serializes scope=all for the parent report trend", async () => {
+    await getLearningStatsDaily("dev-local-001", 7, { scope: "all" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/learning-stats/daily?days=7&deviceId=dev-local-001&scope=all",
+    });
+  });
+
+  it("keeps existing mode filtering unchanged when scope is omitted", async () => {
+    await getLearningStatsDaily("dev-local-001", 7, { mode: "free_chat" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/learning-stats/daily?days=7&deviceId=dev-local-001&mode=free_chat",
+    });
+  });
+
+  it("requests rolling mode usage with the seven-day default", async () => {
+    await getLearningStatsModeUsage("dev local 001");
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/learning-stats/mode-usage?deviceId=dev%20local%20001&days=7",
+    });
+  });
+
+  it("passes an optional rolling usage end date", async () => {
+    await getLearningStatsModeUsage("dev-local-001", 7, "2026-11-01");
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/learning-stats/mode-usage?deviceId=dev-local-001&days=7&endDate=2026-11-01",
+    });
+  });
+
+  it("posts feedback without accepting a client-side user id", async () => {
+    await submitFeedback({
+      content: "建议增加夜间模式",
+      contact: "13800138000",
+    });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/feedbacks",
+      data: {
+        content: "建议增加夜间模式",
+        contact: "13800138000",
+      },
+    });
+  });
+
+  it("exchanges the one-time Wechat phone code through the backend", async () => {
+    await getWechatPhoneNumber("phone-code");
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/users/wechat-phone",
+      data: { code: "phone-code" },
+    });
+  });
+
+  it("puts the complete device order", async () => {
+    await updateDeviceOrder(["dev-002", "dev-001"]);
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PUT",
+      url: "/devices/order",
+      data: { orderedDeviceIds: ["dev-002", "dev-001"] },
+    });
+  });
+});

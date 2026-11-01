@@ -1,0 +1,32 @@
+<view class="child-list-page">
+  <view wx:if="{{ loading }}" class="state-card">正在加载孩子列表…</view>
+  <view wx:elif="{{ loadError }}" class="state-card">孩子列表加载失败，请稍后重试</view>
+
+  <block wx:else>
+    <view
+      wx:for="{{ children }}"
+      wx:key="deviceId"
+      class="child-card {{ index === 0 ? 'child-card-selected' : '' }} {{ index === draggingIndex ? 'child-card-dragging' : '' }}"
+      style="transform: translateY({{ item.dragOffset || 0 }}px);"
+      data-device-id="{{ item.deviceId }}"
+      bind:tap="onChildTap"
+    >
+      <view class="child-avatar" aria-label="灰色头像占位"></view>
+      <text class="child-name">{{ item.name }}</text>
+      <view
+        class="drag-handle"
+        data-index="{{ index }}"
+        aria-label="拖拽调整顺序"
+        bind:touchstart="onDragStart"
+        catch:touchmove="onDragMove"
+        bind:touchend="onDragEnd"
+        bind:touchcancel="onDragCancel"
+        catch:tap="onDragHandleTap"
+      >
+        <van-icon class="child-list-icon" name="wap-nav" size="36rpx" color="var(--color-body)" />
+      </view>
+    </view>
+    <view wx:if="{{ children.length === 0 }}" class="state-card">暂无孩子</view>
+  </block>
+  <view wx:if="{{ saving }}" class="order-saving">正在保存顺序…</view>
+</view>

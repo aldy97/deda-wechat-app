@@ -5,6 +5,35 @@ import {
   LearningStatsTimelineEvent,
 } from "../../api/api";
 
+/**
+ * 使用最大余数法分配整数百分比：先取整数下限，再按小数余数从大到小
+ * 补齐剩余百分点。余数相同时按原始顺序分配，确保结果稳定且合计为 100。
+ */
+export function allocateIntegerPercentages(counts: number[]): number[] {
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  if (total <= 0) return counts.map(() => 0);
+
+  const allocations = counts.map((count, index) => {
+    const exactPercent = (count / total) * 100;
+    const percent = Math.floor(exactPercent);
+    return {
+      index,
+      percent,
+      remainder: exactPercent - percent,
+    };
+  });
+  const remaining =
+    100 - allocations.reduce((sum, item) => sum + item.percent, 0);
+  const byRemainder = [...allocations].sort(
+    (a, b) => b.remainder - a.remainder || a.index - b.index,
+  );
+
+  for (let index = 0; index < remaining; index += 1) {
+    byRemainder[index].percent += 1;
+  }
+  return allocations.map((item) => item.percent);
+}
+
 export interface TextbookUnitProgress {
   textbookId: string;
   textbookName: string;
@@ -191,12 +220,12 @@ export interface MultiDeviceTrend {
 }
 
 const TREND_COLORS = [
-  "#07c160",
-  "#1989fa",
-  "#ff976a",
-  "#7232dd",
-  "#ee0a24",
-  "#00c8c8",
+  "var(--color-trend-1)",
+  "var(--color-trend-2)",
+  "var(--color-trend-3)",
+  "var(--color-trend-4)",
+  "var(--color-trend-5)",
+  "var(--color-trend-6)",
 ];
 
 function sortDateLabels(a: string, b: string): number {

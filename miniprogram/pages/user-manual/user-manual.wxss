@@ -1,6 +1,6 @@
 .user-manual-page {
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
 }
 
 .manual-image {

@@ -1,201 +1,204 @@
-<view class="container learning-data-page">
-  <!-- 时间范围切换 -->
-  <van-tabs active="{{ activeRange }}" bind:change="onRangeChange" custom-class="range-tabs">
-    <van-tab name="today" title="今日"></van-tab>
-    <van-tab name="week" title="本周"></van-tab>
-    <van-tab name="month" title="本月"></van-tab>
-  </van-tabs>
-
-  <!-- 家庭总览卡 -->
-  <view class="overview card">
-    <block wx:if="{{ loading.summary }}">
-      <view class="overview-item" wx:for="{{ [1,2,3,4] }}" wx:key="*this">
-        <van-skeleton row="1" row-width="60rpx" title="{{ false }}" />
-        <van-skeleton row="1" row-width="80rpx" title="{{ false }}" />
-      </view>
-    </block>
-    <block wx:else>
-      <view class="overview-item">
-        <text class="overview-value">{{ dashboard.totalDurationMinutes || 0 }}</text>
-        <text class="overview-label text-secondary">总时长(分)</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-value">{{ dashboard.totalSessions || 0 }}</text>
-        <text class="overview-label text-secondary">总练习</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-value">{{ dashboard.activeDeviceCount || 0 }}</text>
-        <text class="overview-label text-secondary">活跃设备</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-value">{{ dashboard.maxContinuousDays || dashboard.continuousDays || 0 }}</text>
-        <text class="overview-label text-secondary">最长连续天</text>
-      </view>
-    </block>
-  </view>
-
-  <!-- AI 学习洞察：暂时隐藏，后端接口保留 -->
-  <!--
-  <view class="section card insights-section">
-    <view class="section-title-row">
-      <text class="section-title">智能洞察</text>
-      <text class="section-subtitle text-secondary">AI 分析</text>
+<view class="container learning-data-page" bind:tap="onDismissUsageTooltip">
+  <view
+    wx:if="{{ deviceDropdownVisible }}"
+    class="device-dropdown-mask"
+    bind:tap="onCloseDeviceDropdown"
+    aria-hidden="true"
+  ></view>
+  <view class="report-heading">
+    <view class="heading-copy">
+      <text class="heading-title">成长报告</text>
     </view>
-    <view class="insights-skeleton" wx:if="{{ loading.insights }}">
-      <van-skeleton row="3" title="{{ false }}" />
-    </view>
-    <view class="insights-list" wx:elif="{{ insights.length > 0 }}">
-      <view
-        class="insight-item insight-{{ item.type }}"
-        wx:for="{{ insights }}"
-        wx:key="id"
+    <view class="device-switch-wrap {{ deviceDropdownVisible ? 'device-switch-wrap-open' : '' }}">
+      <button
+        class="device-switch {{ devices.length > 1 ? 'device-switch-active' : '' }}"
+        bind:tap="onDeviceSwitch"
+        aria-label="切换孩子设备"
+        aria-haspopup="menu"
+        aria-expanded="{{ deviceDropdownVisible }}"
       >
-        <van-icon
-          class="insight-icon"
-          name="{{ item.type === 'alert' ? 'warning-o' : item.type === 'weakness' ? 'info-o' : item.type === 'milestone' ? 'fire-o' : 'success' }}"
-          size="36rpx"
-        />
-        <view class="insight-content">
-          <text class="insight-title">{{ item.title }}</text>
-          <text class="insight-text">{{ item.content }}</text>
+        <text class="device-switch-name">{{ loadingDevices ? '加载设备中' : selectedDeviceName }}</text>
+        <view
+          wx:if="{{ devices.length > 1 }}"
+          class="device-switch-arrow {{ deviceDropdownVisible ? 'device-switch-arrow-open' : '' }}"
+          aria-hidden="true"
+        ></view>
+      </button>
+      <view wx:if="{{ deviceDropdownVisible }}" class="device-dropdown" aria-role="menu">
+        <view
+          wx:for="{{ devices }}"
+          wx:key="id"
+          class="device-dropdown-item {{ item.id === selectedDeviceId ? 'device-dropdown-item-selected' : '' }}"
+          data-id="{{ item.id }}"
+          hover-class="device-dropdown-item-hover"
+          bind:tap="onSelectDeviceOption"
+          aria-role="menuitem"
+          aria-label="切换到{{ item.childProfile.name || item.childProfile.englishName || item.name }}"
+        >
+          <text class="device-dropdown-name">{{ item.childProfile.name || item.childProfile.englishName || item.name }}</text>
+          <text wx:if="{{ item.id === selectedDeviceId }}" class="device-dropdown-check" aria-hidden="true">✓</text>
         </view>
       </view>
     </view>
-    <text wx:else class="empty-tip text-secondary">暂无洞察</text>
-  </view>
-  -->
-
-  <!-- 主题分布 -->
-  <view class="section card">
-    <text class="section-title">主题分布</text>
-    <view class="topic-skeleton" wx:if="{{ loading.topics }}">
-      <van-skeleton row="4" title="{{ false }}" />
-    </view>
-    <view class="topic-list" wx:elif="{{ topics.length > 0 }}">
-      <view class="topic-item" wx:for="{{ topics }}" wx:key="id">
-        <view class="topic-main">
-          <view class="topic-name-wrap {{ item.isActive ? 'topic-active' : '' }}">
-            <text class="topic-name">
-              {{ item.conversationModeName || item.textbookName || item.mode }}
-              <text wx:if="{{ item.unitName }}"> · {{ item.unitName }}</text>
-            </text>
-          </view>
-          <view wx:if="{{ item.isActive }}" class="topic-current-tag">学习中</view>
-        </view>
-        <view class="topic-meta">
-          <text class="topic-score text-secondary">{{ item.avgScore != null ? item.avgScore + '分' : '--' }}</text>
-          <text class="topic-count text-secondary">{{ item.count }} 次对话</text>
-        </view>
-      </view>
-    </view>
-    <text wx:else class="empty-tip text-secondary">暂无主题数据</text>
   </view>
 
-  <!-- 孩子设备 -->
-  <view class="section-title section-title-with-margin">孩子设备</view>
-  <view class="device-skeleton card" wx:if="{{ loading.devices }}">
-    <van-skeleton row="3" title="{{ false }}" />
-  </view>
-  <block wx:elif="{{ dashboard.devices }}">
-    <view
-      class="device-summary-card card"
-      wx:for="{{ dashboard.devices }}"
-      wx:key="deviceId"
-      data-device-id="{{ item.deviceId }}"
-      bind:tap="onDeviceCardTap"
-    >
-      <view class="summary-header">
-        <view class="summary-left">
-          <view class="summary-child-row">
-            <text class="summary-child-cn">{{ item.childName || item.deviceName }}</text>
-            <text class="summary-child-en" wx:if="{{ item.childEnglishName }}">{{ item.childEnglishName }}</text>
-          </view>
-          <text class="summary-device text-secondary">{{ item.deviceName }}</text>
-        </view>
-        <van-tag type="{{ item.status === 'online' ? 'success' : item.status === 'sleeping' ? 'warning' : 'danger' }}">
-          {{ item.status === 'online' ? '在线' : item.status === 'sleeping' ? '休眠' : '离线' }}
-        </van-tag>
-      </view>
-      <view class="summary-metrics">
-        <view class="summary-metric">
-          <text class="summary-value">{{ item.todayDurationMinutes || 0 }}</text>
-          <text class="summary-label text-secondary">今日(分)</text>
-        </view>
-        <view class="summary-metric">
-          <text class="summary-value">{{ item.weekDurationMinutes || 0 }}</text>
-          <text class="summary-label text-secondary">本周(分)</text>
-        </view>
-        <view class="summary-metric">
-          <text class="summary-value">{{ item.continuousDays || 0 }}</text>
-          <text class="summary-label text-secondary">连续天</text>
-        </view>
-        <view class="summary-metric">
-          <text class="summary-value">{{ item.topicCount || 0 }}</text>
-          <text class="summary-label text-secondary">主题数</text>
-        </view>
-      </view>
-      <view class="summary-action">
-        <text class="action-text text-secondary">查看智能分析</text>
-        <van-icon name="arrow" size="24rpx" color="#999999" />
-      </view>
-    </view>
+  <block wx:if="{{ loadingDevices }}">
+    <view class="card report-section"><van-skeleton row="3" title="{{ false }}" /></view>
+    <view class="card report-section"><van-skeleton row="3" title="{{ false }}" /></view>
+    <view class="card report-section"><van-skeleton row="5" title="{{ false }}" /></view>
   </block>
 
-  <!-- 学习动态 -->
-  <view class="section-title-row section-title-with-margin">
-    <text class="section-title">学习动态</text>
-    <text class="section-subtitle text-secondary">共 {{ dashboard.boundDeviceCount || 0 }} 台设备</text>
+  <view wx:elif="{{ deviceError }}" class="card empty-device">
+    <text class="empty-device-title">设备加载失败</text>
+    <text class="empty-device-copy">请检查网络后重新加载。</text>
+    <button class="retry-button" bind:tap="onRetryDevices">重新加载</button>
   </view>
-  <view class="timeline-skeleton card" wx:if="{{ loading.timeline }}">
-    <van-skeleton row="4" title="{{ false }}" />
+
+  <view wx:elif="{{ devices.length === 0 }}" class="card empty-device">
+    <text class="empty-device-title">先绑定一台 Elly</text>
+    <text class="empty-device-copy">绑定后，这里会自动生成每日家长报告。</text>
   </view>
-  <view class="timeline-days" wx:elif="{{ timeline.length > 0 }}">
-    <view class="timeline-day" wx:for="{{ timeline }}" wx:key="date" wx:for-item="day">
-      <text class="timeline-day-label">{{ day.displayDate }}</text>
-      <view class="timeline-device-groups">
-        <view class="timeline-device-group card" wx:for="{{ day.devices }}" wx:key="deviceId" wx:for-item="device">
-          <view
-            class="timeline-device-header"
-            data-date="{{ day.date }}"
-            data-device-id="{{ device.deviceId }}"
-            bind:tap="onToggleDeviceGroup"
-          >
-            <view class="timeline-device-info">
-              <view class="timeline-device-avatar">
-                <van-icon name="chat-o" size="32rpx" color="#4a90d9" />
-              </view>
-              <view class="timeline-device-names">
-                <text class="timeline-device-name">{{ device.deviceName }}</text>
-                <text class="timeline-device-duration text-secondary">{{ device.totalDurationMinutes }} 分钟 · {{ device.events.length }} 轮对话</text>
-              </view>
-            </view>
-            <van-icon
-              name="arrow-down"
-              size="28rpx"
-              color="#999999"
-              class="timeline-device-arrow {{ device.expanded ? 'expanded' : '' }}"
-            />
+
+  <block wx:else>
+    <!-- 汇报一：每日使用时长 -->
+    <view class="card report-section">
+      <view class="section-heading">
+        <view>
+          <text class="section-title">每日使用时长</text>
+          <text class="section-subtitle">近 7 日 · 单位：分钟</text>
+        </view>
+      </view>
+      <van-skeleton wx:if="{{ loadingDaily && trendBars.length === 0 }}" row="3" title="{{ false }}" />
+      <view wx:elif="{{ dailyError && trendBars.length === 0 }}" class="section-error">
+        <text>使用时长加载失败</text>
+        <button class="retry-button" bind:tap="onRetryDaily">重试</button>
+      </view>
+      <view wx:elif="{{ trendBars.length > 0 }}" class="trend-chart">
+        <view class="trend-item" wx:for="{{ trendBars }}" wx:key="label">
+          <text class="trend-value">{{ item.value }}</text>
+          <view class="trend-track">
+            <view class="trend-bar {{ item.value === 0 ? 'trend-bar-empty' : '' }}" style="height: {{ item.height }}rpx;"></view>
           </view>
-          <view class="timeline-device-events {{ device.expanded ? 'expanded' : '' }}">
-            <view class="timeline-event" wx:for="{{ device.events }}" wx:key="id" wx:for-item="event">
-              <view class="timeline-event-header">
-                <text class="timeline-event-topic">{{ event.topicName }}</text>
-                <text class="timeline-event-time text-secondary">{{ event.displayTime }}</text>
-              </view>
-              <text class="timeline-event-text">{{ event.userText }}</text>
-              <text class="timeline-event-ai">{{ event.aiText }}</text>
+          <text class="trend-label">{{ item.label }}</text>
+        </view>
+      </view>
+      <view wx:else class="empty-state">
+        <view class="empty-chart-icon"><i></i><i></i><i></i></view>
+        <text class="empty-tip">暂无使用时长记录</text>
+      </view>
+    </view>
+
+    <!-- 汇报二：功能使用情况 -->
+    <view class="card report-section">
+      <view class="section-heading">
+        <view>
+          <view class="section-title-row">
+            <text class="section-title">功能使用情况</text>
+            <!-- <button class="usage-help" bind:tap="onUsageHelp" aria-label="了解功能使用统计">?</button> -->
+          </view>
+          <text wx:if="{{ !loadingUsage && !usageError && usageActualDays > 0 }}" class="section-subtitle">近 {{ usageActualDays }} 天 · 功能互动占比</text>
+        </view>
+      </view>
+      <van-skeleton wx:if="{{ loadingUsage && modeUsage.length === 0 && !usagePieVisible }}" row="3" title="{{ false }}" />
+      <view wx:elif="{{ usageError && modeUsage.length === 0 && !usagePieVisible }}" class="section-error">
+        <text>功能使用数据加载失败</text>
+        <button class="retry-button" bind:tap="onRetryUsage">重试</button>
+      </view>
+      <block wx:elif="{{ modeUsage.length > 0 || usagePieVisible }}">
+        <view class="usage-chart" wx:if="{{ usagePieVisible }}">
+          <canvas
+            id="usagePieCanvas"
+            class="usage-pie"
+            type="2d"
+            bind:tap="onUsagePieTap"
+            aria-label="功能使用比例扇形图，点击查看模式占比"
+          ></canvas>
+        </view>
+        <view class="usage-list" wx:if="{{ modeUsage.length > 0 }}">
+          <view class="usage-row" wx:for="{{ modeUsage }}" wx:key="mode">
+            <view class="usage-name-wrap">
+              <view class="usage-dot" style="background-color: {{ item.color }};"></view>
+              <text class="usage-name">{{ item.label }}</text>
+            </view>
+            <view class="usage-numbers">
+              <text class="usage-percent">{{ item.percent }}%</text>
+              <text class="usage-count">{{ item.count }} 次</text>
             </view>
           </view>
         </view>
+      </block>
+      <view wx:else class="empty-state">
+        <view class="empty-report-icon"></view>
+        <text class="empty-tip">暂无功能使用记录</text>
       </view>
     </view>
-  </view>
-  <text wx:else class="empty-tip text-secondary">暂无学习动态</text>
 
-  <load-more
-    wx:if="{{ timeline.length > 0 || loading.timeline }}"
-    loading="{{ loading.timeline }}"
-    has-more="{{ hasMore }}"
-    bind:loadmore="onLoadMore"
-  />
+    <!-- 汇报三：当日使用总结 -->
+    <view class="card report-section summary-section">
+      <view class="section-heading">
+        <view>
+          <text class="section-title">当日使用总结</text>
+          <text class="section-subtitle">从真实对话中整理的观察</text>
+        </view>
+      </view>
+      <van-skeleton wx:if="{{ loadingReport }}" row="5" title="{{ false }}" />
+      <view wx:elif="{{ reportError }}" class="section-error">
+        <text>当日总结加载失败</text>
+        <button class="retry-button" bind:tap="onRetryReport">重试</button>
+      </view>
+      <block wx:elif="{{ hasSummaryContent }}">
+        <view wx:if="{{ summary.expressionObservation }}" class="observation-row">
+          <text class="observation-index">01</text>
+          <view class="observation-content">
+            <text class="observation-title">表达观察</text>
+            <text class="observation-text">{{ summary.expressionObservation }}</text>
+          </view>
+        </view>
+        <view wx:if="{{ summary.emotionObservation }}" class="observation-row">
+          <text class="observation-index">02</text>
+          <view class="observation-content">
+            <text class="observation-title">情绪观察</text>
+            <text class="observation-text">{{ summary.emotionObservation }}</text>
+          </view>
+        </view>
+        <view wx:if="{{ summary.thinkingObservation }}" class="observation-row">
+          <text class="observation-index">03</text>
+          <view class="observation-content">
+            <text class="observation-title">思考观察</text>
+            <text class="observation-text">{{ summary.thinkingObservation }}</text>
+          </view>
+        </view>
+        <view wx:if="{{ summary.suggestion }}" class="suggestion-box">
+          <text class="suggestion-title">给家长的小建议</text>
+          <text class="suggestion-text">{{ summary.suggestion }}</text>
+        </view>
+        <view class="feedback-block">
+          <text wx:if="{{ feedback }}" class="feedback-thanks">感谢你的反馈</text>
+          <block wx:else>
+            <text class="feedback-question">这份报告对你有帮助吗？</text>
+            <view class="feedback-actions">
+              <button
+                class="feedback-button"
+                data-useful="{{ true }}"
+                disabled="{{ feedbackSubmitting }}"
+                bind:tap="onFeedback"
+              >有用</button>
+              <button
+                class="feedback-button"
+                data-useful="{{ false }}"
+                disabled="{{ feedbackSubmitting }}"
+                bind:tap="onFeedback"
+              >没用</button>
+            </view>
+          </block>
+        </view>
+      </block>
+      <view wx:else class="summary-empty">
+        <view class="pending-icon {{ hasReportActivity ? '' : 'pending-icon-quiet' }}"></view>
+        <text class="summary-empty-title">报告还在准备中</text>
+        <text class="summary-empty-copy">{{ hasReportActivity ? '有足够对话内容后，这里会自动生成观察与建议。' : '昨日没有对话内容，不会生成观察与建议。' }}</text>
+      </view>
+      <text wx:if="{{ !loadingReport && !reportError }}" class="ai-disclaimer">部分内容由 AI 根据对话生成，请结合实际情况理解。</text>
+    </view>
+  </block>
 </view>

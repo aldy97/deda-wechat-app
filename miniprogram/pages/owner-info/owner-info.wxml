@@ -24,6 +24,12 @@
         input-align="right"
       />
       <van-cell
+        title="性别"
+        value="{{ form.gender === 'male' ? '小王子' : (form.gender === 'female' ? '小公主' : '请选择') }}"
+        is-link
+        bind:click="onOpenGenderPicker"
+      />
+      <van-cell
         title="生日"
         value="{{ form.birthday || '请选择生日' }}"
         is-link
@@ -64,5 +70,37 @@
       min-date="{{ 0 }}"
       max-date="{{ 1704067200000 }}"
     />
+  </van-popup>
+
+  <!-- 性别选择弹窗 -->
+  <van-popup
+    show="{{ showGenderPicker }}"
+    position="bottom"
+    round
+    bind:close="onCancelGender"
+  >
+    <view class="gender-picker">
+      <view
+        class="gender-option {{ tempGender === 'male' ? 'active' : '' }}"
+        data-value="male"
+        bind:tap="onGenderOptionTap"
+      >小王子</view>
+      <view
+        class="gender-option {{ tempGender === 'female' ? 'active' : '' }}"
+        data-value="female"
+        bind:tap="onGenderOptionTap"
+      >小公主</view>
+      <view class="gender-actions">
+        <van-button
+          custom-class="gender-btn gender-btn-cancel"
+          bind:click="onCancelGender"
+        >取消</van-button>
+        <van-button
+          type="primary"
+          custom-class="gender-btn"
+          bind:click="onConfirmGender"
+        >确定</van-button>
+      </view>
+    </view>
   </van-popup>
 </view>

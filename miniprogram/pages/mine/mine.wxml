@@ -4,25 +4,63 @@
     <view class="avatar-placeholder"></view>
     <view class="profile-info">
       <text class="phone">{{ phone }}</text>
-      <view class="child-row" bind:tap="onSwitchChildTap">
+      <view class="child-row">
         <text class="child-name">{{ childName }}</text>
-        <van-icon class="arrow-icon" name="arrow" size="28rpx" color="#999999" />
+        <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
       </view>
     </view>
   </view>
 
-  <!-- 功能入口列表 -->
+  <!-- 仅“我的孩子”进入列表，其余入口不绑定点击事件 -->
   <view class="menu-list card">
-    <view class="menu-item" bind:tap="onSettingsTap">
-      <van-icon class="menu-icon" name="setting-o" size="40rpx" color="#4a90d9" />
-      <text class="menu-text">设置</text>
-      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="#999999" />
+    <view class="menu-item" bind:tap="onChildListTap">
+      <van-icon class="menu-icon" name="smile-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">我的孩子</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
     </view>
-    <view class="menu-divider"></view>
-    <view class="menu-item" bind:tap="onContactTap">
-      <van-icon class="menu-icon" name="service-o" size="40rpx" color="#4a90d9" />
-      <text class="menu-text">联系我们</text>
-      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="#999999" />
+    <!--
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="friends-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">亲友团</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    -->
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="question-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">使用说明</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    <view class="menu-item" bind:tap="onFeedbackTap" hover-class="none" aria-role="button" aria-label="用户反馈">
+      <van-icon class="menu-icon" name="chat-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">用户反馈</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="lock" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">隐私政策</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="records-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">用户协议</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    <!--
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="play-circle-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">快速上手指引视频</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="service-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">微信服务号</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
+    </view>
+    -->
+    <view class="menu-item">
+      <van-icon class="menu-icon" name="user-o" size="44rpx" color="var(--color-title)" />
+      <text class="menu-text">注销账号</text>
+      <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
     </view>
   </view>
 </view>

@@ -1,7 +1,7 @@
-import { deleteDevice } from '../../api/api';
+import { deleteDevice } from "../../api/api";
 
 /** 设备列表缓存键（与 device-list 保持一致） */
-const DEVICE_LIST_CACHE_KEY = 'device_list_cache';
+const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 /**
  * 设备设置页
@@ -9,7 +9,7 @@ const DEVICE_LIST_CACHE_KEY = 'device_list_cache';
  */
 Page({
   data: {
-    deviceId: '',
+    deviceId: "",
     /** 是否显示删除确认弹窗 */
     showDeleteModal: false,
     /** 删除中加载状态 */
@@ -17,7 +17,7 @@ Page({
   },
 
   onLoad(options) {
-    const deviceId = options?.id || '';
+    const deviceId = options?.id || "";
     this.setData({ deviceId });
   },
 
@@ -31,7 +31,7 @@ Page({
   },
 
   /**
-   * 主人信息：跳转主人信息页
+   * 孩子信息：跳转孩子信息页
    */
   onOwnerInfo() {
     wx.navigateTo({
@@ -44,7 +44,7 @@ Page({
    */
   onManual() {
     wx.navigateTo({
-      url: '/pages/user-manual/user-manual',
+      url: "/pages/user-manual/user-manual",
     });
   },
 
@@ -85,13 +85,13 @@ Page({
     this.setData({ deleteLoading: true });
     try {
       await deleteDevice(this.data.deviceId);
-      wx.showToast({ title: '删除成功', icon: 'success' });
+      wx.showToast({ title: "删除成功", icon: "success" });
       this.setData({ showDeleteModal: false });
       // 删除成功后清除设备列表缓存，确保返回列表页时重新加载
       this.clearDeviceListCache();
       this.navigateBackToDeviceList();
     } catch (error) {
-      wx.showToast({ title: '删除失败，请重试', icon: 'none' });
+      wx.showToast({ title: "删除失败，请重试", icon: "none" });
       this.setData({ deleteLoading: false });
     }
   },
@@ -103,7 +103,7 @@ Page({
     try {
       wx.removeStorageSync(DEVICE_LIST_CACHE_KEY);
     } catch (error) {
-      console.warn('[device-setting] 清除设备列表缓存失败', error);
+      console.warn("[device-setting] 清除设备列表缓存失败", error);
     }
   },
 
@@ -120,7 +120,7 @@ Page({
         },
       });
     } else {
-      wx.switchTab({ url: '/pages/device-list/device-list' });
+      wx.switchTab({ url: "/pages/device-list/device-list" });
     }
   },
 });

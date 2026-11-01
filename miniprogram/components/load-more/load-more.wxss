@@ -17,7 +17,7 @@
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background-color: var(--primary-color, #1989fa);
+  background-color: var(--color-primary);
   animation: load-more-bounce 1.4s infinite ease-in-out both;
 }
 
@@ -44,13 +44,13 @@
 
 .load-more__text {
   font-size: 26rpx;
-  color: #333333;
+  color: var(--color-text);
 }
 
 .load-more__text--link {
-  color: var(--primary-color, #1989fa);
+  color: var(--color-primary);
 }
 
 .load-more__text--muted {
-  color: #999999;
+  color: var(--color-secondary);
 }

@@ -16,7 +16,7 @@
 .bind-subtitle {
   display: block;
   font-size: 28rpx;
-  color: #666;
+  color: var(--color-body);
 }
 
 .bind-form {

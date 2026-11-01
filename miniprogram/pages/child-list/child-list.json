@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "孩子列表",
+  "usingComponents": {
+    "van-icon": "@vant/weapp/icon/index"
+  }
+}

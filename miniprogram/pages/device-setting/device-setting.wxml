@@ -1,5 +1,5 @@
 <view class="container device-setting-page">
-  <!-- 第一组：关于设备、主人信息、说明书 -->
+  <!-- 第一组：关于设备、孩子信息、说明书 -->
   <van-cell-group inset class="setting-group">
     <van-cell
       title="关于设备"
@@ -7,7 +7,7 @@
       bind:click="onAboutDevice"
     />
     <van-cell
-      title="主人信息"
+      title="孩子信息"
       is-link
       bind:click="onOwnerInfo"
     />
@@ -45,7 +45,7 @@
         </view>
         <view class="modal-divider"></view>
         <view class="modal-btn modal-confirm {{ deleteLoading ? 'modal-confirm-loading' : '' }}" bind:tap="onConfirmDelete">
-          <van-loading wx:if="{{ deleteLoading }}" type="spinner" size="28rpx" color="#ee0a24" class="modal-loading" />
+          <van-loading wx:if="{{ deleteLoading }}" type="spinner" size="28rpx" color="var(--color-danger)" class="modal-loading" />
           <text class="{{ deleteLoading ? 'confirm-text-loading' : 'confirm-text' }}">{{ deleteLoading ? '删除中' : '确认' }}</text>
         </view>
       </view>

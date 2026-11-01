@@ -22,8 +22,11 @@ jobs:
       - name: 类型检查（替代人工审查编译产物）
         run: cd miniprogram && npx tsc --noEmit
 
-      - name: 单元测试
-        run: npm test
+      - name: 百分比分配契约测试
+        run: npm test -- --runInBand miniprogram/pages/learning-data/learning-data.utils.spec.ts
+
+      - name: 完整单元测试
+        run: npm test -- --runInBand
 
       - name: 构建（tsc 编译产物，仅存在于 CI 环境，不进仓库）
         run: npm run build

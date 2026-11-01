@@ -1,0 +1,200 @@
+{
+  "results": [
+    {
+      "name": "device",
+      "route": "pages/device-list/device-list",
+      "wxmlLength": 4124,
+      "text": "在线⚡78%乐乐Bagel设置Unlock L1 Speaking & Listeninga Nadiya Hussain writes about food.Salman Khan – Education for all # LISTENING 2 ## PREPARING TO LISTEN 1 What do you think is the best job in the world查看对话切换模式在线⚡78%小豆豆Doudou设置Unlock L1 Speaking & ListeningHOMES AND BUILDINGSUnlock L1 Speaking & Listening查看对话切换模式",
+      "data": {
+        "loading": false,
+        "devices": [
+          {
+            "id": "dev-local-001",
+            "name": "DEV001",
+            "deviceId": "dev-local-001",
+            "deviceCode": "DEV001",
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "乐乐",
+              "englishName": "Bagel"
+            },
+            "statusLoading": false,
+            "cardTitle": "Unlock L1 Speaking & Listening",
+            "cardSubtitle": "a Nadiya Hussain writes about food.",
+            "cardDesc": "Salman Khan – Education for all # LISTENING 2 ## PREPARING TO LISTEN 1 What do you think is the best job in the world",
+            "status": "online",
+            "battery": 78,
+            "isCharging": true,
+            "lastActiveAt": "2026-10-31T13:34:01.875Z"
+          },
+          {
+            "id": "curl-unlock-l1-u2-001",
+            "name": "curl-unlock-l1-u2-001",
+            "deviceId": "curl-unlock-l1-u2-001",
+            "deviceCode": null,
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "小豆豆",
+              "englishName": "Doudou"
+            },
+            "statusLoading": false,
+            "cardTitle": "Unlock L1 Speaking & Listening",
+            "cardSubtitle": "HOMES AND BUILDINGS",
+            "cardDesc": "Unlock L1 Speaking & Listening",
+            "status": "online",
+            "battery": 78,
+            "isCharging": true,
+            "lastActiveAt": "2026-10-31T13:34:01.877Z"
+          }
+        ],
+        "__webviewId__": 19
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-check/device.png"
+    },
+    {
+      "name": "learning",
+      "route": "pages/learning-data/learning-data",
+      "wxmlLength": 2926,
+      "text": "ELLY FAMILY昨日家长报告10月30日 · 昨天乐乐⌄每日使用时长近 7 日 · 单位：分钟0昨日分钟010/25010/26010/27010/28010/29010/30010/31功能使用情况昨日共 0 次互动昨日还没有功能使用记录当日使用总结从真实对话中整理的观察报告还在准备中昨日没有对话内容，不会生成观察与建议。部分内容由 AI 根据对话生成，请结合实际情况理解。",
+      "data": {
+        "initialized": true,
+        "loadingDevices": false,
+        "loadingDaily": false,
+        "loadingReport": false,
+        "deviceError": false,
+        "dailyError": false,
+        "reportError": false,
+        "feedbackSubmitting": false,
+        "devices": [
+          {
+            "id": "dev-local-001",
+            "name": "DEV001",
+            "deviceId": "dev-local-001",
+            "deviceCode": "DEV001",
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "乐乐",
+              "englishName": "Bagel"
+            }
+          },
+          {
+            "id": "curl-unlock-l1-u2-001",
+            "name": "curl-unlock-l1-u2-001",
+            "deviceId": "curl-unlock-l1-u2-001",
+            "deviceCode": null,
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "小豆豆",
+              "englishName": "Doudou"
+            }
+          }
+        ],
+        "selectedDeviceId": "dev-local-001",
+        "selectedDeviceName": "乐乐",
+        "reportDate": "2026-10-30",
+        "reportDateLabel": "10月30日 · 昨天",
+        "trendBars": [
+          {
+            "label": "10/25",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/26",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/27",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/28",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/29",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/30",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/31",
+            "value": 0,
+            "height": 4
+          }
+        ],
+        "modeUsage": [],
+        "totalModeCount": 0,
+        "durationMinutes": 0,
+        "summary": null,
+        "hasSummaryContent": false,
+        "hasReportActivity": false,
+        "feedback": null,
+        "__webviewId__": 20
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-check/learning.png"
+    },
+    {
+      "name": "mine",
+      "route": "pages/mine/mine",
+      "wxmlLength": 1798,
+      "text": "18016235670熊熊设置联系我们",
+      "data": {
+        "phone": "18016235670",
+        "childName": "熊熊",
+        "__webviewId__": 22
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-check/mine.png"
+    }
+  ],
+  "events": [
+    {
+      "kind": "console",
+      "message": {
+        "type": "log",
+        "args": ["[App] onLaunch"]
+      }
+    },
+    {
+      "kind": "console",
+      "message": {
+        "type": "log",
+        "args": ["[App] onShow"]
+      }
+    },
+    {
+      "kind": "console",
+      "message": {
+        "type": "warn",
+        "args": [
+          "wx.getSystemInfoSync is deprecated.Please use wx.getSystemSetting/wx.getAppAuthorizeSetting/wx.getDeviceInfo/wx.getWindowInfo/wx.getAppBaseInfo instead."
+        ]
+      }
+    },
+    {
+      "kind": "console",
+      "message": {
+        "type": "log",
+        "args": [
+          "[App] server health:",
+          {
+            "status": "up",
+            "timestamp": 1793453634151,
+            "expectedRecovery": null
+          }
+        ]
+      }
+    }
+  ]
+}

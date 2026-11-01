@@ -1,0 +1,279 @@
+{
+  "results": [
+    {
+      "name": "device",
+      "route": "pages/device-list/device-list",
+      "wxmlLength": 0,
+      "wxml": "",
+      "data": {
+        "loading": false,
+        "devices": [
+          {
+            "id": "dev-local-001",
+            "name": "DEV001",
+            "deviceId": "dev-local-001",
+            "deviceCode": "DEV001",
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "乐乐",
+              "englishName": "Bagel"
+            },
+            "statusLoading": false,
+            "cardTitle": "自由闲聊",
+            "cardSubtitle": "",
+            "cardDesc": "不限主题和风格，和孩子进行自由开放式的无话题聊天",
+            "status": "online",
+            "battery": 78,
+            "isCharging": true,
+            "lastActiveAt": "2026-10-31T13:29:46.092Z"
+          },
+          {
+            "id": "curl-unlock-l1-u2-001",
+            "name": "curl-unlock-l1-u2-001",
+            "deviceId": "curl-unlock-l1-u2-001",
+            "deviceCode": null,
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "小豆豆",
+              "englishName": "Doudou"
+            },
+            "statusLoading": false,
+            "cardTitle": "Unlock L1 Speaking & Listening",
+            "cardSubtitle": "HOMES AND BUILDINGS",
+            "cardDesc": "Unlock L1 Speaking & Listening",
+            "status": "online",
+            "battery": 78,
+            "isCharging": true,
+            "lastActiveAt": "2026-10-31T13:29:46.091Z"
+          }
+        ],
+        "__webviewId__": 7
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-before/device.png"
+    },
+    {
+      "name": "learning",
+      "route": "pages/learning-data/learning-data",
+      "wxmlLength": 0,
+      "wxml": "",
+      "data": {
+        "initialized": true,
+        "loadingDevices": false,
+        "loadingDaily": false,
+        "loadingReport": false,
+        "deviceError": false,
+        "dailyError": false,
+        "reportError": true,
+        "feedbackSubmitting": false,
+        "devices": [
+          {
+            "id": "dev-local-001",
+            "name": "DEV001",
+            "deviceId": "dev-local-001",
+            "deviceCode": "DEV001",
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "乐乐",
+              "englishName": "Bagel"
+            }
+          },
+          {
+            "id": "curl-unlock-l1-u2-001",
+            "name": "curl-unlock-l1-u2-001",
+            "deviceId": "curl-unlock-l1-u2-001",
+            "deviceCode": null,
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "小豆豆",
+              "englishName": "Doudou"
+            }
+          }
+        ],
+        "selectedDeviceId": "dev-local-001",
+        "selectedDeviceName": "乐乐",
+        "reportDate": "2026-10-30",
+        "reportDateLabel": "10月30日 · 昨天",
+        "trendBars": [
+          {
+            "label": "10/25",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/26",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/27",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/28",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/29",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/30",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/31",
+            "value": 0,
+            "height": 4
+          }
+        ],
+        "modeUsage": [],
+        "totalModeCount": 0,
+        "durationMinutes": 0,
+        "summary": null,
+        "hasSummaryContent": false,
+        "hasReportActivity": false,
+        "feedback": null,
+        "__webviewId__": 8
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-before/learning.png"
+    },
+    {
+      "name": "mine",
+      "route": "pages/learning-data/learning-data",
+      "wxmlLength": 0,
+      "wxml": "",
+      "data": {
+        "initialized": true,
+        "loadingDevices": false,
+        "loadingDaily": false,
+        "loadingReport": false,
+        "deviceError": false,
+        "dailyError": false,
+        "reportError": true,
+        "feedbackSubmitting": false,
+        "devices": [
+          {
+            "id": "dev-local-001",
+            "name": "DEV001",
+            "deviceId": "dev-local-001",
+            "deviceCode": "DEV001",
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "乐乐",
+              "englishName": "Bagel"
+            }
+          },
+          {
+            "id": "curl-unlock-l1-u2-001",
+            "name": "curl-unlock-l1-u2-001",
+            "deviceId": "curl-unlock-l1-u2-001",
+            "deviceCode": null,
+            "networkType": null,
+            "firmwareVersion": null,
+            "childProfile": {
+              "name": "小豆豆",
+              "englishName": "Doudou"
+            }
+          }
+        ],
+        "selectedDeviceId": "dev-local-001",
+        "selectedDeviceName": "乐乐",
+        "reportDate": "2026-10-30",
+        "reportDateLabel": "10月30日 · 昨天",
+        "trendBars": [
+          {
+            "label": "10/25",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/26",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/27",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/28",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/29",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/30",
+            "value": 0,
+            "height": 4
+          },
+          {
+            "label": "10/31",
+            "value": 0,
+            "height": 4
+          }
+        ],
+        "modeUsage": [],
+        "totalModeCount": 0,
+        "durationMinutes": 0,
+        "summary": null,
+        "hasSummaryContent": false,
+        "hasReportActivity": false,
+        "feedback": null,
+        "__webviewId__": 10
+      },
+      "screenshot": "/Users/xiong/Desktop/deda-wechat-app/artifacts/runtime-before/mine.png"
+    }
+  ],
+  "events": [
+    {
+      "kind": "console",
+      "type": "log"
+    },
+    {
+      "kind": "console",
+      "type": "log"
+    },
+    {
+      "kind": "console",
+      "type": "warn"
+    },
+    {
+      "kind": "console",
+      "type": "log"
+    },
+    {
+      "kind": "console",
+      "type": "error"
+    },
+    {
+      "kind": "console",
+      "type": "error"
+    },
+    {
+      "kind": "console",
+      "type": "error"
+    },
+    {
+      "kind": "console",
+      "type": "error"
+    },
+    {
+      "kind": "console",
+      "type": "error"
+    }
+  ]
+}

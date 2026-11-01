@@ -5,7 +5,6 @@
     "pages/device-control/device-control",
     "pages/learning-data/learning-data",
     "pages/chat-history/chat-history",
-    "pages/device-analysis/device-analysis",
     "pages/device-setting/device-setting",
     "pages/device-bind/device-bind",
     "pages/about-device/about-device",
@@ -15,17 +14,20 @@
     "pages/choose-free-chat-mode/choose-free-chat-mode",
     "pages/textbook-learning/textbook-learning",
     "pages/choose-textbook-unit/choose-textbook-unit",
-    "pages/mine/mine"
+    "pages/mine/mine",
+    "pages/child-list/child-list",
+    "pages/child-info/child-info",
+    "pages/feedback/feedback"
   ],
   "window": {
     "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#fff",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTitleText": "Deda 小程序",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#1989fa",
+    "color": "#9298a6",
+    "selectedColor": "#1A82FE",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
@@ -37,7 +39,7 @@
       },
       {
         "pagePath": "pages/learning-data/learning-data",
-        "text": "学习",
+        "text": "更懂TA",
         "iconPath": "static/icons/tabbar/learning-normal.png",
         "selectedIconPath": "static/icons/tabbar/learning-selected.png"
       },
@@ -50,6 +52,5 @@
     ]
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "sitemapLocation": "sitemap.json"
 }

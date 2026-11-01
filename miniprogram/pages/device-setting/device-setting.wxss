@@ -1,6 +1,6 @@
 .device-setting-page {
   min-height: 100vh;
-  background-color: #f5f6f8;
+  background-color: var(--color-bg);
   padding-top: 24rpx;
 }
 
@@ -10,7 +10,7 @@
 
 .delete-group {
   margin: 24rpx;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16rpx;
   overflow: hidden;
 }
@@ -24,7 +24,7 @@
 
 .delete-text {
   font-size: 32rpx;
-  color: #ee0a24;
+  color: var(--color-danger);
 }
 
 /* 删除确认弹窗 */
@@ -34,7 +34,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,7 +43,7 @@
 
 .modal-content {
   width: 560rpx;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 24rpx;
   overflow: hidden;
   text-align: center;
@@ -52,13 +52,13 @@
 .modal-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: #333333;
+  color: var(--color-text);
   padding: 48rpx 48rpx 24rpx;
 }
 
 .modal-message {
   font-size: 32rpx;
-  color: #666666;
+  color: var(--color-body);
   padding: 0 48rpx 48rpx;
 }
 
@@ -66,13 +66,13 @@
   display: flex;
   align-items: center;
   height: 96rpx;
-  border-top: 1rpx solid #f0f0f0;
+  border-top: 1rpx solid var(--color-divider);
 }
 
 .modal-divider {
   width: 1rpx;
   height: 100%;
-  background-color: #f0f0f0;
+  background-color: var(--color-divider);
 }
 
 .modal-btn {
@@ -85,11 +85,11 @@
 }
 
 .modal-cancel {
-  color: #333333;
+  color: var(--color-text);
 }
 
 .modal-confirm {
-  color: #ee0a24;
+  color: var(--color-danger);
 }
 
 .modal-confirm-loading {
@@ -101,9 +101,9 @@
 }
 
 .confirm-text {
-  color: #ee0a24;
+  color: var(--color-danger);
 }
 
 .confirm-text-loading {
-  color: #ee0a24;
+  color: var(--color-danger);
 }

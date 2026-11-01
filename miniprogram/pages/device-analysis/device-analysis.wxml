@@ -24,9 +24,9 @@
 
   <!-- 语境选择器：查看任何教材/单元/自由对话都是只读,不修改设备配置 -->
   <view class="context-bar" bind:tap="onOpenContextSheet">
-    <van-icon name="records-o" size="28rpx" color="#4a90d9" />
+    <van-icon name="records-o" size="28rpx" color="var(--color-primary)" />
     <text class="context-label">{{ contextLabel }}</text>
-    <van-icon name="arrow-down" size="24rpx" color="#999999" />
+    <van-icon name="arrow-down" size="24rpx" color="var(--color-secondary)" />
   </view>
   <van-action-sheet
     show="{{ showContextSheet }}"
@@ -157,7 +157,7 @@
           wx:for-item="ev"
           wx:key="text"
         >
-          <van-icon name="{{ ev.icon }}" size="36rpx" color="#4a90d9" />
+          <van-icon name="{{ ev.icon }}" size="36rpx" color="var(--color-primary)" />
           <view class="activity-text-wrap">
             <text class="activity-text">{{ ev.text }}</text>
             <text class="activity-sub text-secondary" wx:if="{{ ev.sub }}">{{ ev.sub }}</text>

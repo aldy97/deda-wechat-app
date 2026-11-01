@@ -1,0 +1,58 @@
+<view class="child-info-page">
+  <view wx:if="{{ loading }}" class="state-card">正在加载孩子信息…</view>
+  <view wx:elif="{{ loadError }}" class="state-card">孩子信息加载失败，请稍后重试</view>
+
+  <block wx:else>
+    <view class="info-card">
+      <view class="info-row">
+        <text class="info-label">孩子昵称</text>
+        <text class="info-value">{{ childName }}</text>
+      </view>
+      <view class="info-row child-id-row">
+        <text class="info-label">孩子ID</text>
+        <view class="child-id-value">
+          <text class="info-value child-id">{{ deviceId }}</text>
+          <text class="copy-hint">点击复制</text>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">孩子头像</text>
+        <view class="info-value-with-arrow">
+          <view class="child-avatar" aria-label="灰色头像占位"></view>
+          <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">性别</text>
+        <view class="info-value-with-arrow">
+          <text class="info-value">{{ genderLabel }}</text>
+          <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
+        </view>
+      </view>
+      <view class="info-row info-row-last">
+        <text class="info-label">生日</text>
+        <view class="info-value-with-arrow">
+          <text class="info-value">{{ birthdayLabel }}</text>
+          <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 以下分区均为静态 UI，不绑定点击事件 -->
+    <view class="sleep-card">
+      <view class="section-heading">
+        <text class="section-title">哄睡管理入口</text>
+        <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
+      </view>
+      <text class="section-description">哄睡时间、哄睡时长、哄睡模式等</text>
+    </view>
+
+    <view class="partners-card">
+      <text class="section-title">TA的伙伴</text>
+      <view class="partner-empty">
+        <view class="partner-avatar"></view>
+        <text>暂未添加伙伴</text>
+      </view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,79 @@
+.child-list-page {
+  min-height: 100vh;
+  padding: 32rpx 28rpx;
+  box-sizing: border-box;
+  background-color: var(--color-bg);
+}
+
+.child-card,
+.state-card {
+  background-color: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: 20rpx;
+}
+
+.child-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 148rpx;
+  padding: 28rpx;
+  margin-bottom: 28rpx;
+  box-sizing: border-box;
+  transition: transform 120ms ease-out;
+}
+
+.child-card-dragging {
+  z-index: 2;
+  transition: none;
+  box-shadow: 0 12rpx 32rpx var(--color-shadow);
+}
+
+.child-card-selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-brand-light);
+}
+
+.child-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  margin-right: 28rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: var(--color-placeholder);
+}
+
+.child-name {
+  flex: 1;
+  font-size: 34rpx;
+  color: var(--color-title);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64rpx;
+  min-height: 64rpx;
+  margin-right: -12rpx;
+  flex-shrink: 0;
+}
+
+.child-list-icon {
+  flex-shrink: 0;
+}
+
+.order-saving {
+  padding: 12rpx;
+  color: var(--color-secondary);
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.state-card {
+  padding: 56rpx 32rpx;
+  margin-bottom: 28rpx;
+  color: var(--color-secondary);
+  font-size: 28rpx;
+  text-align: center;
+}

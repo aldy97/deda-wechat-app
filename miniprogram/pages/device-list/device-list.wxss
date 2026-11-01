@@ -1,6 +1,6 @@
 .device-list-page {
   padding-bottom: 48rpx;
-  background-color: #f5f6f8;
+  background-color: var(--color-bg);
   min-height: 100vh;
 }
 
@@ -15,7 +15,11 @@
   position: relative;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  background: linear-gradient(135deg, #e8f4ff 0%, #ffffff 60%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-light) 0%,
+    var(--color-surface) 60%
+  );
   border-radius: 24rpx;
   overflow: hidden;
 }
@@ -33,7 +37,7 @@
 .child-name-cn {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333333;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -41,7 +45,7 @@
 
 .child-name-en {
   font-size: 22rpx;
-  color: #999999;
+  color: var(--color-secondary);
   margin-left: 8rpx;
   white-space: nowrap;
   overflow: hidden;
@@ -50,7 +54,7 @@
 
 .child-name-empty {
   font-size: 24rpx;
-  color: #999999;
+  color: var(--color-secondary);
   white-space: nowrap;
 }
 
@@ -77,18 +81,18 @@
 }
 
 .status-online {
-  color: #07c160;
-  background-color: rgba(7, 193, 96, 0.1);
+  color: var(--color-success);
+  background-color: var(--color-success-soft);
 }
 
 .status-sleeping {
-  color: #ff976a;
-  background-color: rgba(255, 151, 106, 0.1);
+  color: var(--color-warning);
+  background-color: var(--color-warning-soft);
 }
 
 .status-offline {
-  color: #969799;
-  background-color: rgba(150, 151, 153, 0.1);
+  color: var(--color-secondary);
+  background-color: var(--color-neutral-soft);
 }
 
 .status-dot {
@@ -99,15 +103,15 @@
 }
 
 .status-online .status-dot {
-  background-color: #07c160;
+  background-color: var(--color-success);
 }
 
 .status-sleeping .status-dot {
-  background-color: #ff976a;
+  background-color: var(--color-warning);
 }
 
 .status-offline .status-dot {
-  background-color: #969799;
+  background-color: var(--color-secondary);
 }
 
 /* 电量加载 */
@@ -126,7 +130,7 @@
 .battery-icon {
   width: 36rpx;
   height: 18rpx;
-  border: 2rpx solid #999999;
+  border: 2rpx solid var(--color-secondary);
   border-radius: 4rpx;
   padding: 2rpx;
   position: relative;
@@ -140,7 +144,7 @@
   top: 4rpx;
   width: 3rpx;
   height: 8rpx;
-  background-color: #999999;
+  background-color: var(--color-secondary);
   border-radius: 0 2rpx 2rpx 0;
 }
 
@@ -151,20 +155,20 @@
 }
 
 .battery-charging .battery-icon {
-  border-color: #4a90d9;
+  border-color: var(--color-primary);
 }
 
 .battery-charging .battery-icon::after {
-  background-color: #4a90d9;
+  background-color: var(--color-primary);
 }
 
 .battery-text {
   font-size: 24rpx;
-  color: #666666;
+  color: var(--color-body);
 }
 
 .battery-charging .battery-text {
-  color: #4a90d9;
+  color: var(--color-primary);
 }
 
 .settings-entry {
@@ -182,7 +186,7 @@
 .settings-text {
   font-size: 24rpx;
   font-weight: bold;
-  color: #999999;
+  color: var(--color-secondary);
 }
 
 /* 卡片中部 */
@@ -203,7 +207,7 @@
 .card-title {
   font-size: 40rpx;
   font-weight: 600;
-  color: #333333;
+  color: var(--color-text);
   margin-right: 12rpx;
 }
 
@@ -211,12 +215,12 @@
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background-color: #e6f2ff;
+  background-color: var(--color-brand-light);
 }
 
 .card-subtitle {
   font-size: 28rpx;
-  color: #4a90d9;
+  color: var(--color-primary);
   font-weight: 500;
   margin-bottom: 12rpx;
   display: block;
@@ -224,7 +228,7 @@
 
 .card-desc {
   font-size: 26rpx;
-  color: #666666;
+  color: var(--color-body);
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -245,7 +249,7 @@
   align-items: center;
   justify-content: center;
   padding: 20rpx 0;
-  background-color: #f0f7ff;
+  background-color: var(--color-brand-light);
   border-radius: 40rpx;
 }
 
@@ -255,7 +259,7 @@
 
 .action-text {
   font-size: 26rpx;
-  color: #4a90d9;
+  color: var(--color-primary);
 }
 
 .current-mode-row {
@@ -263,24 +267,24 @@
   align-items: center;
   margin-top: 16rpx;
   padding: 12rpx 16rpx;
-  background-color: rgba(7, 193, 96, 0.08);
+  background-color: var(--color-success-soft);
   border-radius: 12rpx;
 }
 
 .current-mode-label {
   font-size: 26rpx;
-  color: #666666;
+  color: var(--color-body);
 }
 
 .current-mode-value {
   font-size: 26rpx;
   font-weight: 600;
-  color: #07c160;
+  color: var(--color-success);
   margin-left: 8rpx;
 }
 
 .current-mode-detail {
   font-size: 24rpx;
-  color: #999999;
+  color: var(--color-secondary);
   margin-left: 8rpx;
 }

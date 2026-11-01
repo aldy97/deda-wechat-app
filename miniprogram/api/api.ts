@@ -30,6 +30,51 @@ export interface LoginResult {
   };
 }
 
+/** 用户反馈提交参数；用户身份由后端从 JWT 获取，不由客户端传递。 */
+export interface SubmitFeedbackParams {
+  content: string;
+  contact?: string;
+}
+
+/** 用户反馈提交结果 */
+export interface SubmitFeedbackResult {
+  feedbackId: string;
+  createdAt: string;
+}
+
+/**
+ * 提交用户反馈
+ * 调用 deda-server POST /feedbacks；同一用户可创建多条独立反馈记录。
+ */
+export async function submitFeedback(
+  params: SubmitFeedbackParams,
+): Promise<ApiResponse<SubmitFeedbackResult>> {
+  return request<SubmitFeedbackResult>({
+    method: "POST",
+    url: "/feedbacks",
+    data: params,
+  });
+}
+
+/** 微信手机号换取结果 */
+export interface WechatPhoneNumberResult {
+  phone: string;
+}
+
+/**
+ * 使用 getPhoneNumber 返回的一次性 code 换取手机号。
+ * 后端需调用微信 phonenumber.getPhoneNumber 接口，不接受客户端直接上传手机号作为换取结果。
+ */
+export async function getWechatPhoneNumber(
+  code: string,
+): Promise<ApiResponse<WechatPhoneNumberResult>> {
+  return request<WechatPhoneNumberResult>({
+    method: "POST",
+    url: "/users/wechat-phone",
+    data: { code },
+  });
+}
+
 /** 设备基础信息 */
 export interface Device {
   id: string; // 对应 server 的 deviceId
@@ -145,6 +190,7 @@ export interface ChildProfile {
   name: string | null;
   birthday: string | null; // YYYY-MM-DD；年龄由消费方按需推算
   englishName: string | null;
+  gender?: string | null;
 }
 
 /** 设备主人信息（owner info） */
@@ -153,6 +199,8 @@ export interface OwnerInfo {
   name?: string | null;
   birthday?: string | null;
   englishName?: string | null;
+  /** 性别：male 小王子 / female 小公主 / null 未设置 */
+  gender?: "male" | "female" | null;
 }
 
 /** 单设备核心指标 */
@@ -268,6 +316,7 @@ export interface LearningStatsContext {
   unitId?: string;
   mode?: string;
   conversationModeKey?: string;
+  scope?: "all";
 }
 
 function appendContextQuery(
@@ -283,6 +332,7 @@ function appendContextQuery(
     queryParts.push(
       `conversationModeKey=${encodeURIComponent(ctx.conversationModeKey)}`,
     );
+  if (ctx.scope) queryParts.push(`scope=${encodeURIComponent(ctx.scope)}`);
 }
 
 export interface LearningStatsDeviceSummary {
@@ -475,6 +525,17 @@ export async function getDeviceList(): Promise<ApiResponse<Device[]>> {
   });
 }
 
+/** 持久化当前用户全部孩子的展示顺序。 */
+export async function updateDeviceOrder(
+  orderedDeviceIds: string[],
+): Promise<ApiResponse<{ orderedDeviceIds: string[] }>> {
+  return request<{ orderedDeviceIds: string[] }>({
+    method: "PUT",
+    url: "/devices/order",
+    data: { orderedDeviceIds },
+  });
+}
+
 /**
  * 绑定设备
  * @param params deviceId 或 deviceCode 至少传一个
@@ -627,7 +688,12 @@ export async function getOwnerInfo(
  */
 export async function updateOwnerInfo(
   deviceId: string,
-  data: { name?: string; birthday?: string; englishName?: string },
+  data: {
+    name?: string;
+    birthday?: string;
+    englishName?: string;
+    gender?: "male" | "female" | null;
+  },
 ): Promise<ApiResponse<OwnerInfo>> {
   return request<OwnerInfo>({
     method: "PATCH",
@@ -1195,5 +1261,102 @@ export async function getLearningStatsHealth(
   return request<LearningStatsHealth>({
     method: "GET",
     url: `/learning-stats/health${query}`,
+  });
+}
+
+// ==================== 家长每日报告 ====================
+
+export interface ParentReportModeUsage {
+  mode: string;
+  count: number;
+}
+
+export interface LearningStatsModeUsage {
+  deviceId: string;
+  startDate: string;
+  endDate: string;
+  actualDays: number;
+  totalCount: number;
+  modeUsage: ParentReportModeUsage[];
+}
+
+export interface ParentReportSummary {
+  expressionObservation: string | null;
+  emotionObservation: string | null;
+  thinkingObservation: string | null;
+  suggestion: string | null;
+}
+
+export interface ParentReportHabit {
+  planId: string;
+  title: string;
+  targetDays: number;
+  completedDays: number;
+  todayCompleted: boolean;
+}
+
+export interface ParentReport {
+  deviceId: string;
+  reportDate: string;
+  /** 报告真实生成时间，ISO 8601；报告尚未生成时为空。 */
+  generatedAt?: string | null;
+  durationMinutes: number;
+  modeUsage: ParentReportModeUsage[];
+  summary: ParentReportSummary | null;
+  habits: ParentReportHabit[];
+  feedback: "useful" | "not_useful" | null;
+}
+
+/** 获取指定设备滚动 N 个自然日的功能使用统计。 */
+export async function getLearningStatsModeUsage(
+  deviceId: string,
+  days = 7,
+  endDate?: string,
+): Promise<ApiResponse<LearningStatsModeUsage>> {
+  const queryParts = [
+    `deviceId=${encodeURIComponent(deviceId)}`,
+    `days=${encodeURIComponent(String(days))}`,
+  ];
+  if (endDate) queryParts.push(`endDate=${encodeURIComponent(endDate)}`);
+  return request<LearningStatsModeUsage>({
+    method: "GET",
+    url: `/learning-stats/mode-usage?${queryParts.join("&")}`,
+  });
+}
+
+/** 获取指定设备、指定日期的家长每日报告。 */
+export async function getParentReport(
+  deviceId: string,
+  date: string,
+): Promise<ApiResponse<ParentReport>> {
+  return request<ParentReport>({
+    method: "GET",
+    url: `/learning-stats/parent-report?deviceId=${encodeURIComponent(deviceId)}&date=${encodeURIComponent(date)}`,
+  });
+}
+
+export interface ParentReportFeedbackParams {
+  deviceId: string;
+  reportDate: string;
+  useful: boolean;
+}
+
+/** 提交家长报告反馈；useful 必须保持 JSON boolean。 */
+export async function submitParentReportFeedback(
+  params: ParentReportFeedbackParams,
+): Promise<
+  ApiResponse<{ reportDate: string; feedback: "useful" | "not_useful" }>
+> {
+  return request<{
+    reportDate: string;
+    feedback: "useful" | "not_useful";
+  }>({
+    method: "POST",
+    url: "/learning-stats/parent-report/feedback",
+    data: {
+      deviceId: params.deviceId,
+      reportDate: params.reportDate,
+      useful: params.useful,
+    },
   });
 }

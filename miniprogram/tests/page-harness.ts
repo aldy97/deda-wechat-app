@@ -29,10 +29,22 @@ export function installPageHarness(): PageHarness {
     navigateBack: jest.fn(),
     setNavigationBarTitle: jest.fn(),
     showToast: jest.fn(),
+    showModal: jest.fn(),
+    createSelectorQuery: jest.fn(),
     setStorageSync: jest.fn(),
     getStorageSync: jest.fn().mockReturnValue(""),
     stopPullDownRefresh: jest.fn(),
   };
+  wxStub.createSelectorQuery.mockImplementation(() => {
+    const query: any = {
+      in: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      boundingClientRect: jest.fn().mockReturnThis(),
+      fields: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockReturnThis(),
+    };
+    return query;
+  });
   (globalThis as any).wx = wxStub;
 
   let captured: any = null;

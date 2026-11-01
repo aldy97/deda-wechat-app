@@ -1,0 +1,67 @@
+/*
+ * Deda / Elly 全局唯一色板。
+ * 业务 WXSS、WXML、TS/JS 只能引用这里的变量；原生配置由 scripts/sync-palette.js 同步。
+ */
+page {
+  /* 品牌与功能色 */
+  --color-primary: #1a82fe;
+  --color-brand: var(--color-primary);
+  --color-brand-light: #edf2f6;
+  --color-accent: #ca7764;
+  --color-accent-dark: #a85444;
+  --color-accent-bg: #faf0ed;
+  --color-accent-text: #6f5a54;
+  --color-pink: #efd0da;
+  --color-pink-deep: #d9a5b5;
+  --color-success: #07c160;
+  --color-success-bg: #e6f7ed;
+  --color-warning: #ff976a;
+  --color-warning-bg: #faf0ed;
+  --color-danger: #ee0a24;
+  --color-danger-bg: #fef0f0;
+
+  /* 中性色：相近灰阶已合并，正文与辅助信息分级使用 */
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-title: #202124;
+  --color-heading: #252832;
+  --color-text: #323233;
+  --color-body: #626979;
+  --color-secondary: #9298a6;
+  --color-icon: #7c96a8;
+  --color-border: #e9edf0;
+  --color-divider: #f0f1f5;
+  --color-disabled: #dfe2ea;
+  --color-placeholder: #c9ced5;
+
+  /* 阴影与遮罩 */
+  --color-shadow: rgba(36, 40, 61, 0.04);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-overlay-strong: rgba(0, 0, 0, 0.7);
+  --color-overlay-light: rgba(255, 255, 255, 0.8);
+  --color-success-soft: rgba(7, 193, 96, 0.1);
+  --color-warning-soft: rgba(255, 151, 106, 0.1);
+  --color-neutral-soft: rgba(150, 151, 153, 0.1);
+
+  /* 家长日报功能分布：明亮柔和的天空蓝、薄荷绿、向阳黄、樱花粉、薰衣草紫与蜜桃橙 */
+  --color-mode-1: #6ec6ff;
+  --color-mode-2: #70d6b2;
+  --color-mode-3: #ffd166;
+  --color-mode-4: #ff9eb5;
+  --color-mode-5: #b39ddb;
+  --color-mode-6: #ffbe76;
+
+  /* 旧多设备趋势保留给未注册页面，顺序同样由此维护 */
+  --color-trend-1: var(--color-success);
+  --color-trend-2: var(--color-primary);
+  --color-trend-3: var(--color-warning);
+  --color-trend-4: var(--color-pink-deep);
+  --color-trend-5: var(--color-danger);
+  --color-trend-6: var(--color-icon);
+
+  /* 不支持 CSS 变量的原生配置由同步脚本读取 */
+  --color-nav-bg: var(--color-surface);
+  --color-tab-text: var(--color-secondary);
+  --color-tab-active: var(--color-primary);
+  --color-tab-bg: var(--color-surface);
+}

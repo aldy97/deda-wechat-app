@@ -1,0 +1,76 @@
+<view class="feedback-page">
+  <view class="field-group">
+    <view class="field-label">
+      <text>问题或建议</text>
+      <text class="required-mark">*</text>
+    </view>
+    <view class="textarea-wrap">
+      <textarea
+        class="feedback-textarea"
+        value="{{ content }}"
+        placeholder="请输入您的问题或建议"
+        placeholder-class="field-placeholder"
+        maxlength="200"
+        auto-height="{{ false }}"
+        fixed="{{ true }}"
+        show-confirm-bar="{{ false }}"
+        aria-label="问题或建议，最多 200 字"
+        bind:input="onContentInput"
+      ></textarea>
+      <view class="word-count" aria-label="已输入 {{ contentLength }} 字，最多 200 字">
+        {{ contentLength }}/200
+      </view>
+    </view>
+  </view>
+
+  <view class="field-group contact-group">
+    <view class="field-label">联系方式</view>
+    <view class="contact-input-wrap">
+      <input
+        class="contact-input"
+        value="{{ contact }}"
+        type="number"
+        maxlength="11"
+        placeholder="请输入联系手机号"
+        placeholder-class="field-placeholder"
+        aria-label="联系手机号，选填"
+        bind:input="onContactInput"
+      />
+      <button
+        class="phone-prefill-button"
+        open-type="getPhoneNumber"
+        disabled="{{ phoneLoading }}"
+        hover-class="none"
+        aria-label="使用微信手机号预填写"
+        bind:getphonenumber="onGetPhoneNumber"
+      >
+        {{ phoneLoading ? '获取中…' : '微信预填写' }}
+      </button>
+    </view>
+  </view>
+
+  <view
+    wx:if="{{ submitFailed }}"
+    class="submit-error"
+    aria-role="alert"
+    aria-live="assertive"
+  >
+    <view class="error-icon">!</view>
+    <view class="error-content">
+      <view class="error-title">提交未成功</view>
+      <view class="error-description">服务暂时繁忙，请稍后重试</view>
+      <view class="error-description">已填写的内容已为你保留</view>
+    </view>
+  </view>
+
+  <button
+    class="submit-button"
+    disabled="{{ !canSubmit || submitting }}"
+    loading="{{ submitting }}"
+    hover-class="none"
+    aria-label="{{ submitFailed ? '重新提交反馈' : '提交反馈' }}"
+    bind:tap="onSubmit"
+  >
+    {{ submitting ? '提交中…' : (submitFailed ? '重新提交' : '提交') }}
+  </button>
+</view>

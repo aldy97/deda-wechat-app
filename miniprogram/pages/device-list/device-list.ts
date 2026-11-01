@@ -258,16 +258,6 @@ Page({
   },
 
   /**
-   * 智能分析：跳转单设备智能分析页
-   */
-  onViewAnalysis(event: WechatMiniprogram.TouchEvent) {
-    const { id } = event.currentTarget.dataset;
-    wx.navigateTo({
-      url: `/pages/device-analysis/device-analysis?id=${id}`,
-    });
-  },
-
-  /**
    * 孩子姓名区域：未设置孩子档案时跳转设备设置页，已设置则不响应
    */
   onChildNameTap(event: WechatMiniprogram.TouchEvent) {

@@ -1,6 +1,6 @@
 .switch-mode-page {
   min-height: 100vh;
-  background-color: #f5f6f8;
+  background-color: var(--color-bg);
   padding: 24rpx;
   box-sizing: border-box;
 }
@@ -10,7 +10,11 @@
   align-items: center;
   padding: 32rpx;
   margin-bottom: 24rpx;
-  background: linear-gradient(135deg, #e8f4ff 0%, #ffffff 60%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-light) 0%,
+    var(--color-surface) 60%
+  );
   border-radius: 24rpx;
 }
 
@@ -18,7 +22,7 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
-  background-color: #e6e6e6;
+  background-color: var(--color-placeholder);
   margin-right: 32rpx;
   flex-shrink: 0;
 }
@@ -33,13 +37,13 @@
 .mode-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: #333333;
+  color: var(--color-text);
   margin-bottom: 12rpx;
 }
 
 .mode-desc {
   font-size: 28rpx;
-  color: #666666;
+  color: var(--color-body);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -49,21 +53,21 @@
 
 .mode-card:active {
   transform: scale(0.97);
-  background: #f0f0f0;
+  background: var(--color-divider);
   transition: all 0.15s;
 }
 
 .mode-card.selected {
-  border: 2rpx solid #07c160;
-  background: #e6f7ed;
+  border: 2rpx solid var(--color-success);
+  background: var(--color-success-bg);
 }
 
 .selected-icon {
   width: 48rpx;
   height: 48rpx;
   border-radius: 50%;
-  background-color: #07c160;
-  color: #ffffff;
+  background-color: var(--color-success);
+  color: var(--color-surface);
   font-size: 28rpx;
   display: flex;
   align-items: center;
@@ -78,7 +82,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: var(--color-overlay-light);
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -14,7 +14,7 @@ export interface ApiResponse<T> {
 }
 
 export interface RequestOptions {
-  method: "GET" | "POST" | "PATCH" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   url: string;
   data?: any;
 }

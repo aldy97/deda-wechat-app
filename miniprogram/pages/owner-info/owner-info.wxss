@@ -1,6 +1,6 @@
 .owner-info-page {
   min-height: 100vh;
-  background-color: #f5f6f8;
+  background-color: var(--color-bg);
   padding-top: 24rpx;
 }
 
@@ -20,6 +20,40 @@
   margin: 48rpx 24rpx 0;
 }
 
+/* 性别选择弹窗 */
+.gender-picker {
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+}
+
+.gender-option {
+  text-align: center;
+  font-size: 32rpx;
+  color: var(--color-secondary);
+  padding: 32rpx 0;
+  border-bottom: 1rpx solid var(--color-divider);
+}
+
+.gender-option.active {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.gender-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 48rpx;
+}
+
+.gender-btn {
+  flex: 1;
+}
+
+.gender-btn-cancel {
+  background-color: var(--color-bg);
+  color: var(--color-success);
+  border: none;
+}
+
 .save-overlay {
   position: fixed;
   top: 0;
@@ -29,6 +63,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: var(--color-overlay-light);
   z-index: 100;
 }
