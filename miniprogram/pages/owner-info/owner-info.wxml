@@ -26,12 +26,14 @@
       <van-cell
         title="性别"
         value="{{ form.gender === 'male' ? '小王子' : (form.gender === 'female' ? '小公主' : '请选择') }}"
+        value-class="{{ form.gender ? 'cell-value-dark' : '' }}"
         is-link
         bind:click="onOpenGenderPicker"
       />
       <van-cell
         title="生日"
         value="{{ form.birthday || '请选择生日' }}"
+        value-class="{{ form.birthday ? 'cell-value-dark' : '' }}"
         is-link
         bind:click="onOpenDatePicker"
       />

@@ -16,6 +16,11 @@
   overflow: hidden;
 }
 
+/* cell 右值与输入框文字保持一致的深色 */
+.cell-value-dark {
+  color: var(--color-text);
+}
+
 .save-btn-wrap {
   margin: 48rpx 24rpx 0;
 }
