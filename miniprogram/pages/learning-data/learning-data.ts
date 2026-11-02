@@ -38,6 +38,14 @@ interface ModeUsageView {
 
 const MODE_LABELS: Record<string, string> = {
   free_chat: "自由对话",
+  free_chat_casual: "自由闲聊",
+  free_chat_roleplay: "角色扮演",
+  free_chat_qa: "百科问答",
+  english_chat: "英语对话",
+  english_story: "英语故事",
+  idiom_story: "成语故事",
+  adventure_story: "冒险故事",
+  free_story: "自由故事",
   daily_adventure: "每日冒险",
   adventure: "每日冒险",
   story: "故事",

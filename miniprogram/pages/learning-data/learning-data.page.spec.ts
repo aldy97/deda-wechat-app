@@ -109,6 +109,40 @@ describe("learning-data parent report page", () => {
     expect(page.data.reportGeneratedAt).toBe("2026-10-31 23:05");
   });
 
+  it("maps all approved mode keys to their Chinese labels", () => {
+    const items = [
+      { mode: "free_chat_casual", count: 1 },
+      { mode: "free_chat_roleplay", count: 1 },
+      { mode: "free_chat_qa", count: 1 },
+      { mode: "english_chat", count: 1 },
+      { mode: "english_story", count: 1 },
+      { mode: "idiom_story", count: 1 },
+      { mode: "sleep_story", count: 1 },
+      { mode: "free_story", count: 1 },
+      { mode: "adventure_story", count: 1 },
+      { mode: "unknown", count: 1 },
+    ];
+
+    expect(page.buildModeUsage(items).map((item: any) => item.label)).toEqual([
+      "自由闲聊",
+      "角色扮演",
+      "百科问答",
+      "英语对话",
+      "英语故事",
+      "成语故事",
+      "哄睡故事",
+      "自由故事",
+      "冒险故事",
+      "其他",
+    ]);
+  });
+
+  it("keeps unrecognized mode keys visible for diagnosis", () => {
+    expect(
+      page.buildModeUsage([{ mode: "future_mode", count: 1 }])[0].label,
+    ).toBe("future_mode");
+  });
+
   it("waits for both chart layouts before initializing the native canvas", async () => {
     let resolveDaily!: (value: any) => void;
     mockApi.getLearningStatsDaily.mockReturnValue(
