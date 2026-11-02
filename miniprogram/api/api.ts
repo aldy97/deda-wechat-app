@@ -702,6 +702,58 @@ export async function updateOwnerInfo(
   });
 }
 
+/** 设备哄睡配置（对齐后端 GET /sleep-configs/device/:deviceId） */
+export interface SleepConfig {
+  /** 哄睡总开关 */
+  enabled: boolean;
+  /** 哄睡时长模式：default=默认（后端决定时长），custom=手动设置 */
+  durationMode: "default" | "custom";
+  /** 手动设置的哄睡时长（分钟），取值 10/15/20/25/30；default 模式为 null */
+  durationMinutes: number | null;
+  /** 哄睡内容类型 */
+  contentType: "story" | "song" | "mixed";
+  /** 每晚定时进入时间，24h 制 "HH:mm" */
+  sleepTime: string;
+  /** 强制哄睡开关 */
+  forceSleep: boolean;
+}
+
+/** 哄睡配置部分更新入参（对齐后端 UpdateSleepConfigDto） */
+export type UpdateSleepConfigDto = Partial<{
+  enabled: boolean;
+  durationMode: "default" | "custom";
+  durationMinutes: number | null;
+  contentType: "story" | "song" | "mixed";
+  sleepTime: string;
+  forceSleep: boolean;
+}>;
+
+/**
+ * 获取设备哄睡配置（未设置时返回 data: null）
+ */
+export async function getSleepConfig(
+  deviceId: string,
+): Promise<ApiResponse<SleepConfig | null>> {
+  return request<SleepConfig | null>({
+    method: "GET",
+    url: `/sleep-configs/device/${encodeURIComponent(deviceId)}`,
+  });
+}
+
+/**
+ * 部分更新设备哄睡配置，返回更新后的完整配置
+ */
+export async function updateSleepConfig(
+  deviceId: string,
+  data: UpdateSleepConfigDto,
+): Promise<ApiResponse<SleepConfig>> {
+  return request<SleepConfig>({
+    method: "PATCH",
+    url: `/sleep-configs/device/${encodeURIComponent(deviceId)}`,
+    data,
+  });
+}
+
 /**
  * 获取设备控制面板数据
  */

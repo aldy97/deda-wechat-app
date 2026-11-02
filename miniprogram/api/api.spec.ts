@@ -1,9 +1,11 @@
 import {
   getLearningStatsDaily,
   getLearningStatsModeUsage,
+  getSleepConfig,
   getWechatPhoneNumber,
   submitFeedback,
   updateDeviceOrder,
+  updateSleepConfig,
 } from "./api";
 import { request } from "../utils/request";
 
@@ -86,6 +88,65 @@ describe("learning stats daily request", () => {
       method: "PUT",
       url: "/devices/order",
       data: { orderedDeviceIds: ["dev-002", "dev-001"] },
+    });
+  });
+});
+
+describe("sleep config contract (backend: /sleep-configs/device/:deviceId)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequest.mockResolvedValue({ code: 0, message: "success", data: null });
+  });
+
+  it("reads the sleep config by device id", async () => {
+    await getSleepConfig("dev-local-001");
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/sleep-configs/device/dev-local-001",
+    });
+  });
+
+  it("toggles the master switch with a partial patch", async () => {
+    await updateSleepConfig("dev-local-001", { enabled: true });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/sleep-configs/device/dev-local-001",
+      data: { enabled: true },
+    });
+  });
+
+  it("sends both mode and minutes for a custom duration", async () => {
+    await updateSleepConfig("dev-local-001", {
+      durationMode: "custom",
+      durationMinutes: 20,
+    });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/sleep-configs/device/dev-local-001",
+      data: { durationMode: "custom", durationMinutes: 20 },
+    });
+  });
+
+  it("omits durationMinutes when switching back to default", async () => {
+    await updateSleepConfig("dev-local-001", { durationMode: "default" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/sleep-configs/device/dev-local-001",
+      data: { durationMode: "default" },
+    });
+  });
+
+  it("sends the sleep time in HH:mm", async () => {
+    await updateSleepConfig("dev-local-001", { sleepTime: "21:30" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/sleep-configs/device/dev-local-001",
+      data: { sleepTime: "21:30" },
     });
   });
 });

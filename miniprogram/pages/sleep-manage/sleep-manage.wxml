@@ -16,8 +16,8 @@
     </view>
   </view>
 
-  <!-- 三张配置卡片 -->
-  <view class="card-row">
+  <!-- 三张配置卡片（总开关关闭时隐藏，设置保留） -->
+  <view class="card-row" wx:if="{{ enabled }}">
     <view class="cfg-card">
       <view class="cfg-head">
         <view class="cfg-icon cfg-icon-duration">🌙</view>
@@ -46,8 +46,8 @@
     </view>
   </view>
 
-  <!-- 强制哄睡 -->
-  <view class="force-card">
+  <!-- 强制哄睡（总开关关闭时隐藏，设置保留） -->
+  <view class="force-card" wx:if="{{ enabled }}">
     <view class="force-head">
       <view class="force-left">
         <view class="cfg-icon cfg-icon-duration force-icon">🌙</view>

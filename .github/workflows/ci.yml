@@ -25,6 +25,9 @@ jobs:
       - name: 百分比分配契约测试
         run: npm test -- --runInBand miniprogram/pages/learning-data/learning-data.utils.spec.ts
 
+      - name: 接口契约集成测试（哄睡配置等）
+        run: npm test -- --runInBand miniprogram/api/api.spec.ts
+
       - name: 完整单元测试
         run: npm test -- --runInBand
 
