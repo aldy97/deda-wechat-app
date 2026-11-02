@@ -11,5 +11,5 @@ export const CANVAS_MODE_COLORS = [
 export const CANVAS_UI_COLORS = {
   surface: "#ffffff",
   text: "#323233",
-  primary: "#1A82FE",
+  primary: "#1a82fe",
 } as const;

@@ -1,3 +1,4 @@
 npm run guard:no-js
+npm run palette:check
 npx lint-staged
 npm run pre-commit
