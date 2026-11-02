@@ -43,6 +43,12 @@ page {
   --color-warning-soft: rgba(255, 151, 106, 0.1);
   --color-neutral-soft: rgba(150, 151, 153, 0.1);
 
+  /* 功能模式色的柔和底色（图标圆底等场景） */
+  --color-mode-2-soft: rgba(112, 214, 178, 0.16);
+  --color-mode-3-soft: rgba(255, 209, 102, 0.25);
+  --color-mode-4-soft: rgba(255, 158, 181, 0.18);
+  --color-mode-5-soft: rgba(179, 157, 219, 0.18);
+
   /* 家长日报功能分布：明亮柔和的天空蓝、薄荷绿、向阳黄、樱花粉、薰衣草紫与蜜桃橙 */
   --color-mode-1: #6ec6ff;
   --color-mode-2: #70d6b2;

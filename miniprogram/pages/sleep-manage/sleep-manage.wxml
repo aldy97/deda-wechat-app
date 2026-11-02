@@ -1,0 +1,214 @@
+<view class="container sleep-manage-page">
+  <!-- 顶部：总开关 -->
+  <view class="header-card">
+    <view class="header-left">
+      <text class="header-icon">🌙</text>
+      <text class="header-title">哄睡管理</text>
+    </view>
+    <view class="header-right">
+      <text class="header-status">{{ enabled ? '已开启' : '已关闭' }}</text>
+      <van-switch
+        checked="{{ enabled }}"
+        size="28px"
+        custom-class="sleep-switch"
+        bind:change="onToggleEnabled"
+      />
+    </view>
+  </view>
+
+  <!-- 三张配置卡片 -->
+  <view class="card-row">
+    <view class="cfg-card">
+      <view class="cfg-head">
+        <view class="cfg-icon cfg-icon-duration">🌙</view>
+        <text class="cfg-label cfg-label-duration">时长</text>
+      </view>
+      <text class="cfg-value">{{ duration }}</text>
+      <view class="cfg-btn cfg-btn-duration" bind:tap="onSetDuration">设置时长</view>
+    </view>
+
+    <view class="cfg-card">
+      <view class="cfg-head">
+        <view class="cfg-icon cfg-icon-content">✨</view>
+        <text class="cfg-label cfg-label-content">内容</text>
+      </view>
+      <text class="cfg-value">{{ content }}</text>
+      <view class="cfg-btn cfg-btn-content" bind:tap="onChooseContent">选择内容</view>
+    </view>
+
+    <view class="cfg-card">
+      <view class="cfg-head">
+        <view class="cfg-icon cfg-icon-time">🕐</view>
+        <text class="cfg-label cfg-label-time">时间</text>
+      </view>
+      <text class="cfg-value">{{ sleepTime }}</text>
+      <view class="cfg-btn cfg-btn-time" bind:tap="onSetTime">修改时间</view>
+    </view>
+  </view>
+
+  <!-- 强制哄睡 -->
+  <view class="force-card">
+    <view class="force-head">
+      <view class="force-left">
+        <view class="cfg-icon cfg-icon-duration force-icon">🌙</view>
+        <text class="force-title">强制哄睡</text>
+      </view>
+      <van-switch
+        checked="{{ forceSleep }}"
+        size="26px"
+        custom-class="sleep-switch"
+        bind:change="onToggleForce"
+      />
+    </view>
+    <text class="force-desc">开启后，到达设定时间，不能再继续聊天。哄睡过程中不能叫Elly打断（仅可以通过按键结束）。</text>
+  </view>
+
+  <!-- 如何进入哄睡模式（可展开） -->
+  <view class="guide-card">
+    <view class="guide-header" bind:tap="onToggleGuide">
+      <view class="guide-left">
+        <view class="guide-icon">🚪</view>
+        <text class="guide-title">如何进入哄睡模式?</text>
+      </view>
+      <van-icon
+        name="{{ guideOpen ? 'arrow-down' : 'arrow' }}"
+        custom-class="guide-arrow"
+      />
+    </view>
+
+    <view class="guide-body" wx:if="{{ guideOpen }}">
+      <!-- 方式1：语音指令 -->
+      <view class="guide-way">
+        <view class="way-head">
+          <text class="way-badge">方式1</text>
+          <text class="way-title">语音指令进入</text>
+        </view>
+        <text class="way-desc">直接对Elly说出哄睡的需求</text>
+        <view class="chip-row">
+          <text class="chip">“进入哄睡模式”</text>
+          <text class="chip">“陪我睡觉”</text>
+        </view>
+        <text class="way-desc">你可以指定Elly哄睡的方式：故事或儿歌</text>
+        <view class="chip-row">
+          <text class="chip">“我要听睡前故事”</text>
+          <text class="chip">“我要听睡前儿歌”</text>
+        </view>
+      </view>
+
+      <!-- 方式2：定时进入 -->
+      <view class="guide-way">
+        <view class="way-head">
+          <text class="way-badge">方式2</text>
+          <text class="way-title">定时进入</text>
+        </view>
+        <text class="way-desc">每晚设定时间之后听<text class="way-desc-hl">儿歌</text>和<text class="way-desc-hl">故事</text>自动进入哄睡模式</text>
+        <view class="way-time-row">
+          <view class="way-time-left">
+            <text class="way-time-icon">🕐</text>
+            <text class="way-time">{{ sleepTime }}</text>
+          </view>
+          <view class="way-modify" bind:tap="onSetTime">
+            <text class="way-modify-text">修改</text>
+            <van-icon name="arrow" custom-class="way-modify-arrow" />
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 时间选择弹窗 -->
+  <van-popup
+    show="{{ showTimePicker }}"
+    position="bottom"
+    round
+    bind:close="onCancelTime"
+  >
+    <view class="time-picker">
+      <van-datetime-picker
+        type="time"
+        value="{{ tempTime }}"
+        show-toolbar="{{ false }}"
+        min-hour="{{ 0 }}"
+        max-hour="{{ 23 }}"
+        bind:change="onTimeChange"
+      />
+      <view class="picker-actions">
+        <van-button
+          custom-class="picker-btn picker-btn-cancel"
+          bind:click="onCancelTime"
+        >取消</van-button>
+        <van-button
+          type="primary"
+          custom-class="picker-btn picker-btn-confirm"
+          bind:click="onConfirmTime"
+        >确定</van-button>
+      </view>
+    </view>
+  </van-popup>
+
+  <!-- 哄睡时长弹窗 -->
+  <van-popup
+    show="{{ showDurationPicker }}"
+    round
+    closeable
+    close-icon-position="top-right"
+    custom-class="duration-popup"
+    bind:close="onCancelDuration"
+  >
+    <view class="duration-panel">
+      <text class="duration-title">哄睡时长</text>
+
+      <view class="duration-options">
+        <view
+          class="duration-option {{ tempDurationMode === 'default' ? 'active' : '' }}"
+          data-mode="default"
+          bind:tap="onSelectDurationMode"
+        >
+          <text class="duration-option-icon">✨</text>
+          <text class="duration-option-label">默认</text>
+          <view class="duration-radio {{ tempDurationMode === 'default' ? 'checked' : '' }}">
+            <text wx:if="{{ tempDurationMode === 'default' }}" class="duration-radio-check">✓</text>
+          </view>
+        </view>
+        <view
+          class="duration-option {{ tempDurationMode === 'custom' ? 'active' : '' }}"
+          data-mode="custom"
+          bind:tap="onSelectDurationMode"
+        >
+          <text class="duration-option-icon">🎚️</text>
+          <text class="duration-option-label">手动设置</text>
+          <view class="duration-radio {{ tempDurationMode === 'custom' ? 'checked' : '' }}">
+            <text wx:if="{{ tempDurationMode === 'custom' }}" class="duration-radio-check">✓</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 手动设置：时长滑杆 -->
+      <view class="duration-slider-wrap" wx:if="{{ tempDurationMode === 'custom' }}">
+        <van-slider
+          value="{{ tempDurationMinutes }}"
+          min="{{ 10 }}"
+          max="{{ 30 }}"
+          step="{{ 5 }}"
+          custom-class="duration-slider"
+          bind:change="onDurationSlideChange"
+        />
+        <view class="duration-scale">
+          <text
+            wx:for="{{ [10, 15, 20, 25, 30] }}"
+            wx:key="*this"
+            class="duration-scale-item {{ tempDurationMinutes === item ? 'active' : '' }}"
+          >{{ item }}min</text>
+        </view>
+      </view>
+
+      <!-- 提示 -->
+      <view class="duration-note">
+        <text wx:if="{{ tempDurationMode === 'default' }}">ℹ️ 音乐哄睡时播放8首歌曲，故事哄睡时播放6个故事，播放完毕后有一首助眠音乐</text>
+        <text wx:else>✦ 注：不同歌曲与故事时长不一，为保证播放完整性，上述时间会有一些误差哦</text>
+      </view>
+
+      <view class="duration-confirm" bind:tap="onConfirmDuration">确定</view>
+    </view>
+  </van-popup>
+</view>

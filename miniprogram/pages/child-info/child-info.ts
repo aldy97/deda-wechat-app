@@ -52,4 +52,13 @@ Page({
       this.setData({ loading: false });
     }
   },
+
+  /**
+   * 跳转哄睡管理页
+   */
+  onGoSleepManage() {
+    wx.navigateTo({
+      url: `/pages/sleep-manage/sleep-manage?id=${this.data.deviceId}`,
+    });
+  },
 });

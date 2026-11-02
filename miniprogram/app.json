@@ -9,6 +9,7 @@
     "pages/device-bind/device-bind",
     "pages/about-device/about-device",
     "pages/owner-info/owner-info",
+    "pages/sleep-manage/sleep-manage",
     "pages/user-manual/user-manual",
     "pages/switch-mode/switch-mode",
     "pages/choose-free-chat-mode/choose-free-chat-mode",
