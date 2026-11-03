@@ -35,7 +35,10 @@ Page({
   onLoad(options) {
     const deviceId = options?.id || "";
     this.setData({ deviceId });
-    this.fetchOwnerInfo(deviceId);
+  },
+
+  onReady() {
+    return this.fetchOwnerInfo(this.data.deviceId);
   },
 
   /**

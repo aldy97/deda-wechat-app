@@ -83,6 +83,7 @@ describe("learning-data parent report page", () => {
 
   it("loads daily trend, rolling mode usage and parent report independently", async () => {
     await page.onLoad();
+    await page.onReady();
 
     expect(mockApi.ensureAuthToken).toHaveBeenCalled();
     expect(mockApi.getLearningStatsDaily).toHaveBeenCalledWith("d1", 7, {
@@ -151,7 +152,8 @@ describe("learning-data parent report page", () => {
       }),
     );
 
-    const loading = page.onLoad();
+    page.onLoad();
+    const loading = page.onReady();
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
@@ -201,6 +203,7 @@ describe("learning-data parent report page", () => {
 
     try {
       await page.onLoad();
+      await page.onReady();
       expect(query.exec).toHaveBeenCalledTimes(1);
       expect(page.pieContext).toBeNull();
 
@@ -220,6 +223,7 @@ describe("learning-data parent report page", () => {
 
   it("shows the real report generation time in the usage help modal", async () => {
     await page.onLoad();
+    await page.onReady();
 
     page.onUsageHelp();
 
@@ -236,6 +240,7 @@ describe("learning-data parent report page", () => {
       data: { ...parentReport("d1"), generatedAt: null },
     });
     await page.onLoad();
+    await page.onReady();
 
     page.onUsageHelp();
 
@@ -262,6 +267,7 @@ describe("learning-data parent report page", () => {
     };
     harness.wx.createSelectorQuery.mockReturnValue(query);
     await page.onLoad();
+    await page.onReady();
     query.exec.mockClear();
     expect(page.data.modeUsage).toHaveLength(2);
     expect(page.pieSegments).toEqual([]);
@@ -306,6 +312,7 @@ describe("learning-data parent report page", () => {
     mockApi.getDeviceList.mockResolvedValue({ data: [] });
 
     await page.onLoad();
+    await page.onReady();
 
     expect(mockApi.getLearningStatsDaily).not.toHaveBeenCalled();
     expect(mockApi.getLearningStatsModeUsage).not.toHaveBeenCalled();
@@ -319,6 +326,7 @@ describe("learning-data parent report page", () => {
     mockApi.getDeviceList.mockRejectedValue(new Error("offline"));
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.deviceError).toBe(true);
     expect(page.data.initialized).toBe(true);
@@ -328,6 +336,7 @@ describe("learning-data parent report page", () => {
 
   it("opens and closes the child dropdown at the switch control", async () => {
     await page.onLoad();
+    await page.onReady();
 
     page.onDeviceSwitch();
     expect(page.data.deviceDropdownVisible).toBe(true);
@@ -338,6 +347,7 @@ describe("learning-data parent report page", () => {
 
   it("selects a child from the dropdown and closes it before reloading", async () => {
     await page.onLoad();
+    await page.onReady();
     page.onDeviceSwitch();
     jest.clearAllMocks();
 
@@ -356,6 +366,7 @@ describe("learning-data parent report page", () => {
 
   it("keeps the current charts visible while the next child is loading", async () => {
     await page.onLoad();
+    await page.onReady();
     const previousTrend = page.data.trendBars;
     const previousUsage = page.data.modeUsage;
     let resolveDaily!: (value: any) => void;
@@ -393,6 +404,7 @@ describe("learning-data parent report page", () => {
 
   it("ignores stale chart responses after rapid child switches", async () => {
     await page.onLoad();
+    await page.onReady();
     const pendingDaily = new Map<string, (value: any) => void>();
     const pendingReports = new Map<string, (value: any) => void>();
     const pendingUsage = new Map<string, (value: any) => void>();
@@ -447,6 +459,7 @@ describe("learning-data parent report page", () => {
 
   it("loads the selected child report after switching device", async () => {
     await page.onLoad();
+    await page.onReady();
     jest.clearAllMocks();
 
     await page.selectDevice("d2");
@@ -474,6 +487,7 @@ describe("learning-data parent report page", () => {
     });
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.hasSummaryContent).toBe(false);
     expect(page.data.hasReportActivity).toBe(false);
@@ -485,6 +499,7 @@ describe("learning-data parent report page", () => {
     });
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.hasReportActivity).toBe(true);
     expect(page.data.modeUsage).toHaveLength(2);
@@ -505,6 +520,7 @@ describe("learning-data parent report page", () => {
     });
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.hasSummaryContent).toBe(true);
     expect(page.data.summary.expressionObservation).toBe("只保留表达观察。");
@@ -514,6 +530,7 @@ describe("learning-data parent report page", () => {
     mockApi.getParentReport.mockRejectedValue(new Error("timeout"));
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.dailyError).toBe(false);
     expect(page.data.trendBars).toHaveLength(2);
@@ -527,6 +544,7 @@ describe("learning-data parent report page", () => {
     mockApi.getLearningStatsDaily.mockRejectedValue(new Error("timeout"));
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.dailyError).toBe(true);
     expect(page.data.reportError).toBe(false);
@@ -539,6 +557,7 @@ describe("learning-data parent report page", () => {
     );
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.hasSummaryContent).toBe(true);
     expect(page.data.reportError).toBe(false);
@@ -572,6 +591,7 @@ describe("learning-data parent report page", () => {
     });
 
     await page.onLoad();
+    await page.onReady();
 
     expect(page.data.usageActualDays).toBe(0);
     expect(page.data.modeUsage).toEqual([]);
@@ -582,6 +602,7 @@ describe("learning-data parent report page", () => {
 
   it("submits boolean feedback with deviceId and reportDate", async () => {
     await page.onLoad();
+    await page.onReady();
 
     await page.onFeedback({ currentTarget: { dataset: { useful: true } } });
 
@@ -595,6 +616,7 @@ describe("learning-data parent report page", () => {
 
   it("keeps the unanswered state and report content when submission fails", async () => {
     await page.onLoad();
+    await page.onReady();
     const originalSummary = page.data.summary;
     mockApi.submitParentReportFeedback.mockRejectedValue(new Error("HTTP 500"));
 
@@ -616,6 +638,7 @@ describe("learning-data parent report page", () => {
       data: { ...parentReport("d1"), feedback: "not_useful" },
     });
     await page.onLoad();
+    await page.onReady();
 
     await page.onFeedback({ currentTarget: { dataset: { useful: true } } });
 
@@ -626,6 +649,7 @@ describe("learning-data parent report page", () => {
 
   it("allows retrying feedback after a failed submission", async () => {
     await page.onLoad();
+    await page.onReady();
     mockApi.submitParentReportFeedback.mockRejectedValueOnce(
       new Error("HTTP 500"),
     );
@@ -689,6 +713,7 @@ describe("learning-data parent report page", () => {
 
   it("prevents duplicate feedback submission", async () => {
     await page.onLoad();
+    await page.onReady();
     let resolveFeedback!: (value: any) => void;
     mockApi.submitParentReportFeedback.mockImplementation(
       () =>

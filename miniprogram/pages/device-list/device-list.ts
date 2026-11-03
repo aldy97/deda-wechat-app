@@ -48,18 +48,27 @@ Page({
     devices: [] as DeviceDisplayItem[],
   },
 
-  onLoad() {
+  /** 首次加载是否已发起（onShow 每次触发，仅在首次之后才重复拉取） */
+  hasInitialLoaded: false,
+
+  onLoad() {},
+
+  onReady() {
     this.loadDeviceList();
   },
 
   onShow() {
-    this.loadDeviceList();
+    // 真机首个 onShow 早于 onReady，跳过避免双请求；之后每次回前台刷新
+    if (this.hasInitialLoaded) {
+      this.loadDeviceList();
+    }
   },
 
   /**
    * 加载设备列表：优先真实绑定，空则自动绑定 DEV001
    */
   async loadDeviceList() {
+    this.hasInitialLoaded = true;
     this.setData({ loading: true });
 
     try {

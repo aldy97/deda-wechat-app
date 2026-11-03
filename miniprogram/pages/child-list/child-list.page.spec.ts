@@ -37,6 +37,8 @@ describe("child list page", () => {
 
   it("loads children from devices and navigates with deviceId", async () => {
     await page.onLoad();
+    page.onReady();
+    await page.initialLoad;
 
     expect(page.data.children).toMatchObject([
       { deviceId: "dev-001", name: "乐乐" },
@@ -53,6 +55,8 @@ describe("child list page", () => {
     mockApi.getDeviceList.mockRejectedValue(new Error("offline"));
 
     await page.onLoad();
+    page.onReady();
+    await page.initialLoad;
 
     expect(page.data.loadError).toBe(true);
     expect(page.data.loading).toBe(false);
@@ -61,6 +65,8 @@ describe("child list page", () => {
 
   it("puts the complete order after dragging the first child down", async () => {
     await page.onLoad();
+    page.onReady();
+    await page.initialLoad;
     page.onDragStart({
       currentTarget: { dataset: { index: 0 } },
       touches: [{ clientY: 100 }],
@@ -82,6 +88,8 @@ describe("child list page", () => {
   it("restores the previous order when saving fails", async () => {
     mockApi.updateDeviceOrder.mockRejectedValue(new Error("save failed"));
     await page.onLoad();
+    page.onReady();
+    await page.initialLoad;
     page.onDragStart({
       currentTarget: { dataset: { index: 0 } },
       touches: [{ clientY: 100 }],

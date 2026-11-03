@@ -69,6 +69,27 @@ const MODE_COLORS = [
   "var(--color-mode-6)",
 ];
 
+/** 设备列表缓存键（与 device-list / device-setting 保持一致） */
+const DEVICE_LIST_CACHE_KEY = "device_list_cache";
+/** 报告数据缓存前缀，key 形如 learning_report_cache_<deviceId>_<YYYY-MM-DD> */
+const REPORT_CACHE_PREFIX = "learning_report_cache";
+/** 报告缓存保留时长：7 天 */
+const REPORT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+
+/** 报告页本地缓存内容（用于冷启动首帧直出） */
+interface ReportCache {
+  cachedAt: number;
+  trendBars: TrendBar[];
+  modeUsage: ModeUsageView[];
+  usageActualDays: number;
+  durationMinutes: number;
+  summary: ParentReportSummary | null;
+  hasSummaryContent: boolean;
+  hasReportActivity: boolean;
+  feedback: ParentReport["feedback"];
+  reportGeneratedAt: string;
+}
+
 /**
  * “更懂TA”家长日报页：只保留使用时长、功能使用和当日总结。
  * 不展示学习评分、主题分布、单元进度、学习动态或健康度。
@@ -84,6 +105,10 @@ Page({
   pendingPieItems: null as ModeUsageView[] | null,
   modeColorIndexes: {} as Record<string, number>,
   nextModeColorIndex: 0,
+  /** 缓存预热命中的设备 id（空表示无缓存冷启动） */
+  warmedDeviceId: "",
+  /** 首轮网络加载是否已由 onReady 启动（onShow 刷新守卫） */
+  networkStarted: false,
 
   data: {
     initialized: false,
@@ -114,7 +139,7 @@ Page({
     feedback: null as ParentReport["feedback"],
   },
 
-  async onLoad() {
+  onLoad() {
     this.modeColorIndexes = {};
     this.nextModeColorIndex = 0;
     const yesterday = new Date();
@@ -122,11 +147,13 @@ Page({
     this.setData({
       reportDate: formatDate(yesterday, "YYYY-MM-DD"),
     });
-    await this.initialize();
+    // 冷启动首帧：同步读缓存直出；网络请求统一在 onReady（首帧渲染完成后）启动，
+    // 保证骨架屏/缓存内容先可见，不依赖“网络比渲染慢”的偶然时序。
+    this.warmupFromCache();
   },
 
   onReady() {
-    this.prepareUsagePieCanvas();
+    return this.initialize();
   },
 
   onUnload() {
@@ -134,7 +161,8 @@ Page({
   },
 
   async onShow() {
-    if (this.data.initialized && !this.data.loadingDevices) {
+    // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新
+    if (this.networkStarted && !this.data.loadingDevices) {
       await this.loadReportData();
     }
   },
@@ -148,13 +176,41 @@ Page({
     wx.stopPullDownRefresh();
   },
 
+  /**
+   * 冷启动缓存预热（同步）：首帧直接渲染上次的设备与报告数据。
+   */
+  warmupFromCache() {
+    this.cleanExpiredReportCache();
+    const cachedDevices = this.readDeviceListCache();
+    const cachedSelected = cachedDevices[0];
+    if (!cachedSelected) return;
+    this.warmedDeviceId = cachedSelected.id;
+    this.setData({
+      devices: cachedDevices,
+      selectedDeviceId: cachedSelected.id,
+      selectedDeviceName: this.getDeviceName(cachedSelected),
+      initialized: true,
+      loadingDevices: false,
+      deviceError: false,
+    });
+    this.restoreReportCache(cachedSelected.id);
+  },
+
   async initialize() {
-    this.setData({ loadingDevices: true, deviceError: false });
+    this.networkStarted = true;
+    const warmed = !!this.warmedDeviceId;
+    // 无缓存冷启动才展示整页骨架；有缓存时静默后台刷新
+    if (!warmed) {
+      this.setData({ loadingDevices: true, deviceError: false });
+    }
     try {
       await ensureAuthToken();
       const res = await getDeviceList();
       const devices = res.data || [];
-      const selected = devices[0];
+      const selected =
+        devices.find((item) => item.id === this.data.selectedDeviceId) ||
+        devices[0];
+      this.writeDeviceListCache(devices);
       this.setData({
         devices,
         selectedDeviceId: selected?.id || "",
@@ -162,6 +218,10 @@ Page({
         initialized: true,
       });
       if (selected) {
+        if (selected.id !== this.warmedDeviceId) {
+          // 首次加载，或缓存中的首选设备已失效
+          this.restoreReportCache(selected.id);
+        }
         await this.loadReportData();
       } else {
         this.setData({
@@ -171,18 +231,132 @@ Page({
         });
       }
     } catch (error) {
-      this.setData({
-        initialized: true,
-        deviceError: true,
-        devices: [],
-        loadingDaily: false,
-        loadingReport: false,
-        loadingUsage: false,
+      if (!warmed) {
+        this.setData({
+          initialized: true,
+          deviceError: true,
+          devices: [],
+          loadingDaily: false,
+          loadingReport: false,
+          loadingUsage: false,
+        });
+      }
+      wx.showToast({
+        title: warmed ? "设备列表刷新失败" : "设备加载失败",
+        icon: "none",
       });
-      wx.showToast({ title: "设备加载失败", icon: "none" });
     } finally {
       this.setData({ loadingDevices: false });
     }
+  },
+
+  /**
+   * 读取设备列表缓存（device-list / device-setting 共用同一键）
+   */
+  readDeviceListCache(): Device[] {
+    try {
+      return (
+        (wx.getStorageSync(DEVICE_LIST_CACHE_KEY) as Device[] | undefined) || []
+      );
+    } catch (error) {
+      return [];
+    }
+  },
+
+  /**
+   * 写入设备列表缓存
+   */
+  writeDeviceListCache(devices: Device[]) {
+    try {
+      wx.setStorageSync(DEVICE_LIST_CACHE_KEY, devices);
+    } catch (error) {
+      console.warn("[learning-data] 写入设备列表缓存失败", error);
+    }
+  },
+
+  /**
+   * 恢复报告数据缓存用于首帧直出；返回是否有可用缓存
+   */
+  restoreReportCache(deviceId: string): boolean {
+    try {
+      const cache = wx.getStorageSync(this.reportCacheKey(deviceId)) as
+        ReportCache | undefined;
+      if (!cache || Date.now() - cache.cachedAt > REPORT_CACHE_TTL) {
+        return false;
+      }
+      const modeUsage = cache.modeUsage || [];
+      this.setData(
+        {
+          trendBars: cache.trendBars || [],
+          modeUsage,
+          usageActualDays: cache.usageActualDays || 0,
+          usagePieVisible: modeUsage.length > 0,
+          durationMinutes: cache.durationMinutes || 0,
+          summary: cache.summary || null,
+          hasSummaryContent: !!cache.hasSummaryContent,
+          hasReportActivity: !!cache.hasReportActivity,
+          feedback: cache.feedback || null,
+          reportGeneratedAt: cache.reportGeneratedAt || "",
+        },
+        () => {
+          if (modeUsage.length > 0) {
+            this.requestUsagePieAnimation(modeUsage);
+          }
+        },
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  /**
+   * 将当前展示数据写入缓存（按设备 + 报告日期隔离）
+   */
+  persistReportCache() {
+    const deviceId = this.data.selectedDeviceId;
+    if (!deviceId) return;
+    try {
+      wx.setStorageSync(this.reportCacheKey(deviceId), {
+        cachedAt: Date.now(),
+        trendBars: this.data.trendBars,
+        modeUsage: this.data.modeUsage,
+        usageActualDays: this.data.usageActualDays,
+        durationMinutes: this.data.durationMinutes,
+        summary: this.data.summary,
+        hasSummaryContent: this.data.hasSummaryContent,
+        hasReportActivity: this.data.hasReportActivity,
+        feedback: this.data.feedback,
+        reportGeneratedAt: this.data.reportGeneratedAt,
+      } as ReportCache);
+    } catch (error) {
+      console.warn("[learning-data] 写入报告缓存失败", error);
+    }
+  },
+
+  /**
+   * 清理过期的报告缓存
+   */
+  cleanExpiredReportCache() {
+    try {
+      const info = wx.getStorageInfoSync();
+      for (const key of info.keys) {
+        if (!key.startsWith(REPORT_CACHE_PREFIX)) continue;
+        const cache = wx.getStorageSync(key) as ReportCache | undefined;
+        if (
+          !cache?.cachedAt ||
+          Date.now() - cache.cachedAt > REPORT_CACHE_TTL
+        ) {
+          wx.removeStorageSync(key);
+        }
+      }
+    } catch (error) {
+      // 忽略缓存清理失败
+    }
+  },
+
+  reportCacheKey(deviceId: string): string {
+    return `${REPORT_CACHE_PREFIX}_${deviceId}_${this.data.reportDate}`;
   },
 
   getDeviceName(device?: Device): string {
@@ -221,6 +395,7 @@ Page({
       const res = await getLearningStatsDaily(deviceId, 7, { scope: "all" });
       if (!this.isCurrentReportRequest(deviceId, requestId)) return;
       this.setData({ trendBars: this.buildTrendBars(res.data || []) });
+      this.persistReportCache();
     } catch (error) {
       if (!this.isCurrentReportRequest(deviceId, requestId)) return;
       this.setData({ dailyError: true });
@@ -228,15 +403,19 @@ Page({
     } finally {
       if (this.isCurrentReportRequest(deviceId, requestId)) {
         this.setData({ loadingDaily: false }, () => {
-          if (
-            !this.data.loadingReport &&
-            !this.data.loadingUsage &&
-            this.pendingPieItems
-          ) {
-            this.requestUsagePieAnimation(this.pendingPieItems);
-          }
+          // 饼图只依赖上方时长卡的布局稳定，见 requestUsagePieAnimation
+          this.maybeFlushPendingPie();
         });
       }
+    }
+  },
+
+  /**
+   * 饼图上方布局稳定（时长卡加载结束）后，补画待渲染的饼图
+   */
+  maybeFlushPendingPie() {
+    if (!this.data.loadingDaily && this.pendingPieItems) {
+      this.requestUsagePieAnimation(this.pendingPieItems);
     }
   },
 
@@ -296,21 +475,14 @@ Page({
         hasReportActivity: durationMinutes > 0 || dailyModeCount > 0,
         feedback: report.feedback,
       });
+      this.persistReportCache();
     } catch (error) {
       if (!this.isCurrentReportRequest(deviceId, requestId)) return;
       this.setData({ reportError: true });
       wx.showToast({ title: "家长报告加载失败", icon: "none" });
     } finally {
       if (this.isCurrentReportRequest(deviceId, requestId)) {
-        this.setData({ loadingReport: false }, () => {
-          if (
-            !this.data.loadingDaily &&
-            !this.data.loadingUsage &&
-            this.pendingPieItems
-          ) {
-            this.requestUsagePieAnimation(this.pendingPieItems);
-          }
-        });
+        this.setData({ loadingReport: false });
       }
     }
   },
@@ -335,21 +507,14 @@ Page({
         },
         () => this.requestUsagePieAnimation(modeUsage),
       );
+      this.persistReportCache();
     } catch (error) {
       if (!this.isCurrentReportRequest(deviceId, requestId)) return;
       this.setData({ activeModeUsage: null, usageError: true });
       wx.showToast({ title: "功能使用数据加载失败", icon: "none" });
     } finally {
       if (this.isCurrentReportRequest(deviceId, requestId)) {
-        this.setData({ loadingUsage: false }, () => {
-          if (
-            !this.data.loadingDaily &&
-            !this.data.loadingReport &&
-            this.pendingPieItems
-          ) {
-            this.requestUsagePieAnimation(this.pendingPieItems);
-          }
-        });
+        this.setData({ loadingUsage: false });
       }
     }
   },
@@ -433,12 +598,9 @@ Page({
 
   requestUsagePieAnimation(items: ModeUsageView[]) {
     this.pendingPieItems = items;
-    // 等各模块完成布局，避免原生 Canvas 图层错位。
-    if (
-      this.data.loadingDaily ||
-      this.data.loadingReport ||
-      this.data.loadingUsage
-    ) {
+    // 只需等饼图上方的「每日使用时长」卡完成布局，避免原生 Canvas 图层错位；
+    // 报告与总结卡位于饼图下方，不再阻塞渲染。
+    if (this.data.loadingDaily) {
       return;
     }
     if (!this.pieContext) {
@@ -684,6 +846,8 @@ Page({
       loadingReport: true,
       loadingUsage: true,
     });
+    // 切换设备时优先展示该设备的缓存数据
+    this.restoreReportCache(deviceId);
     await this.loadReportData();
   },
 

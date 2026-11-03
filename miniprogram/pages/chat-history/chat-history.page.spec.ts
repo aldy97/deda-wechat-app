@@ -41,6 +41,7 @@ describe("chat-history page wiring", () => {
     });
 
     await page.onLoad({ id: "dev-001" });
+    await page.onReady();
 
     // 回归锁：必须带 unit-2 过滤,否则 unit-3 的消息会混进来
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
@@ -67,6 +68,7 @@ describe("chat-history page wiring", () => {
       textbookId: "book-b",
       unitId: "unit-9",
     });
+    await page.onReady();
 
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
       expect.objectContaining({ textbookId: "book-b", unitId: "unit-9" }),
@@ -85,6 +87,7 @@ describe("chat-history page wiring", () => {
     });
 
     await page.onLoad({ id: "dev-001" });
+    await page.onReady();
 
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
       expect.objectContaining({ conversationModeKey: "free_chat_roleplay" }),
@@ -132,6 +135,7 @@ describe("chat-history page wiring", () => {
       });
 
     await page.onLoad({ id: "dev-001" });
+    await page.onReady();
     expect(page.data.records.length).toBe(1);
     expect(page.data.hasMore).toBe(true);
 
@@ -182,6 +186,7 @@ describe("chat-history page wiring", () => {
         });
 
       await page.onLoad({ id: "dev-001" });
+      await page.onReady();
       expect(page.data.records.length).toBe(1);
 
       const pending = page.onLoadMore();

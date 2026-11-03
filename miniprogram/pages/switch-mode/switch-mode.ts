@@ -34,6 +34,9 @@ Page({
   onLoad(options) {
     const deviceId = options?.id || "";
     this.setData({ deviceId });
+  },
+
+  onReady() {
     this.loadCategories();
     this.loadCurrentConfig();
   },

@@ -32,8 +32,15 @@ Page({
 
   dragState: null as DragState | null,
 
-  async onLoad() {
-    await this.loadChildren();
+  /** 首屏加载 promise（onReady 不能 return Promise，会破坏 Page 类型推断；测试用它 await） */
+  initialLoad: null as Promise<void> | null,
+
+  onLoad() {
+    // 网络请求统一放到 onReady（首帧渲染完成后）启动
+  },
+
+  onReady() {
+    this.initialLoad = this.loadChildren();
   },
 
   async loadChildren() {

@@ -20,6 +20,7 @@
     "pages/child-info/child-info",
     "pages/feedback/feedback"
   ],
+  "lazyCodeLoading": "requiredComponents",
   "window": {
     "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#ffffff",

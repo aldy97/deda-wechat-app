@@ -7,7 +7,6 @@
 
 .info-card,
 .sleep-card,
-.partners-card,
 .state-card {
   background-color: var(--color-surface);
   border-radius: 24rpx;
@@ -84,8 +83,7 @@
   background-color: var(--color-placeholder);
 }
 
-.sleep-card,
-.partners-card {
+.sleep-card {
   padding: 32rpx;
   margin-top: 28rpx;
 }
@@ -107,22 +105,6 @@
   margin-top: 12rpx;
   font-size: 28rpx;
   color: var(--color-body);
-}
-
-.partner-empty {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  margin-top: 28rpx;
-  color: var(--color-secondary);
-  font-size: 28rpx;
-}
-
-.partner-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background-color: var(--color-placeholder);
 }
 
 .state-card {

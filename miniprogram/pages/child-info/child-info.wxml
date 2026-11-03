@@ -46,13 +46,5 @@
       </view>
       <text class="section-description">哄睡时间、哄睡时长、哄睡模式等</text>
     </view>
-
-    <view class="partners-card">
-      <text class="section-title">TA的伙伴</text>
-      <view class="partner-empty">
-        <view class="partner-avatar"></view>
-        <text>暂未添加伙伴</text>
-      </view>
-    </view>
   </block>
 </view>
