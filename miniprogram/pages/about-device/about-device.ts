@@ -1,4 +1,4 @@
-import { getDeviceAboutInfo, DeviceAboutInfo } from '../../api/api';
+import { getDeviceAboutInfo, DeviceAboutInfo } from "../../api/api";
 
 /**
  * 关于设备页
@@ -7,7 +7,7 @@ import { getDeviceAboutInfo, DeviceAboutInfo } from '../../api/api';
  */
 Page({
   data: {
-    deviceId: '',
+    deviceId: "",
     loading: true,
     info: {} as DeviceAboutInfo,
     /** 复制成功提示显示状态 */
@@ -18,9 +18,12 @@ Page({
   copyToastTimer: null as number | null,
 
   onLoad(options) {
-    const deviceId = options?.id || '';
+    const deviceId = options?.id || "";
     this.setData({ deviceId });
-    this.fetchDeviceAboutInfo(deviceId);
+  },
+
+  onReady() {
+    return this.fetchDeviceAboutInfo(this.data.deviceId);
   },
 
   onUnload() {
@@ -38,7 +41,7 @@ Page({
       const res = await getDeviceAboutInfo(deviceId);
       this.setData({ info: res.data });
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: "加载失败", icon: "none" });
     } finally {
       this.setData({ loading: false });
     }
@@ -57,7 +60,7 @@ Page({
         this.showCopySuccessToast();
       },
       fail: () => {
-        wx.showToast({ title: '复制失败', icon: 'none' });
+        wx.showToast({ title: "复制失败", icon: "none" });
       },
     });
   },

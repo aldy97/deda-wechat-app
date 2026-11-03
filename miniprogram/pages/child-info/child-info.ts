@@ -25,14 +25,17 @@ Page({
     birthdayLabel: "未设置",
   },
 
-  async onLoad(options: Record<string, string>) {
+  onLoad(options: Record<string, string>) {
     const deviceId = options?.deviceId || "";
     this.setData({ deviceId });
     if (!deviceId) {
       this.setData({ loading: false, loadError: true });
-      return;
     }
-    await this.loadChildInfo();
+  },
+
+  onReady() {
+    if (!this.data.deviceId) return;
+    return this.loadChildInfo();
   },
 
   async loadChildInfo() {

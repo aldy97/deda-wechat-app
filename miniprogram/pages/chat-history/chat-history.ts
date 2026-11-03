@@ -52,12 +52,16 @@ Page<ChatHistoryData, Record<string, any>>({
     contextHint: "",
   },
 
-  async onLoad(options) {
+  onLoad(options) {
     const deviceId = options?.deviceId || options?.id || "";
     const textbookId = options?.textbookId || "";
     const unitId = options?.unitId || "";
     const conversationModeKey = options?.conversationModeKey || "";
     this.setData({ deviceId, textbookId, unitId, conversationModeKey });
+  },
+
+  async onReady() {
+    const { deviceId, textbookId, unitId, conversationModeKey } = this.data;
     // 先完成语境解析（含配置兜底过滤）再首次查询,避免竞态发出未过滤请求
     await this.loadContext(deviceId, textbookId, unitId, conversationModeKey);
     this.loadInitialRecords();

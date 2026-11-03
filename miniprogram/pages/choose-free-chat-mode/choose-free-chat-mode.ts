@@ -5,10 +5,10 @@ import {
   ConversationMode,
   DeviceConfig,
   ensureAuthToken,
-} from '../../api/api';
+} from "../../api/api";
 
 /** 缓存键 */
-const CACHE_KEY = 'free_chat_modes_cache';
+const CACHE_KEY = "free_chat_modes_cache";
 /** 缓存有效期：10 分钟 */
 const CACHE_TTL = 10 * 60 * 1000;
 
@@ -24,16 +24,19 @@ interface ModeDisplayItem {
  */
 Page({
   data: {
-    deviceId: '',
+    deviceId: "",
     loading: true,
     saving: false,
-    currentSubMode: '',
+    currentSubMode: "",
     modes: [] as ModeDisplayItem[],
   },
 
   onLoad(options) {
-    const deviceId = options?.id || '';
+    const deviceId = options?.id || "";
     this.setData({ deviceId });
+  },
+
+  onReady() {
     this.loadFreeChatModes();
     this.loadCurrentConfig();
   },
@@ -49,14 +52,14 @@ Page({
 
     try {
       await ensureAuthToken();
-      const res = await getConversationModes('free_chat');
+      const res = await getConversationModes("free_chat");
       const modes = res.data.map(this.mapModeToDisplay);
       this.setData({ modes, loading: false });
       this.saveCache(modes);
     } catch (error) {
-      console.error('[choose-free-chat-mode] load modes failed:', error);
+      console.error("[choose-free-chat-mode] load modes failed:", error);
       if (!cache) {
-        wx.showToast({ title: '加载失败', icon: 'none' });
+        wx.showToast({ title: "加载失败", icon: "none" });
         this.setData({ loading: false });
       }
     }
@@ -72,11 +75,14 @@ Page({
       await ensureAuthToken();
       const res = await getDeviceCurrentConfig(this.data.deviceId);
       const config = res.data;
-      if (config.mode === 'free_chat' && config.conversationModeKey) {
+      if (config.mode === "free_chat" && config.conversationModeKey) {
         this.setData({ currentSubMode: config.conversationModeKey });
       }
     } catch (error) {
-      console.error('[choose-free-chat-mode] load current config failed:', error);
+      console.error(
+        "[choose-free-chat-mode] load current config failed:",
+        error,
+      );
     }
   },
 
@@ -87,7 +93,7 @@ Page({
     return {
       key: mode.key,
       title: mode.name,
-      description: mode.description || '',
+      description: mode.description || "",
     };
   },
 
@@ -96,7 +102,8 @@ Page({
    */
   getCache(): { data: ModeDisplayItem[]; timestamp: number } | null {
     try {
-      const cache = wx.getStorageSync(CACHE_KEY) as { data: ModeDisplayItem[]; timestamp: number } | undefined;
+      const cache = wx.getStorageSync(CACHE_KEY) as
+        { data: ModeDisplayItem[]; timestamp: number } | undefined;
       if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
         return cache;
       }
@@ -113,7 +120,7 @@ Page({
     try {
       wx.setStorageSync(CACHE_KEY, { data: modes, timestamp: Date.now() });
     } catch (error) {
-      console.warn('[choose-free-chat-mode] cache save failed:', error);
+      console.warn("[choose-free-chat-mode] cache save failed:", error);
     }
   },
 
@@ -124,7 +131,10 @@ Page({
     try {
       wx.setStorageSync(`device_config_${config.deviceId}`, config);
     } catch (error) {
-      console.warn('[choose-free-chat-mode] device config cache save failed:', error);
+      console.warn(
+        "[choose-free-chat-mode] device config cache save failed:",
+        error,
+      );
     }
   },
 
@@ -133,8 +143,13 @@ Page({
    */
   updateDeviceListPage(config: DeviceConfig) {
     const pages = getCurrentPages();
-    const deviceListPage = pages.find((p) => p.route === 'pages/device-list/device-list');
-    if (deviceListPage && typeof (deviceListPage as any).updateDeviceConfig === 'function') {
+    const deviceListPage = pages.find(
+      (p) => p.route === "pages/device-list/device-list",
+    );
+    if (
+      deviceListPage &&
+      typeof (deviceListPage as any).updateDeviceConfig === "function"
+    ) {
       (deviceListPage as any).updateDeviceConfig(config);
     }
   },
@@ -147,7 +162,7 @@ Page({
     const { deviceId, modes } = this.data;
 
     if (!deviceId) {
-      wx.showToast({ title: '设备 ID 缺失', icon: 'none' });
+      wx.showToast({ title: "设备 ID 缺失", icon: "none" });
       return;
     }
 
@@ -156,7 +171,7 @@ Page({
     try {
       await ensureAuthToken();
       const res = await switchDeviceMode(deviceId, {
-        mode: 'free_chat',
+        mode: "free_chat",
         conversationModeKey: key,
       });
       const config = res.data;
@@ -174,11 +189,11 @@ Page({
       this.updateDeviceListPage(configWithDesc);
       this.setData({ saving: false });
 
-      wx.switchTab({ url: '/pages/device-list/device-list' });
+      wx.switchTab({ url: "/pages/device-list/device-list" });
     } catch (error) {
-      console.error('[choose-free-chat-mode] switch mode failed:', error);
+      console.error("[choose-free-chat-mode] switch mode failed:", error);
       this.setData({ saving: false });
-      wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+      wx.showToast({ title: "保存失败，请重试", icon: "none" });
     }
   },
 });

@@ -88,9 +88,12 @@ Page({
     this.setData({ deviceId });
     if (!deviceId) {
       wx.showToast({ title: "缺少设备 ID", icon: "none" });
-      return;
     }
-    this.loadAll(deviceId, this.data.activeRange);
+  },
+
+  onReady() {
+    if (!this.data.deviceId) return;
+    return this.loadAll(this.data.deviceId, this.data.activeRange);
   },
 
   async onPullDownRefresh() {

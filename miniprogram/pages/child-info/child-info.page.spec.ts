@@ -40,6 +40,7 @@ describe("child info page", () => {
 
   it("uses deviceId as the child ID and formats profile data", async () => {
     await page.onLoad({ deviceId: "dev-001" });
+    await page.onReady();
 
     expect(mockApi.getChildProfile).toHaveBeenCalledWith("dev-001");
     expect(page.data.deviceId).toBe("dev-001");

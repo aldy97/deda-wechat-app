@@ -5,7 +5,7 @@ import {
   TextbookUnit,
   DeviceConfig,
   ensureAuthToken,
-} from '../../api/api';
+} from "../../api/api";
 
 interface UnitDisplayItem {
   key: string;
@@ -21,18 +21,22 @@ interface UnitDisplayItem {
  */
 Page({
   data: {
-    deviceId: '',
-    textbookId: '',
+    deviceId: "",
+    textbookId: "",
     loading: true,
     saving: false,
-    currentUnitId: '',
+    currentUnitId: "",
     units: [] as UnitDisplayItem[],
   },
 
   onLoad(options) {
-    const deviceId = options?.deviceId || '';
-    const textbookId = options?.textbookId || '';
+    const deviceId = options?.deviceId || "";
+    const textbookId = options?.textbookId || "";
     this.setData({ deviceId, textbookId });
+  },
+
+  onReady() {
+    // 首帧渲染完成后再发请求，保证加载态可见
     this.loadUnits();
     this.loadCurrentConfig();
   },
@@ -49,8 +53,8 @@ Page({
       const units = res.data.map(this.mapUnitToDisplay);
       this.setData({ units, loading: false });
     } catch (error) {
-      console.error('[choose-textbook-unit] load units failed:', error);
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      console.error("[choose-textbook-unit] load units failed:", error);
+      wx.showToast({ title: "加载失败", icon: "none" });
       this.setData({ loading: false });
     }
   },
@@ -66,14 +70,17 @@ Page({
       const res = await getDeviceCurrentConfig(this.data.deviceId);
       const config = res.data;
       if (
-        config.mode === 'locked_unit' &&
+        config.mode === "locked_unit" &&
         config.textbookId === this.data.textbookId &&
         config.unitId
       ) {
         this.setData({ currentUnitId: config.unitId });
       }
     } catch (error) {
-      console.error('[choose-textbook-unit] load current config failed:', error);
+      console.error(
+        "[choose-textbook-unit] load current config failed:",
+        error,
+      );
     }
   },
 
@@ -84,7 +91,7 @@ Page({
     return {
       key: unit.unitId,
       title: unit.name,
-      description: unit.description || '',
+      description: unit.description || "",
       cefrLevel: unit.cefrLevel,
       difficulty: unit.difficulty,
     };
@@ -97,7 +104,10 @@ Page({
     try {
       wx.setStorageSync(`device_config_${config.deviceId}`, config);
     } catch (error) {
-      console.warn('[choose-textbook-unit] device config cache save failed:', error);
+      console.warn(
+        "[choose-textbook-unit] device config cache save failed:",
+        error,
+      );
     }
   },
 
@@ -106,8 +116,13 @@ Page({
    */
   updateDeviceListPage(config: DeviceConfig) {
     const pages = getCurrentPages();
-    const deviceListPage = pages.find((p) => p.route === 'pages/device-list/device-list');
-    if (deviceListPage && typeof (deviceListPage as any).updateDeviceConfig === 'function') {
+    const deviceListPage = pages.find(
+      (p) => p.route === "pages/device-list/device-list",
+    );
+    if (
+      deviceListPage &&
+      typeof (deviceListPage as any).updateDeviceConfig === "function"
+    ) {
       (deviceListPage as any).updateDeviceConfig(config);
     }
   },
@@ -120,7 +135,7 @@ Page({
     const { deviceId, textbookId, units } = this.data;
 
     if (!deviceId || !textbookId) {
-      wx.showToast({ title: '参数缺失', icon: 'none' });
+      wx.showToast({ title: "参数缺失", icon: "none" });
       return;
     }
 
@@ -129,7 +144,7 @@ Page({
     try {
       await ensureAuthToken();
       const res = await applyDeviceConfig(deviceId, {
-        mode: 'locked_unit',
+        mode: "locked_unit",
         textbookId,
         unitId: key,
       });
@@ -147,11 +162,11 @@ Page({
       this.updateDeviceListPage(configWithDesc);
       this.setData({ saving: false });
 
-      wx.switchTab({ url: '/pages/device-list/device-list' });
+      wx.switchTab({ url: "/pages/device-list/device-list" });
     } catch (error) {
-      console.error('[choose-textbook-unit] apply config failed:', error);
+      console.error("[choose-textbook-unit] apply config failed:", error);
       this.setData({ saving: false });
-      wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+      wx.showToast({ title: "保存失败，请重试", icon: "none" });
     }
   },
 });

@@ -53,8 +53,11 @@ Page({
   onLoad(options) {
     const deviceId = options?.id || "";
     this.setData({ deviceId });
-    if (deviceId) {
-      this.fetchSleepConfig(deviceId);
+  },
+
+  onReady() {
+    if (this.data.deviceId) {
+      this.fetchSleepConfig(this.data.deviceId);
     }
   },
 

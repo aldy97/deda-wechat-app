@@ -43,9 +43,52 @@
   </view>
 
   <block wx:if="{{ loadingDevices }}">
-    <view class="card report-section"><van-skeleton row="3" title="{{ false }}" /></view>
-    <view class="card report-section"><van-skeleton row="3" title="{{ false }}" /></view>
-    <view class="card report-section"><van-skeleton row="5" title="{{ false }}" /></view>
+    <!-- 拟真骨架：与真实布局一致，冷启动首帧即完整页面轮廓 -->
+    <view class="card report-section">
+      <view class="section-heading">
+        <view>
+          <text class="section-title">每日使用时长</text>
+          <text class="section-subtitle">近 7 日 · 单位：分钟</text>
+        </view>
+      </view>
+      <view class="sk-trend sk-anim">
+        <view
+          class="sk-trend-bar"
+          wx:for="{{ [72, 128, 76, 148, 96, 60, 120] }}"
+          wx:key="*this"
+          style="height: {{ item }}rpx;"
+        ></view>
+      </view>
+    </view>
+    <view class="card report-section">
+      <view class="section-heading">
+        <view>
+          <text class="section-title">功能使用情况</text>
+        </view>
+      </view>
+      <view class="sk-pie-wrap sk-anim">
+        <view class="sk-pie"></view>
+        <view class="sk-lines">
+          <view class="sk-line"></view>
+          <view class="sk-line"></view>
+          <view class="sk-line sk-line-short"></view>
+        </view>
+      </view>
+    </view>
+    <view class="card report-section">
+      <view class="section-heading">
+        <view>
+          <text class="section-title">当日使用总结</text>
+          <text class="section-subtitle">从真实对话中整理的观察</text>
+        </view>
+      </view>
+      <view class="sk-anim">
+        <view class="sk-line"></view>
+        <view class="sk-line"></view>
+        <view class="sk-line"></view>
+        <view class="sk-line sk-line-short"></view>
+      </view>
+    </view>
   </block>
 
   <view wx:elif="{{ deviceError }}" class="card empty-device">
@@ -68,7 +111,14 @@
           <text class="section-subtitle">近 7 日 · 单位：分钟</text>
         </view>
       </view>
-      <van-skeleton wx:if="{{ loadingDaily && trendBars.length === 0 }}" row="3" title="{{ false }}" />
+      <view wx:if="{{ loadingDaily && trendBars.length === 0 }}" class="sk-trend sk-anim">
+        <view
+          class="sk-trend-bar"
+          wx:for="{{ [72, 128, 76, 148, 96, 60, 120] }}"
+          wx:key="*this"
+          style="height: {{ item }}rpx;"
+        ></view>
+      </view>
       <view wx:elif="{{ dailyError && trendBars.length === 0 }}" class="section-error">
         <text>使用时长加载失败</text>
         <button class="retry-button" bind:tap="onRetryDaily">重试</button>
@@ -99,7 +149,14 @@
           <text wx:if="{{ !loadingUsage && !usageError && usageActualDays > 0 }}" class="section-subtitle">近 {{ usageActualDays }} 天 · 功能互动占比</text>
         </view>
       </view>
-      <van-skeleton wx:if="{{ loadingUsage && modeUsage.length === 0 && !usagePieVisible }}" row="3" title="{{ false }}" />
+      <view wx:if="{{ loadingUsage && modeUsage.length === 0 && !usagePieVisible }}" class="sk-pie-wrap sk-anim">
+        <view class="sk-pie"></view>
+        <view class="sk-lines">
+          <view class="sk-line"></view>
+          <view class="sk-line"></view>
+          <view class="sk-line sk-line-short"></view>
+        </view>
+      </view>
       <view wx:elif="{{ usageError && modeUsage.length === 0 && !usagePieVisible }}" class="section-error">
         <text>功能使用数据加载失败</text>
         <button class="retry-button" bind:tap="onRetryUsage">重试</button>
@@ -141,7 +198,13 @@
           <text class="section-subtitle">从真实对话中整理的观察</text>
         </view>
       </view>
-      <van-skeleton wx:if="{{ loadingReport }}" row="5" title="{{ false }}" />
+      <view wx:if="{{ loadingReport }}" class="sk-anim">
+        <view class="sk-line"></view>
+        <view class="sk-line"></view>
+        <view class="sk-line"></view>
+        <view class="sk-line"></view>
+        <view class="sk-line sk-line-short"></view>
+      </view>
       <view wx:elif="{{ reportError }}" class="section-error">
         <text>当日总结加载失败</text>
         <button class="retry-button" bind:tap="onRetryReport">重试</button>

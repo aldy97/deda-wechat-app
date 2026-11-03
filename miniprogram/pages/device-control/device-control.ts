@@ -5,19 +5,25 @@ import {
   DeviceControlData,
   DeviceConfig,
   ensureAuthToken,
-} from '../../api/api';
+} from "../../api/api";
 
 /** Vant 组件 change 事件，detail 为当前值 */
-interface VantBooleanEvent { detail: boolean; }
-interface VantNumberEvent { detail: number; }
-interface VantStringEvent { detail: string; }
+interface VantBooleanEvent {
+  detail: boolean;
+}
+interface VantNumberEvent {
+  detail: number;
+}
+interface VantStringEvent {
+  detail: string;
+}
 
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
-  free_chat: '自由对话',
-  textbook_learning: '教材学习',
-  locked_unit: '教材单元',
-  free_textbook: '自由教材',
+  free_chat: "自由对话",
+  textbook_learning: "教材学习",
+  locked_unit: "教材单元",
+  free_textbook: "自由教材",
 };
 
 /**
@@ -26,18 +32,21 @@ const MODE_DISPLAY_MAP: Record<string, string> = {
  */
 Page({
   data: {
-    deviceId: '',
+    deviceId: "",
     loading: true,
     device: {} as DeviceControlData,
     currentConfig: null as DeviceConfig | null,
-    currentModeDisplay: '',
+    currentModeDisplay: "",
   },
 
   onLoad(options) {
-    const deviceId = options?.id || 'D001';
+    const deviceId = options?.id || "D001";
     this.setData({ deviceId });
-    this.fetchDeviceData(deviceId);
-    this.fetchCurrentConfig(deviceId);
+  },
+
+  onReady() {
+    this.fetchDeviceData(this.data.deviceId);
+    this.fetchCurrentConfig(this.data.deviceId);
   },
 
   /**
@@ -49,7 +58,7 @@ Page({
       const res = await getDeviceControl(deviceId);
       this.setData({ device: res.data });
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: "加载失败", icon: "none" });
     } finally {
       this.setData({ loading: false });
     }
@@ -69,7 +78,7 @@ Page({
       });
       wx.setStorageSync(`device_config_${deviceId}`, config);
     } catch (error) {
-      console.error('[device-control] fetch current config failed:', error);
+      console.error("[device-control] fetch current config failed:", error);
     }
   },
 
@@ -78,18 +87,20 @@ Page({
    */
   formatModeDisplay(config: DeviceConfig): string {
     const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
-    if (config.mode === 'free_chat' && config.conversationModeKey) {
+    if (config.mode === "free_chat" && config.conversationModeKey) {
       return `${modeName} / ${config.conversationModeKey}`;
     }
     if (
-      (config.mode === 'textbook_learning' || config.mode === 'locked_unit') &&
+      (config.mode === "textbook_learning" || config.mode === "locked_unit") &&
       config.textbookId
     ) {
       const textbook = config.textbookName || config.textbookId;
       const unit = config.unitName || config.unitId;
-      return unit ? `${modeName} / ${textbook} / ${unit}` : `${modeName} / ${textbook}`;
+      return unit
+        ? `${modeName} / ${textbook} / ${unit}`
+        : `${modeName} / ${textbook}`;
     }
-    if (config.mode === 'free_textbook' && config.textbookId) {
+    if (config.mode === "free_textbook" && config.textbookId) {
       const textbook = config.textbookName || config.textbookId;
       return `${modeName} / ${textbook}`;
     }
@@ -101,7 +112,7 @@ Page({
    */
   async onPowerChange(event: VantBooleanEvent) {
     const power = event.detail;
-    this.setData({ 'device.power': power });
+    this.setData({ "device.power": power });
     await this.updateDevice({ power });
   },
 
@@ -110,7 +121,7 @@ Page({
    */
   async onVolumeChange(event: VantNumberEvent) {
     const volume = event.detail;
-    this.setData({ 'device.volume': volume });
+    this.setData({ "device.volume": volume });
   },
 
   /**
@@ -125,8 +136,8 @@ Page({
    * 模式切换
    */
   async onModeChange(event: VantStringEvent) {
-    const mode = event.detail as DeviceControlData['mode'];
-    this.setData({ 'device.mode': mode });
+    const mode = event.detail as DeviceControlData["mode"];
+    this.setData({ "device.mode": mode });
     await this.updateDevice({ mode });
   },
 
@@ -138,7 +149,7 @@ Page({
       const res = await updateDeviceControl(this.data.deviceId, partial);
       this.setData({ device: res.data });
     } catch (error) {
-      wx.showToast({ title: '更新失败', icon: 'none' });
+      wx.showToast({ title: "更新失败", icon: "none" });
     }
   },
 });

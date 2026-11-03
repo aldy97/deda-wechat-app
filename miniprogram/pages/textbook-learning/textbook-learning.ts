@@ -1,4 +1,4 @@
-import { getTextbooks, Textbook, ensureAuthToken } from '../../api/api';
+import { getTextbooks, Textbook, ensureAuthToken } from "../../api/api";
 
 interface TextbookDisplayItem {
   key: string;
@@ -13,14 +13,18 @@ interface TextbookDisplayItem {
  */
 Page({
   data: {
-    deviceId: '',
+    deviceId: "",
     loading: true,
     textbooks: [] as TextbookDisplayItem[],
   },
 
   onLoad(options) {
-    const deviceId = options?.id || '';
+    const deviceId = options?.id || "";
     this.setData({ deviceId });
+  },
+
+  onReady() {
+    // 首帧渲染完成后再发请求，保证加载态可见
     this.loadTextbooks();
   },
 
@@ -36,8 +40,8 @@ Page({
       const textbooks = res.data.map(this.mapTextbookToDisplay);
       this.setData({ textbooks, loading: false });
     } catch (error) {
-      console.error('[textbook-learning] load textbooks failed:', error);
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      console.error("[textbook-learning] load textbooks failed:", error);
+      wx.showToast({ title: "加载失败", icon: "none" });
       this.setData({ loading: false });
     }
   },
@@ -49,7 +53,7 @@ Page({
     return {
       key: textbook.textbookId,
       title: textbook.name,
-      description: textbook.description || '',
+      description: textbook.description || "",
       cefrLevel: textbook.cefrLevel,
     };
   },

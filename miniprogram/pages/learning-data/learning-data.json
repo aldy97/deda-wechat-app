@@ -1,7 +1,5 @@
 {
   "navigationBarTitleText": "更懂TA",
   "enablePullDownRefresh": true,
-  "usingComponents": {
-    "van-skeleton": "@vant/weapp/skeleton/index"
-  }
+  "usingComponents": {}
 }
