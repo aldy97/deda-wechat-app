@@ -1,18 +1,13 @@
 import {
-  groupUnitProgressByTextbook,
-  formatTopicDisplayName,
   getRangeDays,
   getCalendarRangeDays,
   formatTopicScore,
   aggregateDailyToWeekly,
   scaleBarHeights,
-  buildContextOptions,
   groupTimelineByDayAndDevice,
   allocateIntegerPercentages,
 } from "./learning-data.utils";
 import {
-  LearningStatsUnitProgress,
-  LearningStatsTopic,
   LearningStatsDailyPoint,
   LearningStatsTimelineEvent,
 } from "../../api/api";
@@ -78,92 +73,6 @@ describe("learning-data utils", () => {
           100,
         );
       }
-    });
-  });
-
-  describe("groupUnitProgressByTextbook", () => {
-    it("groups units by textbook and preserves order", () => {
-      const items: LearningStatsUnitProgress[] = [
-        {
-          textbookId: "t1",
-          textbookName: "Textbook 1",
-          unitId: "u1",
-          unitName: "Unit 1",
-          conversationCount: 3,
-          lastSpokeAt: "2026-09-25T00:00:00Z",
-        },
-        {
-          textbookId: "t2",
-          textbookName: "Textbook 2",
-          unitId: "u2",
-          unitName: "Unit 2",
-          conversationCount: 1,
-          lastSpokeAt: "2026-09-24T00:00:00Z",
-        },
-        {
-          textbookId: "t1",
-          textbookName: "Textbook 1",
-          unitId: "u3",
-          unitName: "Unit 3",
-          conversationCount: 5,
-          lastSpokeAt: "2026-09-23T00:00:00Z",
-        },
-      ];
-
-      const result = groupUnitProgressByTextbook(items);
-
-      expect(result).toHaveLength(2);
-      expect(result[0].textbookId).toBe("t1");
-      expect(result[0].units).toHaveLength(2);
-      expect(result[0].units[0].unitId).toBe("u1");
-      expect(result[0].units[1].unitId).toBe("u3");
-      expect(result[1].textbookId).toBe("t2");
-      expect(result[1].units).toHaveLength(1);
-    });
-
-    it("returns empty array for empty input", () => {
-      expect(groupUnitProgressByTextbook([])).toEqual([]);
-    });
-  });
-
-  describe("formatTopicDisplayName", () => {
-    it("prefers conversationModeName", () => {
-      const topic: LearningStatsTopic = {
-        id: "1",
-        mode: "free_chat",
-        conversationModeName: "自由闲聊",
-        textbookName: "Textbook",
-        unitName: "Unit 1",
-        count: 1,
-        lastSpokeAt: "",
-        isActive: false,
-      };
-      expect(formatTopicDisplayName(topic)).toBe("自由闲聊 · Unit 1");
-    });
-
-    it("falls back to textbookName then mode", () => {
-      const topic: LearningStatsTopic = {
-        id: "1",
-        mode: "textbook_learning",
-        textbookName: "Unlock L1",
-        unitName: "Unit 2",
-        count: 1,
-        lastSpokeAt: "",
-        isActive: false,
-      };
-      expect(formatTopicDisplayName(topic)).toBe("Unlock L1 · Unit 2");
-    });
-
-    it("omits unitName when absent", () => {
-      const topic: LearningStatsTopic = {
-        id: "1",
-        mode: "free_chat",
-        conversationModeName: "自由闲聊",
-        count: 1,
-        lastSpokeAt: "",
-        isActive: false,
-      };
-      expect(formatTopicDisplayName(topic)).toBe("自由闲聊");
     });
   });
 
@@ -256,88 +165,6 @@ describe("learning-data utils", () => {
     });
   });
 
-  describe("buildContextOptions", () => {
-    const topic = (over: Record<string, any>): LearningStatsTopic =>
-      ({
-        id: "k",
-        mode: "locked_unit",
-        textbookId: "book-a",
-        textbookName: "Unlock L1",
-        unitId: "unit-1",
-        unitName: "Food",
-        conversationModeKey: null,
-        conversationModeName: null,
-        count: 3,
-        lastSpokeAt: "2026-09-27T00:00:00Z",
-        isActive: false,
-        avgScore: null,
-        ...over,
-      }) as LearningStatsTopic;
-
-    it("puts the active context first as the default option with empty params", () => {
-      const result = buildContextOptions([
-        topic({ isActive: true }),
-        topic({ unitId: "unit-2", unitName: "Seasons" }),
-      ]);
-
-      expect(result[0].key).toBe("default");
-      expect(result[0].params).toEqual({});
-      expect(result[0].label).toContain("当前");
-      expect(result[0].label).toContain("Food");
-      expect(result).toHaveLength(3);
-    });
-
-    it("falls back to generic label when no topic is active", () => {
-      const result = buildContextOptions([topic({})]);
-      expect(result[0].label).toBe("当前语境");
-    });
-
-    it("builds textbook options with textbookId/unitId params", () => {
-      const result = buildContextOptions([topic({})]);
-      expect(result[1]).toEqual({
-        key: "book-a|unit-1",
-        label: "Unlock L1 · Food",
-        params: { textbookId: "book-a", unitId: "unit-1" },
-      });
-    });
-
-    it("builds free_chat options with mode and sub-mode params", () => {
-      const result = buildContextOptions([
-        topic({
-          mode: "free_chat",
-          textbookId: null,
-          textbookName: null,
-          unitId: null,
-          unitName: null,
-          conversationModeKey: "free_chat_roleplay",
-          conversationModeName: "角色扮演",
-        }),
-      ]);
-
-      expect(result[1]).toEqual({
-        key: "free_chat|free_chat_roleplay",
-        label: "自由对话 · 角色扮演",
-        params: {
-          mode: "free_chat",
-          conversationModeKey: "free_chat_roleplay",
-        },
-      });
-    });
-
-    it("falls back to raw ids when names are missing", () => {
-      const result = buildContextOptions([
-        topic({ textbookName: null, unitName: null }),
-      ]);
-      expect(result[1].label).toBe("book-a · unit-1");
-    });
-
-    it("returns only the default option for empty topics", () => {
-      const result = buildContextOptions([]);
-      expect(result).toHaveLength(1);
-      expect(result[0].key).toBe("default");
-    });
-  });
-
   describe("scaleBarHeights", () => {
     it("scales relative to the max value with a floor for non-zero values", () => {
       const result = scaleBarHeights([0, 30, 60], 160, 60);
@@ -371,7 +198,7 @@ describe("learning-data utils", () => {
       id,
       deviceId,
       deviceName,
-      mode: "locked_unit",
+      mode: "free_chat",
       topicName: "Food",
       userText: "Hello",
       aiText: "Hi",

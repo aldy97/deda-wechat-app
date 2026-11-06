@@ -8,10 +8,8 @@ describe("switch-mode utils", () => {
       );
     });
 
-    it("routes textbook_learning to the textbook learning page", () => {
-      expect(resolveModeRoute("textbook_learning", "dev-001")).toBe(
-        "/pages/textbook-learning/textbook-learning?id=dev-001",
-      );
+    it("returns null for textbook_learning (教材模式已下线)", () => {
+      expect(resolveModeRoute("textbook_learning", "dev-001")).toBeNull();
     });
 
     it("returns null for unknown mode keys", () => {

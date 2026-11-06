@@ -12,8 +12,6 @@ export function resolveModeRoute(
   switch (modeKey) {
     case "free_chat":
       return `/pages/choose-free-chat-mode/choose-free-chat-mode?id=${id}`;
-    case "textbook_learning":
-      return `/pages/textbook-learning/textbook-learning?id=${id}`;
     default:
       return null;
   }

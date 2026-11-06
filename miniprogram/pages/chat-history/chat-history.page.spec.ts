@@ -1,15 +1,13 @@
 /**
- * chat-history 页面装配测试（跨单元泄漏回归锁）。
- * 复现路径：设备卡「查看对话」只传 deviceId → 页面必须按设备当前配置
- * 推导语境过滤,否则全单元消息混排。
+ * chat-history 页面装配测试。
+ * 设备卡「查看对话」只传 deviceId → 页面必须按设备当前配置
+ * 推导语境过滤；已废弃的教材 URL 参数一律静默忽略。
  */
 import { installPageHarness } from "../../tests/page-harness";
 
 const mockApi = {
   getChatRecords: jest.fn(),
   getDeviceCurrentConfig: jest.fn(),
-  getTextbookDetail: jest.fn(),
-  getTextbookUnits: jest.fn(),
 };
 jest.mock("../../api/api", () => mockApi);
 
@@ -25,11 +23,10 @@ describe("chat-history page wiring", () => {
     jest.clearAllMocks();
     page = harness.createInstance();
     mockApi.getChatRecords.mockResolvedValue({ data: { items: [], total: 0 } });
-    mockApi.getTextbookDetail.mockResolvedValue({ data: { name: "Book A" } });
-    mockApi.getTextbookUnits.mockResolvedValue({ data: [] });
   });
 
-  it("derives textbook+unit filter from device config when URL has no context params", async () => {
+  it("ignores legacy textbook mode config and sends no textbook filter", async () => {
+    // 历史缓存中可能存在教材模式配置；教材功能已删除,不得带出教材过滤参数
     mockApi.getDeviceCurrentConfig.mockResolvedValue({
       data: {
         deviceId: "dev-001",
@@ -43,35 +40,29 @@ describe("chat-history page wiring", () => {
     await page.onLoad({ id: "dev-001" });
     await page.onReady();
 
-    // 回归锁：必须带 unit-2 过滤,否则 unit-3 的消息会混进来
-    expect(mockApi.getChatRecords).toHaveBeenCalledWith(
-      expect.objectContaining({
-        deviceId: "dev-001",
-        textbookId: "unlock-l1-speaking-listening",
-        unitId: "unit-2",
-      }),
-    );
+    const callArg = mockApi.getChatRecords.mock.calls[0][0];
+    expect(callArg.deviceId).toBe("dev-001");
+    expect(callArg.textbookId).toBeUndefined();
+    expect(callArg.unitId).toBeUndefined();
   });
 
-  it("prefers explicit URL context params over the device config", async () => {
+  it("prefers explicit URL conversationModeKey over the device config", async () => {
     mockApi.getDeviceCurrentConfig.mockResolvedValue({
       data: {
         deviceId: "dev-001",
-        mode: "locked_unit",
-        textbookId: "book-a",
-        unitId: "unit-1",
+        mode: "free_chat",
+        conversationModeKey: "free_chat_casual",
       },
     });
 
     await page.onLoad({
       id: "dev-001",
-      textbookId: "book-b",
-      unitId: "unit-9",
+      conversationModeKey: "free_chat_qa",
     });
     await page.onReady();
 
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
-      expect.objectContaining({ textbookId: "book-b", unitId: "unit-9" }),
+      expect.objectContaining({ conversationModeKey: "free_chat_qa" }),
     );
   });
 
@@ -80,8 +71,6 @@ describe("chat-history page wiring", () => {
       data: {
         deviceId: "dev-001",
         mode: "free_chat",
-        textbookId: null,
-        unitId: null,
         conversationModeKey: "free_chat_roleplay",
       },
     });
@@ -92,10 +81,6 @@ describe("chat-history page wiring", () => {
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
       expect.objectContaining({ conversationModeKey: "free_chat_roleplay" }),
     );
-    // 不应带教材过滤
-    const callArg = mockApi.getChatRecords.mock.calls[0][0];
-    expect(callArg.textbookId).toBeFalsy();
-    expect(callArg.unitId).toBeFalsy();
   });
 
   it("loads older records when onLoadMore is triggered", async () => {
@@ -202,5 +187,28 @@ describe("chat-history page wiring", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it("ignores deprecated textbookId/unitId URL params and falls back to device config context", async () => {
+    // 旧分享链接可能携带教材参数；教材功能已删除,必须静默忽略并按设备配置推导语境
+    mockApi.getDeviceCurrentConfig.mockResolvedValue({
+      data: {
+        deviceId: "dev-001",
+        mode: "free_chat",
+        conversationModeKey: "free_chat_casual",
+      },
+    });
+
+    await page.onLoad({
+      id: "dev-001",
+      textbookId: "book-a",
+      unitId: "unit-1",
+    });
+    await page.onReady();
+
+    const callArg = mockApi.getChatRecords.mock.calls[0][0];
+    expect(callArg.conversationModeKey).toBe("free_chat_casual");
+    expect(callArg.textbookId).toBeUndefined();
+    expect(callArg.unitId).toBeUndefined();
   });
 });

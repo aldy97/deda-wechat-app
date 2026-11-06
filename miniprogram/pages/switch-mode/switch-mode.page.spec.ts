@@ -37,14 +37,13 @@ describe("switch-mode page wiring", () => {
     expect(mockApi.switchDeviceMode).not.toHaveBeenCalled();
   });
 
-  it("navigates to textbook learning on textbook_learning without saving config", () => {
+  it("shows a toast and does not navigate for textbook_learning (教材模式已下线)", () => {
     page.onSelectMode({
       currentTarget: { dataset: { key: "textbook_learning" } },
     });
 
-    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
-      url: "/pages/textbook-learning/textbook-learning?id=dev-001",
-    });
+    expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+    expect(harness.wx.showToast).toHaveBeenCalled();
     expect(mockApi.switchDeviceMode).not.toHaveBeenCalled();
   });
 

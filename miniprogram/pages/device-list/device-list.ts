@@ -21,9 +21,6 @@ const DEV001_DEVICE: Device = {
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
   free_chat: "自由对话",
-  textbook_learning: "教材学习",
-  locked_unit: "教材单元",
-  free_textbook: "自由教材",
 };
 
 /** 设备展示项 = 基础信息 + 状态信息 + 卡片内容 */
@@ -133,8 +130,6 @@ Page({
               conversationModeDescription:
                 serverConfig.conversationModeDescription ||
                 cachedConfig?.conversationModeDescription,
-              unitDescription:
-                serverConfig.unitDescription || cachedConfig?.unitDescription,
             };
             this.applyConfigToDevice(item, mergedConfig);
             this.saveDeviceConfigCache(mergedConfig);
@@ -200,15 +195,6 @@ Page({
       device.cardDesc =
         config.conversationModeDescription ||
         "自由对话模式，随时陪伴孩子聊天互动。";
-    } else if (config.textbookId) {
-      // 教材模式：标题显示教材名，副标题显示单元名，描述显示单元描述
-      device.cardTitle = config.textbookName || config.textbookId;
-      device.cardSubtitle = config.unitName || config.unitId || "";
-      device.cardDesc =
-        config.unitDescription ||
-        config.textbookName ||
-        config.textbookId ||
-        "教材学习模式，系统化提升英语能力。";
     } else {
       // 兜底
       device.cardTitle = modeName;

@@ -13,7 +13,7 @@
     "test": "jest",
     "prepare": "husky",
     "guard:no-js": "files=$(git diff --cached --name-only --diff-filter=AM | grep -E '^(miniprogram/.+\\.js|\\.runtime/.*)$' || true); if [ -n \"$files\" ]; then echo \"$files\" | xargs git restore --staged --; echo '⚠️ 以下 .js 编译产物/运行时文件已自动移出暂存区，不会进入提交（路线二：仓库只存 .ts 源码）'; echo \"$files\"; fi; exit 0",
-    "pre-commit": "cd miniprogram && npx tsc --noEmit"
+    "pre-commit": "cd miniprogram && npx tsc --noEmit && cd .. && npx jest"
   },
   "lint-staged": {
     "*.{ts,js,wxml,wxss,json,md}": [

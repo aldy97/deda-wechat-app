@@ -121,40 +121,13 @@ export interface ConversationMode {
   promptTemplate?: string | null;
 }
 
-/** 教材 */
-export interface Textbook {
-  id: string;
-  textbookId: string;
-  name: string;
-  description?: string | null;
-  cefrLevel?: string | null;
-}
-
-/** 教材单元 */
-export interface TextbookUnit {
-  id: string;
-  unitId: string;
-  textbookId: string;
-  name: string;
-  description?: string | null;
-  cefrLevel?: string | null;
-  difficulty?: number | null;
-  sortOrder: number;
-}
-
 /** 设备当前生效配置 */
 export interface DeviceConfig {
   deviceId: string;
-  mode: "free_chat" | "textbook_learning" | "locked_unit" | "free_textbook";
+  mode: "free_chat";
   conversationModeKey?: string | null;
   conversationModeName?: string | null;
   conversationModeDescription?: string | null;
-  textbookId?: string | null;
-  textbookName?: string | null;
-  unitId?: string | null;
-  unitName?: string | null;
-  unitDescription?: string | null;
-  cefrLevel?: string | null;
   language?: string | null;
   speechRate?: string | null;
 }
@@ -203,117 +176,9 @@ export interface OwnerInfo {
   gender?: "male" | "female" | null;
 }
 
-/** 单设备核心指标 */
-export interface DeviceAnalysis {
-  deviceId: string;
-  range: "today" | "week" | "month";
-  totalDuration: number; // 分钟
-  totalSessions: number;
-  totalDialogueRounds: number;
-  avgScore: number;
-  continuousDays: number;
-  oralDimensions: {
-    accuracy: number; // 发音准确度
-    fluency: number; // 流利度
-    integrity: number; // 完整度
-  };
-  weakPoints: string[];
-  recentRecords: PracticeRecord[];
-}
-
-/** 练习记录 */
-export interface PracticeRecord {
-  id: string;
-  textbookId: string;
-  textbookName: string;
-  moduleId: string;
-  moduleName: string;
-  unitId: string;
-  unitName: string;
-  practiceType: string;
-  score: number;
-  duration: number; // 分钟
-  practicedAt: string;
-}
-
-/** 教材进度树 */
-export interface TextbookProgress {
-  textbookId: string;
-  textbookName: string;
-  modules: ModuleProgress[];
-}
-
-export interface ModuleProgress {
-  moduleId: string;
-  moduleName: string;
-  units: UnitProgress[];
-}
-
-export interface UnitProgress {
-  unitId: string;
-  unitName: string;
-  totalItems: number;
-  completedItems: number;
-  avgScore: number;
-  lastPracticedAt: string;
-}
-
-/** 趋势数据点 */
-export interface TrendPoint {
-  date: string; // YYYY-MM-DD
-  duration: number; // 分钟
-  sessions: number;
-}
-
-/** 家庭总览 */
-export interface FamilyOverview {
-  totalDuration: number;
-  totalSessions: number;
-  activeDeviceCount: number;
-  todayCompletedDeviceIds: string[];
-  devices: DeviceSummary[];
-}
-
-export interface DeviceSummary {
-  deviceId: string;
-  deviceName: string;
-  childName: string;
-  status: DeviceStatus["status"];
-  todayDuration: number;
-  weekDuration: number;
-  continuousDays: number;
-  avgScore: number;
-}
-
-/** 家庭动态时间线 */
-export interface TimelineEvent {
-  id: string;
-  deviceId: string;
-  childName: string;
-  eventType: "practice" | "dialogue";
-  content: string;
-  createdAt: string;
-}
-
 // ==================== 学习全览 MVP 类型 ====================
 
-export interface LearningStatsDashboard {
-  totalDurationMinutes: number;
-  totalSessions: number;
-  activeDeviceCount: number;
-  boundDeviceCount: number;
-  continuousDays: number;
-  /** 各设备连续天中的最大值，用于家庭总览展示 */
-  maxContinuousDays?: number;
-  topicCount: number;
-  /** 范围内对话轮数,仅带 range 参数时返回 */
-  practiceCount?: number | null;
-  devices: LearningStatsDeviceSummary[];
-}
-
 export interface LearningStatsContext {
-  textbookId?: string;
-  unitId?: string;
   mode?: string;
   conversationModeKey?: string;
   scope?: "all";
@@ -324,9 +189,6 @@ function appendContextQuery(
   ctx?: LearningStatsContext,
 ): void {
   if (!ctx) return;
-  if (ctx.textbookId)
-    queryParts.push(`textbookId=${encodeURIComponent(ctx.textbookId)}`);
-  if (ctx.unitId) queryParts.push(`unitId=${encodeURIComponent(ctx.unitId)}`);
   if (ctx.mode) queryParts.push(`mode=${encodeURIComponent(ctx.mode)}`);
   if (ctx.conversationModeKey)
     queryParts.push(
@@ -335,43 +197,10 @@ function appendContextQuery(
   if (ctx.scope) queryParts.push(`scope=${encodeURIComponent(ctx.scope)}`);
 }
 
-export interface LearningStatsDeviceSummary {
-  deviceId: string;
-  deviceName: string;
-  childName?: string | null;
-  childEnglishName?: string | null;
-  status: "online" | "offline" | "sleeping";
-  totalDurationMinutes: number;
-  totalSessions: number;
-  continuousDays: number;
-  topicCount: number;
-  todayDurationMinutes: number;
-  weekDurationMinutes: number;
-  /** 由 getDeviceStatus 校正后补充的实时状态字段 */
-  battery?: number;
-  isCharging?: boolean;
-  lastActiveAt?: string;
-}
-
 export interface LearningStatsDailyPoint {
   date: string;
   durationMinutes: number;
   sessionCount: number;
-}
-
-export interface LearningStatsTopic {
-  id: string;
-  mode: string;
-  textbookId?: string | null;
-  textbookName?: string | null;
-  unitId?: string | null;
-  unitName?: string | null;
-  conversationModeKey?: string | null;
-  conversationModeName?: string | null;
-  count: number;
-  lastSpokeAt: string;
-  isActive: boolean;
-  avgScore?: number | null;
 }
 
 export interface LearningStatsTimelineEvent {
@@ -383,59 +212,6 @@ export interface LearningStatsTimelineEvent {
   userText: string;
   aiText: string;
   createdAt: string;
-}
-
-export interface LearningStatsUnitProgress {
-  textbookId: string;
-  textbookName: string;
-  unitId: string;
-  unitName: string;
-  conversationCount: number;
-  lastSpokeAt: string;
-  masteryLevel?: number | null;
-}
-
-// ==================== 智能分析扩展类型 ====================
-
-/** 洞察类型 */
-export type LearningStatsInsightType =
-  | "strength" // 优势/进步
-  | "weakness" // 薄弱点
-  | "suggestion" // 学习建议
-  | "milestone" // 里程碑
-  | "alert"; // 异常提醒
-
-/** 单条学习洞察 */
-export interface LearningStatsInsight {
-  id: string;
-  type: LearningStatsInsightType;
-  title: string;
-  content: string;
-  /** 关联设备 ID，可选 */
-  deviceId?: string | null;
-  /** 关联设备名称，可选 */
-  deviceName?: string | null;
-  /** 关联指标数值，可选 */
-  metricValue?: number | null;
-  /** 指标单位，可选 */
-  metricUnit?: string | null;
-}
-
-/** 学习健康度评分 */
-export interface LearningStatsHealth {
-  /** 综合健康分 0-100 */
-  score: number;
-  /** 评分等级 */
-  level: "excellent" | "good" | "average" | "attention";
-  /** 各维度得分 */
-  dimensions: {
-    activity: number; // 活跃度
-    consistency: number; // 坚持度
-    balance: number; // 内容均衡度
-    engagement: number; // 互动深度
-  };
-  /** 主要建议 */
-  suggestion: string;
 }
 
 // ==================== 模拟延迟工具 ====================
@@ -598,40 +374,6 @@ export async function getConversationModes(
 }
 
 /**
- * 获取教材列表
- */
-export async function getTextbooks(): Promise<ApiResponse<Textbook[]>> {
-  return request<Textbook[]>({
-    method: "GET",
-    url: "/textbooks",
-  });
-}
-
-/**
- * 获取教材详情
- */
-export async function getTextbookDetail(
-  textbookId: string,
-): Promise<ApiResponse<Textbook>> {
-  return request<Textbook>({
-    method: "GET",
-    url: `/textbooks/${textbookId}`,
-  });
-}
-
-/**
- * 获取教材下单元列表
- */
-export async function getTextbookUnits(
-  textbookId: string,
-): Promise<ApiResponse<TextbookUnit[]>> {
-  return request<TextbookUnit[]>({
-    method: "GET",
-    url: `/textbooks/${textbookId}/units`,
-  });
-}
-
-/**
  * 获取设备当前生效配置
  */
 export async function getDeviceCurrentConfig(
@@ -640,20 +382,6 @@ export async function getDeviceCurrentConfig(
   return request<DeviceConfig>({
     method: "GET",
     url: `/device-configs/${deviceId}/current`,
-  });
-}
-
-/**
- * 应用教材/单元配置
- */
-export async function applyDeviceConfig(
-  deviceId: string,
-  config: Omit<DeviceConfig, "deviceId">,
-): Promise<ApiResponse<DeviceConfig>> {
-  return request<DeviceConfig>({
-    method: "POST",
-    url: `/device-configs/${deviceId}/apply`,
-    data: config,
   });
 }
 
@@ -813,8 +541,6 @@ interface GetChatRecordsParams {
   page?: number;
   pageSize?: number;
   deviceId?: string;
-  textbookId?: string;
-  unitId?: string;
   conversationModeKey?: string;
 }
 
@@ -825,22 +551,12 @@ interface GetChatRecordsParams {
 export async function getChatRecords(
   params: GetChatRecordsParams = {},
 ): Promise<ApiResponse<PaginatedResponse<ChatRecord>>> {
-  const {
-    page = 1,
-    pageSize = 100,
-    deviceId,
-    textbookId,
-    unitId,
-    conversationModeKey,
-  } = params;
+  const { page = 1, pageSize = 100, deviceId, conversationModeKey } = params;
   const queryParts = [
     `page=${encodeURIComponent(String(page))}`,
     `pageSize=${encodeURIComponent(String(pageSize))}`,
   ];
   if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (textbookId)
-    queryParts.push(`textbookId=${encodeURIComponent(textbookId)}`);
-  if (unitId) queryParts.push(`unitId=${encodeURIComponent(unitId)}`);
   if (conversationModeKey)
     queryParts.push(
       `conversationModeKey=${encodeURIComponent(conversationModeKey)}`,
@@ -864,265 +580,7 @@ export async function getChildProfile(
   });
 }
 
-// ==================== 智能分析相关接口（模拟数据） ====================
-
-/**
- * 获取单设备智能分析
- */
-export async function getDeviceAnalysis(
-  deviceId: string,
-  range: "today" | "week" | "month" = "week",
-): Promise<ApiResponse<DeviceAnalysis>> {
-  await mockDelay();
-
-  const accuracy = Math.floor(Math.random() * 39) + 60; // 60-98
-  const fluency = Math.floor(Math.random() * 39) + 60;
-  const integrity = Math.floor(Math.random() * 39) + 60;
-  const avgScore = Math.round((accuracy + fluency + integrity) / 3);
-
-  const dimensions = [
-    { key: "accuracy", label: "发音准确度", value: accuracy },
-    { key: "fluency", label: "流利度", value: fluency },
-    { key: "integrity", label: "完整度", value: integrity },
-  ];
-  const weakest = dimensions.sort((a, b) => a.value - b.value)[0];
-
-  return success({
-    deviceId,
-    range,
-    totalDuration: range === "today" ? 35 : range === "week" ? 245 : 980,
-    totalSessions: range === "today" ? 3 : range === "week" ? 18 : 72,
-    totalDialogueRounds: range === "today" ? 12 : range === "week" ? 86 : 340,
-    avgScore,
-    continuousDays: 5,
-    oralDimensions: { accuracy, fluency, integrity },
-    weakPoints: [
-      `${weakest.label}相对薄弱，建议加强跟读练习`,
-      "Module 3 Unit 2 尚未完成",
-    ],
-    recentRecords: generatePracticeRecords(deviceId, 5),
-  });
-}
-
-/**
- * 获取单设备教材进度
- */
-export async function getDeviceTextbookProgress(
-  deviceId: string,
-): Promise<ApiResponse<TextbookProgress[]>> {
-  await mockDelay();
-  return success(generateTextbookProgress(deviceId));
-}
-
-/**
- * 获取单设备学习趋势
- */
-export async function getDeviceTrend(
-  deviceId: string,
-  days = 7,
-): Promise<ApiResponse<TrendPoint[]>> {
-  await mockDelay();
-  return success(generateTrend(deviceId, days));
-}
-
-/**
- * 获取家庭全览
- */
-export async function getFamilyOverview(): Promise<
-  ApiResponse<FamilyOverview>
-> {
-  await mockDelay();
-  const devicesRes = await getDeviceList();
-  const devices = devicesRes.data;
-
-  // 并发获取设备状态
-  const statusResList = await Promise.all(
-    devices.map((d) => getDeviceStatus(d.id)),
-  );
-  const statusMap = new Map(
-    statusResList.map((res) => [res.data.deviceId, res.data]),
-  );
-
-  const summaries: DeviceSummary[] = devices.map((device) => {
-    const status = statusMap.get(device.id);
-    return {
-      deviceId: device.id,
-      deviceName: device.name,
-      childName:
-        device.id === "D001" ? "小明" : device.id === "D002" ? "小红" : "小宝",
-      status: status?.status || "offline",
-      todayDuration: Math.floor(Math.random() * 60) + 10,
-      weekDuration: Math.floor(Math.random() * 300) + 60,
-      continuousDays: Math.floor(Math.random() * 7) + 1,
-      avgScore: Math.floor(Math.random() * 30) + 70,
-    };
-  });
-
-  return success({
-    totalDuration: summaries.reduce((sum, d) => sum + d.weekDuration, 0),
-    totalSessions: summaries.reduce(
-      (sum) => sum + Math.floor(Math.random() * 20) + 5,
-      0,
-    ),
-    activeDeviceCount: summaries.filter((d) => d.status === "online").length,
-    todayCompletedDeviceIds: summaries
-      .filter(() => Math.random() > 0.3)
-      .map((d) => d.deviceId),
-    devices: summaries,
-  });
-}
-
-/**
- * 获取家庭学习趋势
- */
-export async function getFamilyTrend(
-  days = 7,
-): Promise<ApiResponse<TrendPoint[]>> {
-  await mockDelay();
-  return success(generateTrend("family", days));
-}
-
-/**
- * 获取家庭动态时间线
- */
-export async function getFamilyTimeline(
-  page = 1,
-  pageSize = 10,
-): Promise<ApiResponse<TimelineEvent[]>> {
-  await mockDelay();
-  const events: TimelineEvent[] = [];
-  const children = ["小明", "小红", "小宝"];
-  const textbooks = ["PEP 人教版三上", "牛津树 Level 1", "新概念英语入门"];
-  const modules = ["Module 1", "Module 2", "Module 3"];
-  const units = ["Unit 1", "Unit 2", "Unit 3"];
-  const types = ["单词跟读", "句型跟读", "情景对话", "绘本阅读"];
-
-  const total = 35;
-  const start = (page - 1) * pageSize;
-  const end = Math.min(start + pageSize, total);
-
-  for (let i = start; i < end; i++) {
-    const childIndex = i % children.length;
-    const textbook = textbooks[i % textbooks.length];
-    const moduleName = modules[i % modules.length];
-    const unitName = units[i % units.length];
-    const type = types[i % types.length];
-    const day = 11 - Math.floor(i / 3);
-    const hour = 9 + (i % 8);
-
-    events.push({
-      id: `E${String(i + 1).padStart(3, "0")}`,
-      deviceId: `D00${childIndex + 1}`,
-      childName: children[childIndex],
-      eventType: i % 2 === 0 ? "practice" : "dialogue",
-      content: `${children[childIndex]} 完成了 ${textbook} ${moduleName} ${unitName} 的${type}`,
-      createdAt: `2026-09-${String(day).padStart(2, "0")} ${String(hour).padStart(2, "0")}:00:00`,
-    });
-  }
-
-  return success(events);
-}
-
-// ==================== 智能分析辅助函数 ====================
-
-function generatePracticeRecords(
-  deviceId: string,
-  count: number,
-): PracticeRecord[] {
-  const textbooks = [
-    { id: "T001", name: "PEP 人教版三上" },
-    { id: "T002", name: "牛津树 Level 1" },
-  ];
-  const types = ["单词跟读", "句型跟读", "情景对话", "绘本阅读"];
-  const records: PracticeRecord[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const textbook = textbooks[i % textbooks.length];
-    const moduleIndex = (i % 3) + 1;
-    const unitIndex = (i % 3) + 1;
-    records.push({
-      id: `P${String(i + 1).padStart(3, "0")}`,
-      textbookId: textbook.id,
-      textbookName: textbook.name,
-      moduleId: `M${moduleIndex}`,
-      moduleName: `Module ${moduleIndex}`,
-      unitId: `U${unitIndex}`,
-      unitName: `Unit ${unitIndex}`,
-      practiceType: types[i % types.length],
-      score: Math.floor(Math.random() * 35) + 60,
-      duration: Math.floor(Math.random() * 10) + 3,
-      practicedAt: `2026-09-${String(10 - i).padStart(2, "0")} 1${i % 8}:00:00`,
-    });
-  }
-
-  return records;
-}
-
-function generateTextbookProgress(deviceId: string): TextbookProgress[] {
-  const textbooks = [
-    { id: "T001", name: "PEP 人教版三上" },
-    { id: "T002", name: "牛津树 Level 1" },
-  ];
-
-  return textbooks.map((textbook) => ({
-    textbookId: textbook.id,
-    textbookName: textbook.name,
-    modules: [1, 2, 3].map((moduleIndex) => ({
-      moduleId: `M${moduleIndex}`,
-      moduleName: `Module ${moduleIndex}`,
-      units: [1, 2, 3].map((unitIndex) => {
-        const completed = Math.floor(Math.random() * 5);
-        return {
-          unitId: `U${unitIndex}`,
-          unitName: `Unit ${unitIndex}`,
-          totalItems: 5,
-          completedItems: completed,
-          avgScore: completed > 0 ? Math.floor(Math.random() * 35) + 60 : 0,
-          lastPracticedAt:
-            completed > 0
-              ? `2026-09-${String(10 - unitIndex).padStart(2, "0")} 10:00:00`
-              : "",
-        };
-      }),
-    })),
-  }));
-}
-
-function generateTrend(deviceId: string, days: number): TrendPoint[] {
-  const points: TrendPoint[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    points.push({
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
-      duration: Math.floor(Math.random() * 60) + 10,
-      sessions: Math.floor(Math.random() * 5) + 1,
-    });
-  }
-  return points;
-}
-
 // ==================== 学习全览 MVP 接口 ====================
-
-/**
- * 获取学习全览仪表盘
- * 调用 deda-server GET /learning-stats/dashboard
- */
-export async function getLearningStatsDashboard(
-  deviceId?: string,
-  range?: "today" | "week" | "month",
-  ctx?: LearningStatsContext,
-): Promise<ApiResponse<LearningStatsDashboard>> {
-  const queryParts: string[] = [];
-  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
-  appendContextQuery(queryParts, ctx);
-  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return request<LearningStatsDashboard>({
-    method: "GET",
-    url: `/learning-stats/dashboard${query}`,
-  });
-}
 
 /**
  * 获取学习趋势（近 N 天）
@@ -1143,20 +601,6 @@ export async function getLearningStatsDaily(
 }
 
 /**
- * 获取主题分布
- * 调用 deda-server GET /learning-stats/topics
- */
-export async function getLearningStatsTopics(
-  deviceId?: string,
-): Promise<ApiResponse<LearningStatsTopic[]>> {
-  const query = deviceId ? `?deviceId=${encodeURIComponent(deviceId)}` : "";
-  return request<LearningStatsTopic[]>({
-    method: "GET",
-    url: `/learning-stats/topics${query}`,
-  });
-}
-
-/**
  * 获取学习动态时间线
  * 调用 deda-server GET /learning-stats/timeline
  */
@@ -1173,19 +617,6 @@ export async function getLearningStatsTimeline(
   return request<PaginatedResponse<LearningStatsTimelineEvent>>({
     method: "GET",
     url: `/learning-stats/timeline?${queryParts.join("&")}`,
-  });
-}
-
-/**
- * 获取单元进度
- * 调用 deda-server GET /learning-stats/unit-progress/:deviceId
- */
-export async function getLearningStatsUnitProgress(
-  deviceId: string,
-): Promise<ApiResponse<LearningStatsUnitProgress[]>> {
-  return request<LearningStatsUnitProgress[]>({
-    method: "GET",
-    url: `/learning-stats/unit-progress/${encodeURIComponent(deviceId)}`,
   });
 }
 
@@ -1235,84 +666,6 @@ export async function getDeviceAboutInfo(
     subnetMask: "255.255.255.0",
     gateway: "192.168.3.1",
     dns: "192.168.3.1",
-  });
-}
-
-export interface LearningStatsActivityEvent {
-  type: "study" | "streak" | "unlock";
-  mode?: string | null;
-  textbookId?: string | null;
-  textbookName?: string | null;
-  unitId?: string | null;
-  unitName?: string | null;
-  turnCount?: number;
-  streakDays?: number;
-}
-
-export interface LearningStatsActivityDay {
-  date: string;
-  events: LearningStatsActivityEvent[];
-}
-
-/**
- * 获取学习动态（事件型卡片,按日倒序分页）
- * 调用 deda-server GET /learning-stats/activities
- */
-export async function getLearningStatsActivities(
-  deviceId?: string,
-  page = 1,
-  pageSize = 10,
-  range?: "today" | "week" | "month",
-  ctx?: LearningStatsContext,
-): Promise<ApiResponse<PaginatedResponse<LearningStatsActivityDay>>> {
-  const queryParts: string[] = [
-    `page=${encodeURIComponent(String(page))}`,
-    `pageSize=${encodeURIComponent(String(pageSize))}`,
-  ];
-  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
-  appendContextQuery(queryParts, ctx);
-  return request<PaginatedResponse<LearningStatsActivityDay>>({
-    method: "GET",
-    url: `/learning-stats/activities?${queryParts.join("&")}`,
-  });
-}
-
-/**
- * 获取 AI 学习洞察
- * 调用 deda-server GET /learning-stats/insights
- * 不传 deviceId 时返回家庭维度洞察。
- */
-export async function getLearningStatsInsights(
-  deviceId?: string,
-  range?: "today" | "week" | "month",
-): Promise<ApiResponse<LearningStatsInsight[]>> {
-  const queryParts: string[] = [];
-  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
-  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return request<LearningStatsInsight[]>({
-    method: "GET",
-    url: `/learning-stats/insights${query}`,
-  });
-}
-
-/**
- * 获取学习健康度评分
- * 调用 deda-server GET /learning-stats/health
- * 不传 deviceId 时返回家庭维度健康度。
- */
-export async function getLearningStatsHealth(
-  deviceId?: string,
-  range?: "today" | "week" | "month",
-): Promise<ApiResponse<LearningStatsHealth>> {
-  const queryParts: string[] = [];
-  if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (range) queryParts.push(`range=${encodeURIComponent(range)}`);
-  const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return request<LearningStatsHealth>({
-    method: "GET",
-    url: `/learning-stats/health${query}`,
   });
 }
 
