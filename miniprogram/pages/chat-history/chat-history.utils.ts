@@ -6,18 +6,14 @@ export interface DisplayRecord extends ChatRecord {
 }
 
 export interface HistoryFilters {
-  textbookId?: string | null;
-  unitId?: string | null;
   conversationModeKey?: string | null;
 }
 
 /**
  * 聊天记录过滤参数决策：
- * - URL 显式参数优先（直通「查看指定语境」）
- * - 无参时按设备当前配置推导，保证页面语境与设备学习状态一致：
- *   locked_unit / textbook_learning → 教材+单元
- *   free_textbook → 教材
- *   free_chat → 子模式
+ * - URL 显式参数优先（直通「查看指定语境」）；
+ *   textbookId / unitId 为已废弃的教材参数，一律静默忽略
+ * - 无参时按设备当前配置推导：free_chat → 子模式
  * - 无配置 → 不过滤（全部记录）
  * 后端 /conversations 只认显式传参、不读设备配置（契约见 integration.md）。
  */
@@ -25,35 +21,17 @@ export function resolveHistoryFilters(
   params: HistoryFilters,
   config: DeviceConfig | null,
 ): HistoryFilters {
-  const clean = (f: HistoryFilters): HistoryFilters => {
-    const out: HistoryFilters = {};
-    if (f.textbookId) out.textbookId = f.textbookId;
-    if (f.unitId) out.unitId = f.unitId;
-    if (f.conversationModeKey) out.conversationModeKey = f.conversationModeKey;
-    return out;
-  };
-
   // URL 显式参数优先
-  if (params.textbookId || params.unitId || params.conversationModeKey) {
-    return clean(params);
+  if (params.conversationModeKey) {
+    return { conversationModeKey: params.conversationModeKey };
   }
 
   if (!config) return {};
 
-  switch (config.mode) {
-    case "locked_unit":
-    case "textbook_learning":
-      return clean({
-        textbookId: config.textbookId,
-        unitId: config.unitId,
-      });
-    case "free_textbook":
-      return clean({ textbookId: config.textbookId });
-    case "free_chat":
-      return clean({ conversationModeKey: config.conversationModeKey });
-    default:
-      return {};
+  if (config.mode === "free_chat" && config.conversationModeKey) {
+    return { conversationModeKey: config.conversationModeKey };
   }
+  return {};
 }
 
 /** 加载指示的最短展示时长：本地快返回也能被用户看见，避免一闪而过 */

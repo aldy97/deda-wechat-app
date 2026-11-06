@@ -1,6 +1,4 @@
 import {
-  LearningStatsUnitProgress,
-  LearningStatsTopic,
   LearningStatsDailyPoint,
   LearningStatsTimelineEvent,
 } from "../../api/api";
@@ -32,38 +30,6 @@ export function allocateIntegerPercentages(counts: number[]): number[] {
     byRemainder[index].percent += 1;
   }
   return allocations.map((item) => item.percent);
-}
-
-export interface TextbookUnitProgress {
-  textbookId: string;
-  textbookName: string;
-  units: LearningStatsUnitProgress[];
-}
-
-export function groupUnitProgressByTextbook(
-  items: LearningStatsUnitProgress[],
-): TextbookUnitProgress[] {
-  const map = new Map<string, TextbookUnitProgress>();
-
-  for (const item of items) {
-    const existing = map.get(item.textbookId);
-    if (existing) {
-      existing.units.push(item);
-    } else {
-      map.set(item.textbookId, {
-        textbookId: item.textbookId,
-        textbookName: item.textbookName,
-        units: [item],
-      });
-    }
-  }
-
-  return Array.from(map.values());
-}
-
-export function formatTopicDisplayName(topic: LearningStatsTopic): string {
-  const main = topic.conversationModeName || topic.textbookName || topic.mode;
-  return topic.unitName ? `${main} · ${topic.unitName}` : main;
 }
 
 export function getRangeDays(range: "today" | "week" | "month"): number {
@@ -142,67 +108,6 @@ export function scaleBarHeights(
     const h = Math.round((Math.min(v, divisor) / divisor) * maxHeightRpx);
     return Math.max(h, 8);
   });
-}
-
-export interface ContextOption {
-  /** 'default' 或 `${textbookId}|${unitId}` 或 `free_chat|${conversationModeKey}` */
-  key: string;
-  label: string;
-  /** 传给统计端点的显式语境参数;空对象 = 服务端按设备当前配置族默认 */
-  params: {
-    textbookId?: string;
-    unitId?: string;
-    mode?: string;
-    conversationModeKey?: string;
-  };
-}
-
-/**
- * 组装智能分析页的语境选择器选项。
- * 首项为「默认（当前配置）」;其后为全部练过的语境（topics 已是全量）。
- * 查看任何语境都是只读操作,不修改设备配置。
- */
-export function buildContextOptions(
-  topics: LearningStatsTopic[],
-): ContextOption[] {
-  const active = topics.find((t) => t.isActive);
-  const activeLabel = active
-    ? `当前（${topicContextLabel(active)}）`
-    : "当前语境";
-
-  const options: ContextOption[] = [
-    { key: "default", label: activeLabel, params: {} },
-  ];
-
-  for (const t of topics) {
-    if (t.mode === "free_chat") {
-      options.push({
-        key: `free_chat|${t.conversationModeKey}`,
-        label: `自由对话 · ${t.conversationModeName ?? t.conversationModeKey}`,
-        params: {
-          mode: "free_chat",
-          conversationModeKey: t.conversationModeKey ?? undefined,
-        },
-      });
-    } else {
-      options.push({
-        key: `${t.textbookId}|${t.unitId}`,
-        label: topicContextLabel(t),
-        params: {
-          textbookId: t.textbookId ?? undefined,
-          unitId: t.unitId ?? undefined,
-        },
-      });
-    }
-  }
-
-  return options;
-}
-
-function topicContextLabel(t: LearningStatsTopic): string {
-  const textbook = t.textbookName ?? t.textbookId ?? "";
-  const unit = t.unitName ?? t.unitId ?? "";
-  return [textbook, unit].filter(Boolean).join(" · ");
 }
 
 export interface TrendSeries {

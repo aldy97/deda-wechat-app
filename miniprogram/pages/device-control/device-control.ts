@@ -21,9 +21,6 @@ interface VantStringEvent {
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
   free_chat: "自由对话",
-  textbook_learning: "教材学习",
-  locked_unit: "教材单元",
-  free_textbook: "自由教材",
 };
 
 /**
@@ -89,20 +86,6 @@ Page({
     const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
     if (config.mode === "free_chat" && config.conversationModeKey) {
       return `${modeName} / ${config.conversationModeKey}`;
-    }
-    if (
-      (config.mode === "textbook_learning" || config.mode === "locked_unit") &&
-      config.textbookId
-    ) {
-      const textbook = config.textbookName || config.textbookId;
-      const unit = config.unitName || config.unitId;
-      return unit
-        ? `${modeName} / ${textbook} / ${unit}`
-        : `${modeName} / ${textbook}`;
-    }
-    if (config.mode === "free_textbook" && config.textbookId) {
-      const textbook = config.textbookName || config.textbookId;
-      return `${modeName} / ${textbook}`;
     }
     return modeName;
   },

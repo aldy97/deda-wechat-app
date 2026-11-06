@@ -74,55 +74,30 @@ describe("chat-history utils", () => {
     const config = (over: Partial<DeviceConfig>): DeviceConfig =>
       ({
         deviceId: "dev-001",
-        mode: "locked_unit",
-        textbookId: "book-a",
-        unitId: "unit-1",
+        mode: "free_chat",
         conversationModeKey: null,
         ...over,
       }) as DeviceConfig;
 
     it("prefers explicit URL params over the device config", () => {
       const result = resolveHistoryFilters(
-        { textbookId: "book-b", unitId: "unit-9" },
-        config({}),
+        { conversationModeKey: "free_chat_qa" },
+        config({ conversationModeKey: "free_chat_casual" }),
       );
-      expect(result).toEqual({ textbookId: "book-b", unitId: "unit-9" });
-    });
-
-    it("derives textbook+unit filter from locked_unit config", () => {
-      expect(resolveHistoryFilters({}, config({}))).toEqual({
-        textbookId: "book-a",
-        unitId: "unit-1",
-      });
-    });
-
-    it("derives textbook+unit filter from textbook_learning config", () => {
-      expect(
-        resolveHistoryFilters(
-          {},
-          config({ mode: "textbook_learning", unitId: null }),
-        ),
-      ).toEqual({ textbookId: "book-a" });
-    });
-
-    it("derives textbook-only filter from free_textbook config", () => {
-      expect(
-        resolveHistoryFilters({}, config({ mode: "free_textbook" })),
-      ).toEqual({ textbookId: "book-a" });
+      expect(result).toEqual({ conversationModeKey: "free_chat_qa" });
     });
 
     it("derives conversationModeKey filter from free_chat config", () => {
       expect(
         resolveHistoryFilters(
           {},
-          config({
-            mode: "free_chat",
-            textbookId: null,
-            unitId: null,
-            conversationModeKey: "free_chat_casual",
-          }),
+          config({ conversationModeKey: "free_chat_casual" }),
         ),
       ).toEqual({ conversationModeKey: "free_chat_casual" });
+    });
+
+    it("returns empty filter when free_chat config has no sub-mode key", () => {
+      expect(resolveHistoryFilters({}, config({}))).toEqual({});
     });
 
     it("returns empty filter when no config is available", () => {

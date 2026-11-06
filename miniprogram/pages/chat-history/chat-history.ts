@@ -1,11 +1,7 @@
 import {
   getChatRecords,
   getDeviceCurrentConfig,
-  getTextbookDetail,
-  getTextbookUnits,
   DeviceConfig,
-  Textbook,
-  TextbookUnit,
 } from "../../api/api";
 import {
   buildDisplayRecords,
@@ -17,8 +13,6 @@ import {
 
 interface ChatHistoryData {
   deviceId: string;
-  textbookId: string;
-  unitId: string;
   conversationModeKey: string;
   loading: boolean;
   records: DisplayRecord[];
@@ -39,8 +33,6 @@ interface ChatHistoryData {
 Page<ChatHistoryData, Record<string, any>>({
   data: {
     deviceId: "",
-    textbookId: "",
-    unitId: "",
     conversationModeKey: "",
     loading: false,
     records: [],
@@ -54,66 +46,23 @@ Page<ChatHistoryData, Record<string, any>>({
 
   onLoad(options) {
     const deviceId = options?.deviceId || options?.id || "";
-    const textbookId = options?.textbookId || "";
-    const unitId = options?.unitId || "";
+    // textbookId/unitId 为已废弃的教材参数，静默忽略
     const conversationModeKey = options?.conversationModeKey || "";
-    this.setData({ deviceId, textbookId, unitId, conversationModeKey });
+    this.setData({ deviceId, conversationModeKey });
   },
 
   async onReady() {
-    const { deviceId, textbookId, unitId, conversationModeKey } = this.data;
+    const { deviceId, conversationModeKey } = this.data;
     // 先完成语境解析（含配置兜底过滤）再首次查询,避免竞态发出未过滤请求
-    await this.loadContext(deviceId, textbookId, unitId, conversationModeKey);
+    await this.loadContext(deviceId, conversationModeKey);
     this.loadInitialRecords();
   },
 
   /**
    * 加载页面上下文：优先使用 URL 传入的参数，否则回退到设备当前配置
    */
-  async loadContext(
-    deviceId: string,
-    textbookId: string,
-    unitId: string,
-    conversationModeKey: string,
-  ) {
+  async loadContext(deviceId: string, conversationModeKey: string) {
     if (!deviceId) return;
-
-    if (textbookId && unitId) {
-      try {
-        const [textbookRes, unitsRes] = await Promise.all([
-          getTextbookDetail(textbookId),
-          getTextbookUnits(textbookId),
-        ]);
-        const textbook = textbookRes.data as Textbook | undefined;
-        const unit = (unitsRes.data as TextbookUnit[] | undefined)?.find(
-          (u) => u.unitId === unitId,
-        );
-        const title = unit
-          ? `${textbook?.name || textbookId} · ${unit.name}`
-          : "对话记录";
-        wx.setNavigationBarTitle({ title });
-        this.setData({
-          contextHint: unit?.description || textbook?.description || "",
-        });
-        return;
-      } catch (error) {
-        console.warn("[chat-history] 加载教材单元信息失败", error);
-      }
-    }
-
-    if (textbookId) {
-      try {
-        const res = await getTextbookDetail(textbookId);
-        const textbook = res.data as Textbook | undefined;
-        wx.setNavigationBarTitle({
-          title: `${textbook?.name || textbookId} · 全部单元`,
-        });
-        this.setData({ contextHint: textbook?.description || "" });
-        return;
-      } catch (error) {
-        console.warn("[chat-history] 加载教材信息失败", error);
-      }
-    }
 
     if (conversationModeKey) {
       wx.setNavigationBarTitle({ title: conversationModeKey });
@@ -121,33 +70,20 @@ Page<ChatHistoryData, Record<string, any>>({
       return;
     }
 
-    if (!textbookId && !unitId && !conversationModeKey) {
-      // URL 无参：按设备当前配置推导过滤,保持页面语境与设备学习状态一致;
-      // 配置拉取失败才退回「全部对话记录」
-      try {
-        const res = await getDeviceCurrentConfig(deviceId);
-        const config = res.data;
-        const filters = resolveHistoryFilters({}, config);
-        this.setData({
-          textbookId: filters.textbookId ?? "",
-          unitId: filters.unitId ?? "",
-          conversationModeKey: filters.conversationModeKey ?? "",
-        });
-        this.applyContext(config);
-      } catch (error) {
-        console.warn("[chat-history] 加载设备配置失败", error);
-        wx.setNavigationBarTitle({ title: "全部对话记录" });
-        this.setData({ contextHint: "查看该设备全部历史对话" });
-      }
-      return;
-    }
-
+    // URL 无参：按设备当前配置推导过滤,保持页面语境与设备学习状态一致;
+    // 配置拉取失败才退回「全部对话记录」
     try {
       const res = await getDeviceCurrentConfig(deviceId);
       const config = res.data;
+      const filters = resolveHistoryFilters({}, config);
+      this.setData({
+        conversationModeKey: filters.conversationModeKey ?? "",
+      });
       this.applyContext(config);
     } catch (error) {
       console.warn("[chat-history] 加载设备配置失败", error);
+      wx.setNavigationBarTitle({ title: "全部对话记录" });
+      this.setData({ contextHint: "查看该设备全部历史对话" });
     }
   },
 
@@ -158,17 +94,9 @@ Page<ChatHistoryData, Record<string, any>>({
     if (config.mode === "free_chat" && config.conversationModeName) {
       title = config.conversationModeName;
       hint = config.conversationModeDescription || "";
-    } else if (
-      (config.mode === "locked_unit" || config.mode === "textbook_learning") &&
-      config.textbookName
-    ) {
-      title = config.unitName
-        ? `${config.textbookName} · ${config.unitName}`
-        : config.textbookName;
-      hint = config.unitDescription || config.textbookName || "";
     } else {
-      title = config.textbookName || config.conversationModeName || "对话记录";
-      hint = config.unitDescription || config.conversationModeDescription || "";
+      title = config.conversationModeName || "对话记录";
+      hint = config.conversationModeDescription || "";
     }
 
     wx.setNavigationBarTitle({ title });
@@ -185,8 +113,6 @@ Page<ChatHistoryData, Record<string, any>>({
         page: 1,
         pageSize: this.data.pageSize,
         deviceId: this.data.deviceId,
-        textbookId: this.data.textbookId,
-        unitId: this.data.unitId,
         conversationModeKey: this.data.conversationModeKey,
       });
       const items = res.data.items || [];
@@ -236,8 +162,6 @@ Page<ChatHistoryData, Record<string, any>>({
           page: this.data.page,
           pageSize: this.data.pageSize,
           deviceId: this.data.deviceId,
-          textbookId: this.data.textbookId,
-          unitId: this.data.unitId,
           conversationModeKey: this.data.conversationModeKey,
         }),
       );

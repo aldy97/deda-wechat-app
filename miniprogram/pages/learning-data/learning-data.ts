@@ -53,9 +53,6 @@ const MODE_LABELS: Record<string, string> = {
   sleep_story: "哄睡故事",
   bedtime: "哄睡故事",
   music: "音乐",
-  textbook_learning: "英语互动",
-  locked_unit: "英语互动",
-  free_textbook: "英语互动",
   device_control: "设备控制",
   unknown: "其他",
 };

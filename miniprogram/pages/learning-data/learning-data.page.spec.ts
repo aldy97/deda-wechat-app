@@ -734,4 +734,12 @@ describe("learning-data parent report page", () => {
     await Promise.all([first, second]);
     expect(page.data.feedbackSubmitting).toBe(false);
   });
+
+  it("falls back to raw mode key for unmapped modes", () => {
+    // 历史统计数据可能含有已下线的 mode key（如教材模式）；
+    // 未映射时必须展示原始 key 而不炸。
+    const usage = page.buildModeUsage([{ mode: "legacy_mode", count: 1 }]);
+    expect(usage).toHaveLength(1);
+    expect(usage[0].label).toBe("legacy_mode");
+  });
 });

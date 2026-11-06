@@ -13,8 +13,6 @@
     "pages/user-manual/user-manual",
     "pages/switch-mode/switch-mode",
     "pages/choose-free-chat-mode/choose-free-chat-mode",
-    "pages/textbook-learning/textbook-learning",
-    "pages/choose-textbook-unit/choose-textbook-unit",
     "pages/mine/mine",
     "pages/child-list/child-list",
     "pages/child-info/child-info",
