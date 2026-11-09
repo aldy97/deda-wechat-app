@@ -26,13 +26,10 @@ const PAGE_FILE_EXTENSIONS = [".ts", ".wxml", ".wxss", ".json"];
 
 /**
  * 已知的「注册但不可达」页面白名单。
- * device-control / device-bind 为现状遗留，不在本次清理范围内。
+ * device-bind / device-control 均已有 device-list 入口可达，白名单清零。
  * 白名单只允许减少，不允许新增。
  */
-const KNOWN_ORPHAN_PAGES = [
-  "pages/device-control/device-control",
-  "pages/device-bind/device-bind",
-];
+const KNOWN_ORPHAN_PAGES: string[] = [];
 
 /**
  * 已知的「磁盘存在但未注册」页面目录白名单。

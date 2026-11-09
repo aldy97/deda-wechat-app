@@ -89,13 +89,18 @@ export interface Device {
   } | null;
 }
 
-/** 设备实时状态（电量、在线状态等） */
+/**
+ * 设备实时状态（电量、在线状态等）
+ * 对齐 deda-server MINI_PROGRAM_API.md 3.4（2026-11 起接 MQTT 真实状态）：
+ * - status 仅 online/offline，15 秒无心跳即 offline
+ * - battery / isCharging / lastActiveAt 均可能为 null（设备未上报；isCharging 协议暂缺，固定 null）
+ */
 export interface DeviceStatus {
   deviceId: string;
-  status: "online" | "offline" | "sleeping";
-  battery: number; // 电量 0-100
-  isCharging: boolean;
-  lastActiveAt: string;
+  status: "online" | "offline";
+  battery: number | null; // 电量 0-100，未上报为 null
+  isCharging: boolean | null;
+  lastActiveAt: string | null; // ISO 8601，从未上报为 null
 }
 
 /** 对话模式顶层分类 */
@@ -132,13 +137,11 @@ export interface DeviceConfig {
   speechRate?: string | null;
 }
 
-/** 设备控制面板数据 */
-export interface DeviceControlData {
-  id: string;
-  name: string;
-  power: boolean;
-  volume: number; // 0-100
-  mode: "study" | "play" | "rest";
+/** 设备控制结果（契约 3.6） */
+export interface ControlDeviceResult {
+  success: boolean;
+  deviceId: string;
+  action: string;
 }
 
 /** 学习数据概览 */
@@ -483,35 +486,18 @@ export async function updateSleepConfig(
 }
 
 /**
- * 获取设备控制面板数据
+ * 下发音量控制（契约 3.6 中唯一真实生效的 action）
+ * 调用 deda-server POST /devices/{deviceId}/control
+ * volume 0-100；设备不存在返回 404；volume 缺失/越界返回 400
  */
-export async function getDeviceControl(
+export async function controlDeviceVolume(
   deviceId: string,
-): Promise<ApiResponse<DeviceControlData>> {
-  await mockDelay();
-  return success({
-    id: deviceId,
-    name: "小象学习机",
-    power: true,
-    volume: 60,
-    mode: "study",
-  });
-}
-
-/**
- * 更新设备状态
- */
-export async function updateDeviceControl(
-  deviceId: string,
-  data: Partial<DeviceControlData>,
-): Promise<ApiResponse<DeviceControlData>> {
-  await mockDelay();
-  return success({
-    id: deviceId,
-    name: "小象学习机",
-    power: data.power ?? true,
-    volume: data.volume ?? 60,
-    mode: data.mode ?? "study",
+  volume: number,
+): Promise<ApiResponse<ControlDeviceResult>> {
+  return request<ControlDeviceResult>({
+    method: "POST",
+    url: `/devices/${encodeURIComponent(deviceId)}/control`,
+    data: { action: "volume", volume },
   });
 }
 

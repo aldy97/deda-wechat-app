@@ -75,7 +75,10 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
         } else {
           console.error(`[request] HTTP error: ${url}`, statusCode, body);
           const message = body?.message || `HTTP ${statusCode}`;
-          reject(new Error(message));
+          // 携带 HTTP 状态码，页面层可据此区分 404（资源不存在）与网络/服务异常
+          const error = new Error(message) as Error & { statusCode?: number };
+          error.statusCode = statusCode;
+          reject(error);
         }
       },
       fail: (err) => {

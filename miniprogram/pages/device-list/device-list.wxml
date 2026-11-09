@@ -4,8 +4,16 @@
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
   </view>
 
-  <!-- 设备列表（联调简化版：固定只展示 DEV001） -->
+  <!-- 设备列表：空列表给空态引导，有设备时列表底部常驻「添加设备」 -->
   <view wx:else>
+    <!-- 空态：无绑定设备 -->
+    <view wx:if="{{ devices.length === 0 }}" class="card empty-device-card">
+      <text class="empty-device-title">还没有绑定设备</text>
+      <text class="empty-device-copy">输入设备底部的编码，完成绑定后开始使用。</text>
+      <van-button type="primary" block bind:click="onAddDevice">去绑定</van-button>
+    </view>
+
+    <block wx:else>
     <view
       class="device-card card"
       wx:for="{{ devices }}"
@@ -15,10 +23,10 @@
       <!-- 卡片顶部：状态/电量居左，孩子姓名居中，设置居右 -->
       <view class="card-top">
         <view class="status-battery-row">
-          <!-- 状态标签 -->
-          <view class="status-tag {{ item.status === 'online' ? 'status-online' : item.status === 'sleeping' ? 'status-sleeping' : 'status-offline' }}">
+          <!-- 状态标签：契约仅 online/offline；status 404 时给「设备不存在」兜底 -->
+          <view class="status-tag {{ !item.statusNotFound && item.status === 'online' ? 'status-online' : 'status-offline' }}">
             <text class="status-dot"></text>
-            <text>{{ item.status === 'online' ? '在线' : item.status === 'sleeping' ? '休眠' : '离线' }}</text>
+            <text>{{ item.statusNotFound ? '设备不存在' : item.status === 'online' ? '在线' : '离线' }}</text>
           </view>
 
           <!-- 电量加载中 -->
@@ -26,13 +34,17 @@
             <van-loading type="spinner" size="20rpx">电量...</van-loading>
           </view>
 
-          <!-- 电量显示 -->
-          <view wx:elif="{{ item.battery !== undefined }}" class="battery-wrap {{ item.isCharging ? 'battery-charging' : '' }}">
-            <view class="battery-icon">
-              <view class="battery-level" style="width: {{ item.battery }}; background-color: {{ item.isCharging ? 'var(--color-primary)' : (item.battery >= 50 ? 'var(--color-success)' : (item.battery >= 20 ? 'var(--color-warning)' : 'var(--color-danger)')) }};"></view>
+          <!-- 电量显示（isCharging 协议暂缺、固定 null，不显示充电态；404 设备不展示电量） -->
+          <block wx:elif="{{ !item.statusNotFound }}">
+            <view wx:if="{{ item.battery !== undefined && item.battery !== null }}" class="battery-wrap {{ item.isCharging ? 'battery-charging' : '' }}">
+              <view class="battery-icon">
+                <view class="battery-level" style="width: {{ item.battery }}%; background-color: {{ item.isCharging ? 'var(--color-primary)' : (item.battery >= 50 ? 'var(--color-success)' : (item.battery >= 20 ? 'var(--color-warning)' : 'var(--color-danger)')) }};"></view>
+              </view>
+              <text class="battery-text">{{ item.isCharging ? '⚡' : '' }}{{ item.battery }}%</text>
             </view>
-            <text class="battery-text">{{ item.isCharging ? '⚡' : '' }}{{ item.battery }}%</text>
-          </view>
+            <!-- 设备尚未上报电量：显示 --，不按 0% 误导家长 -->
+            <text wx:else class="battery-unknown-text">电量 --</text>
+          </block>
         </view>
 
         <!-- 孩子姓名 -->
@@ -62,6 +74,8 @@
           </view>
           <text class="card-subtitle" wx:if="{{ item.cardSubtitle }}">{{ item.cardSubtitle }}</text>
           <text class="card-desc">{{ item.cardDesc || 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。' }}</text>
+          <!-- 最近活跃时间；从未上报为「暂未连接」 -->
+          <text class="last-active-text" wx:if="{{ !item.statusLoading && item.lastActiveText }}">{{ item.lastActiveText }}</text>
         </view>
       </view>
 
@@ -75,7 +89,18 @@
           <van-icon class="action-icon" name="exchange" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">切换模式</text>
         </view>
+        <view class="action-btn" bind:tap="onVolumeControl" data-id="{{ item.id }}">
+          <van-icon class="action-icon" name="volume-o" size="32rpx" color="var(--color-primary)" />
+          <text class="action-text">音量控制</text>
+        </view>
       </view>
     </view>
+
+    <!-- 常驻添加设备入口 -->
+    <view class="add-device-entry" bind:tap="onAddDevice">
+      <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
+      <text class="add-device-text">添加设备</text>
+    </view>
+    </block>
   </view>
 </view>

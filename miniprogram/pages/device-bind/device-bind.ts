@@ -1,4 +1,5 @@
-import { bindDevice } from '../../api/api';
+import { bindDevice } from "../../api/api";
+import { isDevEnv } from "../../config/api.config";
 
 /** Vant Field change 事件，detail 为当前输入值字符串 */
 interface VantFieldChangeEvent {
@@ -11,12 +12,14 @@ interface VantFieldChangeEvent {
  */
 Page({
   data: {
-    deviceCode: '',
+    deviceCode: "",
     loading: false,
+    /** 是否开发环境：控制「本地开发测试编码」提示的显隐 */
+    isDev: false,
   },
 
   onLoad() {
-    console.log('[DeviceBind] onLoad');
+    this.setData({ isDev: isDevEnv() });
   },
 
   /**
@@ -30,9 +33,12 @@ Page({
    * 提交绑定
    */
   async onBind() {
+    // 绑定中拦截重复提交（按钮 disabled 之外的逻辑层兜底）
+    if (this.data.loading) return;
+
     const { deviceCode } = this.data;
     if (!deviceCode.trim()) {
-      wx.showToast({ title: '请输入设备编码', icon: 'none' });
+      wx.showToast({ title: "请输入设备编码", icon: "none" });
       return;
     }
 
@@ -40,13 +46,13 @@ Page({
     try {
       const res = await bindDevice({ deviceCode: deviceCode.trim() });
       wx.showToast({
-        title: res.data.alreadyBound ? '设备已绑定' : '绑定成功',
-        icon: 'success',
+        title: res.data.alreadyBound ? "设备已绑定" : "绑定成功",
+        icon: "success",
       });
 
       // 清除设备列表缓存，确保返回后重新拉取
       try {
-        wx.removeStorageSync('device_list_cache');
+        wx.removeStorageSync("device_list_cache");
       } catch (e) {
         // ignore
       }
@@ -55,8 +61,8 @@ Page({
         wx.navigateBack();
       }, 800);
     } catch (error) {
-      const message = error instanceof Error ? error.message : '绑定失败';
-      wx.showToast({ title: message, icon: 'none' });
+      const message = error instanceof Error ? error.message : "绑定失败";
+      wx.showToast({ title: message, icon: "none" });
     } finally {
       this.setData({ loading: false });
     }

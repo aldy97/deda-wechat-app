@@ -85,11 +85,6 @@
   background-color: var(--color-success-soft);
 }
 
-.status-sleeping {
-  color: var(--color-warning);
-  background-color: var(--color-warning-soft);
-}
-
 .status-offline {
   color: var(--color-secondary);
   background-color: var(--color-neutral-soft);
@@ -106,12 +101,22 @@
   background-color: var(--color-success);
 }
 
-.status-sleeping .status-dot {
-  background-color: var(--color-warning);
-}
-
 .status-offline .status-dot {
   background-color: var(--color-secondary);
+}
+
+/* 电量未知（设备未上报） */
+.battery-unknown-text {
+  font-size: 24rpx;
+  color: var(--color-secondary);
+}
+
+/* 最近活跃时间 */
+.last-active-text {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: var(--color-secondary);
 }
 
 /* 电量加载 */
@@ -187,6 +192,48 @@
   font-size: 24rpx;
   font-weight: bold;
   color: var(--color-secondary);
+}
+
+/* 空态：无绑定设备 */
+.empty-device-card {
+  padding: 64rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-device-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12rpx;
+}
+
+.empty-device-copy {
+  font-size: 26rpx;
+  color: var(--color-secondary);
+  margin-bottom: 32rpx;
+  text-align: center;
+}
+
+.empty-device-card van-button {
+  width: 100%;
+}
+
+/* 常驻添加设备入口 */
+.add-device-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 24rpx 0;
+  border: 2rpx dashed var(--color-secondary);
+  border-radius: 24rpx;
+}
+
+.add-device-text {
+  font-size: 26rpx;
+  color: var(--color-primary);
 }
 
 /* 卡片中部 */

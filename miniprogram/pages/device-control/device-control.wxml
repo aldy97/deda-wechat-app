@@ -1,5 +1,5 @@
 <view class="container device-control-page">
-  <text class="page-title">{{ device.name || '设备控制' }}</text>
+  <text class="page-title">音量控制</text>
 
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{ loading }}">
@@ -13,19 +13,13 @@
         <text class="current-mode-text" slot="right-icon">{{ currentModeDisplay }}</text>
       </van-cell>
 
-      <van-cell title="设备电源">
-        <van-switch
-          checked="{{ device.power }}"
-          bind:change="onPowerChange"
-          slot="right-icon"
-        />
-      </van-cell>
-
-      <van-cell title="音量：{{ device.volume }}">
+      <!-- 音量：契约 3.6 中唯一真实下发的控制项 -->
+      <van-cell title="音量：{{ volume }}">
         <van-slider
-          value="{{ device.volume }}"
+          value="{{ volume }}"
           min="0"
           max="100"
+          disabled="{{ sliderDisabled }}"
           bind:change="onVolumeChange"
           bind:dragend="onVolumeDragEnd"
           slot="right-icon"
@@ -34,17 +28,32 @@
       </van-cell>
     </van-cell-group>
 
+    <!-- 离线 / 设备不存在提示 -->
+    <view class="status-hint" wx:if="{{ statusHint }}">
+      <text class="status-hint-text">{{ statusHint }}</text>
+    </view>
+
+    <!-- 协议暂不支持的控制项：灰显占位，不制造「已生效」错觉 -->
+    <van-cell-group inset class="card">
+      <van-cell title="设备电源" label="协议暂未支持，敬请期待">
+        <van-switch checked="{{ false }}" disabled slot="right-icon" />
+      </van-cell>
+    </van-cell-group>
+
     <view class="card mode-card">
-      <text class="mode-title">工作模式</text>
-      <van-radio-group value="{{ device.mode }}" bind:change="onModeChange">
-        <van-radio name="study">学习模式</van-radio>
-        <van-radio name="play">娱乐模式</van-radio>
-        <van-radio name="rest">休息模式</van-radio>
+      <view class="mode-title-row">
+        <text class="mode-title">工作模式</text>
+        <text class="coming-soon-tag">敬请期待</text>
+      </view>
+      <van-radio-group value="" disabled>
+        <van-radio name="study" disabled>学习模式</van-radio>
+        <van-radio name="play" disabled>娱乐模式</van-radio>
+        <van-radio name="rest" disabled>休息模式</van-radio>
       </van-radio-group>
     </view>
 
     <view class="actions">
-      <van-button type="primary" block bind:click="fetchDeviceData" data-id="{{ deviceId }}">
+      <van-button type="primary" block bind:click="onRefresh">
         刷新状态
       </van-button>
     </view>

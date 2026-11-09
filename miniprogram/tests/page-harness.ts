@@ -27,13 +27,19 @@ export function installPageHarness(): PageHarness {
     navigateTo: jest.fn(),
     switchTab: jest.fn(),
     navigateBack: jest.fn(),
+    reLaunch: jest.fn(),
     setNavigationBarTitle: jest.fn(),
     showToast: jest.fn(),
     showModal: jest.fn(),
     createSelectorQuery: jest.fn(),
     setStorageSync: jest.fn(),
     getStorageSync: jest.fn().mockReturnValue(""),
+    removeStorageSync: jest.fn(),
     stopPullDownRefresh: jest.fn(),
+    // 默认开发版环境（dev 门控的联调行为默认开启，单测可按需覆盖返回值）
+    getAccountInfoSync: jest
+      .fn()
+      .mockReturnValue({ miniProgram: { envVersion: "develop" } }),
   };
   wxStub.createSelectorQuery.mockImplementation(() => {
     const query: any = {
@@ -51,6 +57,8 @@ export function installPageHarness(): PageHarness {
   (globalThis as any).Page = jest.fn((config: any) => {
     captured = config;
   });
+  // 页面栈桩：默认栈内有一层以上（navigateBack 可用），用例可覆盖
+  (globalThis as any).getCurrentPages = jest.fn(() => [{}]);
 
   return {
     wx: wxStub,

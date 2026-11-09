@@ -3,6 +3,7 @@ import {
   getLearningStatsModeUsage,
   getSleepConfig,
   getWechatPhoneNumber,
+  controlDeviceVolume,
   submitFeedback,
   updateDeviceOrder,
   updateSleepConfig,
@@ -147,6 +148,37 @@ describe("sleep config contract (backend: /sleep-configs/device/:deviceId)", () 
       method: "PATCH",
       url: "/sleep-configs/device/dev-local-001",
       data: { sleepTime: "21:30" },
+    });
+  });
+});
+
+describe("device volume control request", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequest.mockResolvedValue({
+      code: 0,
+      message: "success",
+      data: { success: true, deviceId: "dev-local-001", action: "volume" },
+    });
+  });
+
+  it("posts action=volume to the control endpoint (契约 3.6)", async () => {
+    await controlDeviceVolume("dev-local-001", 65);
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/devices/dev-local-001/control",
+      data: { action: "volume", volume: 65 },
+    });
+  });
+
+  it("url-encodes the device id", async () => {
+    await controlDeviceVolume("dev local 001", 0);
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/devices/dev%20local%20001/control",
+      data: { action: "volume", volume: 0 },
     });
   });
 });

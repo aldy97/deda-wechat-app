@@ -28,7 +28,8 @@
     </view>
   </view>
 
-  <view class="bind-tips text-secondary">
+  <!-- 联调提示仅开发环境可见 -->
+  <view class="bind-tips text-secondary" wx:if="{{ isDev }}">
     本地开发测试编码：DEV001
   </view>
 </view>

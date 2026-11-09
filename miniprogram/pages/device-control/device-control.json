@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "设备控制",
+  "navigationBarTitleText": "音量控制",
   "usingComponents": {
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",

@@ -77,7 +77,8 @@ Page({
   },
 
   /**
-   * 确认删除：显示加载并调用 mock API
+   * 确认删除：显示加载并调用解绑接口（契约 3.9 DELETE /devices/:id）
+   * 404 幂等当成功：解绑仅删除绑定关系，404 即关系已不存在
    */
   async onConfirmDelete() {
     if (this.data.deleteLoading) return;
@@ -85,15 +86,28 @@ Page({
     this.setData({ deleteLoading: true });
     try {
       await deleteDevice(this.data.deviceId);
-      wx.showToast({ title: "删除成功", icon: "success" });
-      this.setData({ showDeleteModal: false });
-      // 删除成功后清除设备列表缓存，确保返回列表页时重新加载
-      this.clearDeviceListCache();
-      this.navigateBackToDeviceList();
+      this.handleDeleteSuccess();
     } catch (error) {
-      wx.showToast({ title: "删除失败，请重试", icon: "none" });
+      if ((error as { statusCode?: number })?.statusCode === 404) {
+        this.handleDeleteSuccess();
+        return;
+      }
+      const message =
+        error instanceof Error ? error.message : "删除失败，请重试";
+      wx.showToast({ title: message, icon: "none" });
       this.setData({ deleteLoading: false });
     }
+  },
+
+  /**
+   * 删除成功路径：提示、关弹窗、清设备列表缓存、返回列表
+   */
+  handleDeleteSuccess() {
+    wx.showToast({ title: "删除成功", icon: "success" });
+    this.setData({ showDeleteModal: false, deleteLoading: false });
+    // 删除成功后清除设备列表缓存，确保返回列表页时重新加载
+    this.clearDeviceListCache();
+    this.navigateBackToDeviceList();
   },
 
   /**
