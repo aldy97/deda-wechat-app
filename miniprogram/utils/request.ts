@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../config/api.config";
+import { reportApi } from "./monitor";
 
 /**
  * 小程序统一请求封装
@@ -43,6 +44,7 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   const token = wx.getStorageSync("token") || "";
 
   const url = `${API_BASE_URL}${options.url}`;
+  const begin = Date.now();
 
   return new Promise((resolve, reject) => {
     wx.request({
@@ -75,6 +77,10 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
         } else {
           console.error(`[request] HTTP error: ${url}`, statusCode, body);
           const message = body?.message || `HTTP ${statusCode}`;
+          // 4xx/5xx 上报 ARMS（401 已在上方单独处理，属登录态流转不上报）
+          if (statusCode >= 400) {
+            reportApi(options.url, Date.now() - begin, statusCode, message);
+          }
           // 携带 HTTP 状态码，页面层可据此区分 404（资源不存在）与网络/服务异常
           const error = new Error(message) as Error & { statusCode?: number };
           error.statusCode = statusCode;
@@ -83,6 +89,13 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
       },
       fail: (err) => {
         console.error(`[request] network error: ${url}`, err);
+        // 网络层失败（断网/超时/DNS），上报 ARMS
+        reportApi(
+          options.url,
+          Date.now() - begin,
+          0,
+          err.errMsg || "Network error",
+        );
         reject(new Error(err.errMsg || "Network error"));
       },
     });
