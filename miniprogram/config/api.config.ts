@@ -42,8 +42,8 @@ export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * 是否开发环境（开发者工具/开发版）。
- * 用于门控联调专用行为（如 device-list 空列表自动绑定 DEV001、
- * device-bind 页的测试编码提示），trial/release 一律关闭。
+ * 用于门控联调专用行为（如 device-provision 页的广播诊断输出），
+ * trial/release 一律关闭。
  */
 export function isDevEnv(): boolean {
   try {

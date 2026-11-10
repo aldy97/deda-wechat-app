@@ -1,0 +1,173 @@
+<view class="container device-provision-page">
+  <view class="provision-header">
+    <text class="provision-title">添加设备</text>
+    <text class="provision-subtitle">通过蓝牙为机芯配置网络</text>
+  </view>
+
+  <!-- 步骤 1：准备 -->
+  <view wx:if="{{ step === 1 }}" class="card step-card">
+    <view class="step-title">第 1 步 · 准备设备</view>
+    <view class="step-body">
+      <text class="step-text">请确认机芯已开机，开机后自动进入配网模式；请保持机芯在手机附近。</text>
+      <text class="step-text text-secondary">配网前请先将手机连接到家里的 2.4GHz WiFi。</text>
+    </view>
+    <van-button type="primary" block round bind:click="onStartScan">
+      开始搜索设备
+    </van-button>
+  </view>
+
+  <!-- 步骤 2：扫描与选择 -->
+  <view wx:if="{{ step === 2 }}" class="card step-card">
+    <view class="step-title">第 2 步 · 选择设备</view>
+
+    <view wx:if="{{ scanning }}" class="scanning-row">
+      <van-loading size="20px" />
+      <text class="text-secondary scanning-text">正在搜索附近的设备…</text>
+    </view>
+
+    <view
+      wx:for="{{ devices }}"
+      wx:key="deviceId"
+      class="device-row"
+      data-index="{{ index }}"
+      bind:tap="onSelectDevice"
+    >
+      <view class="device-info">
+        <text class="device-name">{{ item.localName || item.name || "未命名设备" }}</text>
+        <text class="device-meta text-secondary">信号 {{ item.rssiText }}</text>
+        <!-- 真机联调诊断：仅开发环境显示广播原文，用于锁定 MAC 解析规则 -->
+        <text wx:if="{{ isDev }}" class="device-adv">
+          adv: {{ item.advertisDataHex || "（空）" }}
+        </text>
+      </view>
+      <van-icon name="arrow" custom-class="device-arrow-icon" />
+    </view>
+
+    <view wx:if="{{ !scanning && devices.length === 0 }}" class="scan-empty">
+      <text class="text-secondary">{{ scanHint || "未发现设备" }}</text>
+    </view>
+
+    <view wx:if="{{ connectError }}" class="error-text">{{ connectError }}</view>
+
+    <van-button
+      wx:if="{{ !scanning }}"
+      type="default"
+      block
+      round
+      loading="{{ connecting }}"
+      loading-text="连接中…"
+      bind:click="onRescan"
+    >
+      重新搜索
+    </van-button>
+  </view>
+
+  <!-- 步骤 3：确认 WiFi 并输入密码 -->
+  <view wx:if="{{ step === 3 }}" class="card step-card">
+    <view class="step-title">第 3 步 · 配置 WiFi</view>
+
+    <view class="wifi-box">
+      <text class="wifi-label">当前手机 WiFi</text>
+      <text class="wifi-ssid">{{ ssid }}</text>
+      <text class="wifi-tip">机芯仅支持 2.4GHz 网络，请确认手机未连接 5GHz 或双频合一网络</text>
+    </view>
+
+    <van-cell-group inset>
+      <van-field
+        value="{{ password }}"
+        password
+        label="WiFi 密码"
+        placeholder="{{ wifiSecure ? '请输入 WiFi 密码' : '开放网络可留空' }}"
+        bind:change="onPasswordChange"
+      />
+    </van-cell-group>
+
+    <view class="step-actions">
+      <van-button type="primary" block round bind:click="onSubmitProvision">
+        开始配网
+      </van-button>
+    </view>
+  </view>
+
+  <!-- 步骤 4：配网中 -->
+  <view wx:if="{{ step === 4 }}" class="card step-card center-card">
+    <van-loading size="36px" />
+    <text class="provision-status">{{ provisionStatusText }}</text>
+    <text class="text-secondary step-text">请保持小程序在前台，不要关闭机芯</text>
+  </view>
+
+  <!-- 步骤 5：结果 -->
+  <view wx:if="{{ step === 5 }}" class="card step-card center-card">
+    <!-- 多台候选：让用户选择要绑定的设备 -->
+    <block wx:if="{{ claimChoice }}">
+      <view class="step-title">检测到多台新设备</view>
+      <text class="text-secondary step-text">请选择你正在配网的这一台</text>
+      <view
+        wx:for="{{ claimCandidates }}"
+        wx:key="deviceId"
+        class="device-row"
+        data-device-id="{{ item.deviceId }}"
+        bind:tap="onSelectCandidate"
+      >
+        <view class="device-info">
+          <text class="device-name">设备 {{ item.macTail }}</text>
+          <text class="device-meta text-secondary">上线时间 {{ item.lastSeenAt }}</text>
+        </view>
+        <van-icon name="arrow" custom-class="device-arrow-icon" />
+      </view>
+    </block>
+
+    <block wx:else>
+      <van-icon
+        name="{{ success ? 'checked' : 'warning' }}"
+        custom-class="{{ success ? 'result-icon-success' : 'result-icon-warning' }}"
+        size="64px"
+      />
+      <text class="result-text">{{ resultText }}</text>
+      <text wx:if="{{ success && alreadyBound }}" class="text-secondary step-text">
+        历史数据已恢复到当前账号
+      </text>
+
+      <view class="step-actions">
+        <van-button
+          wx:if="{{ bindFailed }}"
+          type="primary"
+          block
+          round
+          loading="{{ provisioning }}"
+          loading-text="绑定中…"
+          bind:click="onRetryBind"
+        >
+          重试绑定
+        </van-button>
+        <van-button
+          wx:if="{{ claimTimeout }}"
+          type="primary"
+          block
+          round
+          bind:click="onRetryClaim"
+        >
+          重试检测
+        </van-button>
+        <van-button
+          wx:if="{{ success }}"
+          type="primary"
+          block
+          round
+          bind:click="onDone"
+        >
+          完成
+        </van-button>
+        <van-button
+          wx:if="{{ !success && !bindFailed }}"
+          type="default"
+          block
+          round
+          bind:click="onRestart"
+        >
+          重新配网
+        </van-button>
+      </view>
+    </block>
+  </view>
+</view>
