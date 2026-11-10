@@ -62,17 +62,58 @@
     </van-button>
   </view>
 
-  <!-- 步骤 3：确认 WiFi 并输入密码 -->
+  <!-- 步骤 3：选择 WiFi 并输入密码 -->
   <view wx:if="{{ step === 3 }}" class="card step-card">
     <view class="step-title">第 3 步 · 配置 WiFi</view>
 
     <view class="wifi-box">
-      <text class="wifi-label">当前手机 WiFi</text>
-      <text class="wifi-ssid">{{ ssid }}</text>
-      <text class="wifi-tip">机芯仅支持 2.4GHz 网络，请确认手机未连接 5GHz 或双频合一网络</text>
+      <text class="wifi-tip">请选择手机当前连接的 WiFi；机芯仅支持 2.4GHz 网络，请勿选择名称带 5G 的网络或双频合一网络</text>
+    </view>
+
+    <!-- 等待设备推送列表 -->
+    <view wx:if="{{ wifiListLoading }}" class="scanning-row">
+      <van-loading size="20px" />
+      <text class="text-secondary scanning-text">正在获取设备搜索到的 WiFi…</text>
+    </view>
+
+    <!-- 设备扫描到的 WiFi 列表 -->
+    <view wx:if="{{ !ssidEditable && wifiList.length > 0 }}" class="wifi-list">
+      <view
+        wx:for="{{ wifiList }}"
+        wx:key="ssid"
+        class="wifi-row {{ item.ssid === ssid ? 'wifi-row-selected' : '' }}"
+        data-ssid="{{ item.ssid }}"
+        bind:tap="onSelectWifi"
+      >
+        <view class="wifi-row-info">
+          <text class="wifi-row-ssid">{{ item.ssid }}</text>
+          <text wx:if="{{ item.ssid === phoneSsid }}" class="wifi-current-tag">当前手机连接</text>
+        </view>
+        <text wx:if="{{ item.rssi !== null }}" class="wifi-row-rssi text-secondary">{{ item.rssi }} dBm</text>
+      </view>
+    </view>
+
+    <!-- 空列表提示 -->
+    <view
+      wx:if="{{ !wifiListLoading && !ssidEditable && wifiList.length === 0 }}"
+      class="scan-empty"
+    >
+      <text class="text-secondary">设备未搜索到附近的 WiFi，请手动输入</text>
+    </view>
+
+    <!-- 手动输入入口 -->
+    <view wx:if="{{ !ssidEditable }}" class="manual-entry">
+      <text class="manual-entry-text" bind:tap="onEnableManualInput">找不到目标 WiFi？手动输入</text>
     </view>
 
     <van-cell-group inset>
+      <van-field
+        wx:if="{{ ssidEditable }}"
+        value="{{ ssid }}"
+        label="WiFi 名称"
+        placeholder="手机当前连接的 WiFi 名称"
+        bind:change="onSsidChange"
+      />
       <van-field
         value="{{ password }}"
         password

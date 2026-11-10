@@ -145,6 +145,78 @@
   line-height: 1.5;
 }
 
+.wifi-list {
+  margin-bottom: 16rpx;
+  border: 1rpx solid var(--color-divider);
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.wifi-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.wifi-row:last-child {
+  border-bottom: none;
+}
+
+.wifi-row-selected {
+  background: var(--color-brand-light);
+}
+
+.wifi-row-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.wifi-row-ssid {
+  font-size: 30rpx;
+  color: var(--color-title);
+  word-break: break-all;
+}
+
+.wifi-row-selected .wifi-row-ssid {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.wifi-current-tag {
+  margin-left: 16rpx;
+  padding: 4rpx 12rpx;
+  font-size: 20rpx;
+  color: var(--color-primary);
+  background: var(--color-brand-light);
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+
+.wifi-row-selected .wifi-current-tag {
+  background: var(--color-surface);
+}
+
+.wifi-row-rssi {
+  font-size: 24rpx;
+  margin-left: 24rpx;
+  flex-shrink: 0;
+}
+
+.manual-entry {
+  text-align: center;
+  padding: 8rpx 0 24rpx;
+}
+
+.manual-entry-text {
+  font-size: 26rpx;
+  color: var(--color-primary);
+}
+
 .step-actions {
   margin-top: 40rpx;
 }

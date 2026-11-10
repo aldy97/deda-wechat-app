@@ -3,6 +3,7 @@
  * 契约以 deda-server MINI_PROGRAM_API.md 3.9（DELETE /devices/:id）为准。
  */
 import { installIntegrationHarness } from "./integration-harness";
+import { API_BASE_URL } from "../config/api.config";
 
 const harness = installIntegrationHarness();
 
@@ -27,7 +28,7 @@ describe("device-setting 解绑全链路（契约 3.9）", () => {
 
     expect(harness.lastRequest()).toMatchObject({
       method: "DELETE",
-      url: "http://127.0.0.1:3000/devices/dev-1",
+      url: `${API_BASE_URL}/devices/dev-1`,
     });
     expect(harness.wx.showToast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "删除成功" }),

@@ -49,9 +49,24 @@ function describeWifiError(err: any): string {
 /**
  * 读取手机当前连接的 WiFi。
  * 失败抛出带用户文案的 Error；SSID 为空（隐藏网络等）也视为失败。
+ *
+ * iOS 已知顽疾：定位权限/系统状态异常时 wx.getConnectedWifi 可能
+ * 既不 success 也不 fail，Promise 永不 settle（真机表现为流程卡死）。
+ * 因此强制超时兜底，超时后由调用方降级处理。
  */
-export async function getCurrentWifi(): Promise<CurrentWifi> {
-  try {
+const WIFI_READ_TIMEOUT_MS = 8000;
+
+export async function getCurrentWifi(
+  timeoutMs: number = WIFI_READ_TIMEOUT_MS,
+): Promise<CurrentWifi> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("读取当前 WiFi 超时，请手动输入")),
+      timeoutMs,
+    );
+  });
+  const task = (async (): Promise<CurrentWifi> => {
     // 重复调用 startWifi 在部分平台返回失败，属正常，忽略
     await promisify(wx.startWifi, {}).catch(() => {});
     const res = await promisify<any>(wx.getConnectedWifi, {});
@@ -60,8 +75,15 @@ export async function getCurrentWifi(): Promise<CurrentWifi> {
       throw new Error("未读取到当前 WiFi 名称，请确认手机已连接 WiFi");
     }
     return { ssid, secure: !!res?.wifi?.secure };
+  })();
+  // 超时判负后底层回调若再抵达，吞掉避免 unhandled rejection
+  task.catch(() => {});
+  try {
+    return await Promise.race([task, timeout]);
   } catch (err) {
     if (err instanceof Error) throw err;
     throw new Error(describeWifiError(err));
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }

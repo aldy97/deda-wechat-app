@@ -50,9 +50,7 @@
     "disableUseStrict": false,
     "minifyWXML": true,
     "showES6CompileOption": false,
-    "useCompilerPlugins": [
-      "typescript"
-    ],
+    "useCompilerPlugins": ["typescript"],
     "compileWorklet": false,
     "localPlugins": false,
     "condition": false
@@ -60,7 +58,7 @@
   "compileType": "miniprogram",
   "miniprogramRoot": "miniprogram/",
   "libVersion": "3.4.0",
-  "appid": "wx5c6802bff88814ea",
+  "appid": "wxe3357c616715ce6b",
   "projectname": "deda-wechat-app",
   "condition": {},
   "editorSetting": {

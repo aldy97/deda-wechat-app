@@ -4,6 +4,7 @@
  * 仅 action=volume 真实下发；设备不存在 404。
  */
 import { installIntegrationHarness } from "./integration-harness";
+import { API_BASE_URL } from "../config/api.config";
 
 const harness = installIntegrationHarness();
 
@@ -35,7 +36,7 @@ describe("device-control 音量控制全链路（契约 3.6）", () => {
 
     expect(harness.lastRequest()).toMatchObject({
       method: "POST",
-      url: "http://127.0.0.1:3000/devices/dev-1/control",
+      url: `${API_BASE_URL}/devices/dev-1/control`,
       data: { action: "volume", volume: 65 },
     });
     // 成功后写入本地音量缓存

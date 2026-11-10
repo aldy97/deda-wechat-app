@@ -20,9 +20,17 @@ import { getCurrentWifi } from "../../utils/wifi-info";
 const PROVISION_TIMEOUT_MS = 90000;
 /** 扫描窗口 */
 const SCAN_DURATION_MS = 10000;
+/** 等待设备推送 WiFi 列表的上限（协议建议值 10 秒，客户端自定） */
+const WIFI_LIST_TIMEOUT_MS = 10000;
 /** 认领轮询间隔与次数上限：2s × 30 = 60s（覆盖设备连网→loginMac 时延） */
 const CLAIM_POLL_INTERVAL_MS = 2000;
 const CLAIM_POLL_MAX_ATTEMPTS = 30;
+
+/** 设备 20 01 推送的周边 AP */
+interface ScannedWifi {
+  ssid: string;
+  rssi: number | null;
+}
 
 interface VantFieldChangeEvent {
   detail: string;
@@ -48,12 +56,22 @@ Page({
     devices: [] as Array<ScannedDevice & { rssiText: string }>,
     scanHint: "",
 
-    // 步骤 3：WiFi（SSID 锁定为手机当前网络，不可改）
+    // 步骤 3：WiFi 列表（设备 20 01 推送的周边 AP）
     connecting: false,
     connectError: "",
+    /** 当前选中的（或手动输入的）SSID */
     ssid: "",
     wifiSecure: true,
     password: "",
+    /** 手动输入模式（列表超时/空列表/用户主动选择手动时开启） */
+    ssidEditable: false,
+    /** 设备扫描到的周边 AP（按信号降序） */
+    wifiList: [] as ScannedWifi[],
+    /** 正在等待设备推送列表 */
+    wifiListLoading: false,
+    /** 手机当前连接的 WiFi（用于高亮/默认选中；读取失败为空串） */
+    phoneSsid: "",
+    phoneWifiSecure: true,
 
     // 步骤 4：配网中 / 认领中
     provisioning: false,
@@ -82,6 +100,7 @@ Page({
   pollInFlight: false,
   scanStopper: null as (() => void) | null,
   scanTimer: 0 as any,
+  wifiListTimer: 0 as any,
   provisionTimer: 0 as any,
   finished: false,
 
@@ -227,6 +246,7 @@ Page({
 
     try {
       await this.client.connect(device.deviceId);
+      if (this.data.isDev) console.log("[provision] BLE connected");
 
       // 订阅通知：先注册回调再开 Notify；此后才允许下发配网帧
       this.receiver = createReceiver(
@@ -238,14 +258,41 @@ Page({
         (chunk) => receiver(chunk),
         () => this.handleUnexpectedDisconnect(),
       );
+      if (this.data.isDev) console.log("[provision] notify enabled");
 
-      // 锁定手机当前 WiFi（产品要求：仅允许手机所连网络）
-      const wifi = await getCurrentWifi();
+      // 进入 WiFi 步骤：设备在 CCC 写入后推送 20 01 列表（协议建议等 10 秒）
       this.setData({
         step: 3,
-        ssid: wifi.ssid,
-        wifiSecure: wifi.secure,
+        ssid: "",
+        ssidEditable: false,
+        wifiList: [],
+        wifiListLoading: true,
+        phoneSsid: "",
       });
+      this.wifiListTimer = setTimeout(() => {
+        this.wifiListTimer = 0;
+        // 列表超时：结束等待，用户可改手动输入（协议：超时后允许手动输入 SSID）
+        if (this.data.step === 3 && this.data.wifiListLoading) {
+          this.setData({ wifiListLoading: false });
+        }
+      }, WIFI_LIST_TIMEOUT_MS);
+
+      // 并行读手机当前 WiFi：仅用于高亮/默认选中/提醒；失败不阻断（列表仍可手选）
+      try {
+        const wifi = await getCurrentWifi();
+        if (this.data.isDev) {
+          console.log(
+            `[provision] current wifi: ${wifi.ssid} secure=${wifi.secure}`,
+          );
+        }
+        this.setData({
+          phoneSsid: wifi.ssid,
+          phoneWifiSecure: wifi.secure,
+        });
+        this.maybeAutoSelect();
+      } catch (wifiErr) {
+        console.warn("[provision] getCurrentWifi failed:", wifiErr);
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "连接设备失败";
       this.setData({ connectError: message });
@@ -258,6 +305,37 @@ Page({
 
   // ---------- 步骤 3 → 4：下发配网 ----------
 
+  onSsidChange(event: VantFieldChangeEvent) {
+    this.setData({ ssid: event.detail });
+  },
+
+  /**
+   * 手机当前 WiFi 出现在设备列表中时默认选中。
+   * 列表帧与 getCurrentWifi 是两条异步来源，谁后到一起触发。
+   */
+  maybeAutoSelect() {
+    const { step, ssid, phoneSsid, wifiList } = this.data;
+    if (step !== 3 || ssid || !phoneSsid) return;
+    if (!wifiList.some((it) => it.ssid === phoneSsid)) return;
+    this.setData({ ssid: phoneSsid, wifiSecure: this.data.phoneWifiSecure });
+  },
+
+  /** 用户从设备列表中选择一个 WiFi */
+  onSelectWifi(event: WechatMiniprogram.TouchEvent) {
+    const ssid = event.currentTarget.dataset.ssid as string;
+    if (!ssid) return;
+    // 设备列表不带加密标记：选中手机当前网络时沿用手机上报的 secure，
+    // 其余一律按加密网络处理（密码必填）
+    const secure =
+      ssid === this.data.phoneSsid ? this.data.phoneWifiSecure : true;
+    this.setData({ ssid, wifiSecure: secure, ssidEditable: false });
+  },
+
+  /** 手动输入入口（列表超时/空列表/目标不在列表中） */
+  onEnableManualInput() {
+    this.setData({ ssidEditable: true, ssid: "", wifiSecure: true });
+  },
+
   onPasswordChange(event: VantFieldChangeEvent) {
     this.setData({ password: event.detail });
   },
@@ -267,6 +345,15 @@ Page({
     if (!this.client || !this.receiver) {
       wx.showToast({ title: "连接已失效，请重新扫描", icon: "none" });
       this.setData({ step: 1 });
+      return;
+    }
+    if (!this.data.ssid) {
+      wx.showToast({
+        title: this.data.ssidEditable
+          ? "请输入手机当前连接的 WiFi 名称"
+          : "请先选择 WiFi",
+        icon: "none",
+      });
       return;
     }
     if (this.data.wifiSecure && !this.data.password) {
@@ -311,10 +398,28 @@ Page({
 
   handleMessage(msg: ProvisionMessage) {
     if (msg.t1 === CMD_WIFI_LIST[0] && msg.t2 === CMD_WIFI_LIST[1]) {
-      // 设备推送的周边 AP 列表：本产品只允许手机当前 WiFi，接收但不用
+      // 设备推送的周边 AP 列表（协议 4.1：{"wifiList":[{ssid,rssi}]}；
+      // 设备端已过滤 rssi<-70；可能重复推送，收到即更新）
+      const raw = Array.isArray(msg.data?.wifiList) ? msg.data.wifiList : [];
+      const wifiList: ScannedWifi[] = raw
+        .filter((it: any) => typeof it?.ssid === "string" && it.ssid.length > 0)
+        .map((it: any) => ({
+          ssid: it.ssid as string,
+          rssi: typeof it?.rssi === "number" ? it.rssi : null,
+        }))
+        .sort(
+          (a: ScannedWifi, b: ScannedWifi) =>
+            (b.rssi ?? -100) - (a.rssi ?? -100),
+        );
       if (this.data.isDev) {
-        console.log("[provision] wifiList:", JSON.stringify(msg.data));
+        console.log(`[provision] wifiList: ${wifiList.length} 个 AP`);
       }
+      if (this.wifiListTimer) {
+        clearTimeout(this.wifiListTimer);
+        this.wifiListTimer = 0;
+      }
+      this.setData({ wifiList, wifiListLoading: false });
+      this.maybeAutoSelect();
       return;
     }
     if (msg.t1 !== CMD_STATUS[0] || msg.t2 !== CMD_STATUS[1]) return;
@@ -426,7 +531,7 @@ Page({
       step: 5,
       provisioning: false,
       claimTimeout: true,
-      resultText: "未检测到设备上线，请确认设备指示灯正常后重试",
+      resultText: "未检测到设备上线，请重启机芯后重新配网",
     });
   },
 
@@ -508,10 +613,16 @@ Page({
 
   handleUnexpectedDisconnect() {
     console.warn("[provision] BLE disconnected unexpectedly");
-    // 认领阶段 BLE 已可断开（设备走 WiFi/HTTP 上线），只提示配网中的中断
-    if (!this.finished && this.data.provisioning && !this.claimTimer) {
-      this.finishWithError("蓝牙连接已断开，请返回重新扫描并重试");
+    if (this.finished || !this.data.provisioning || this.claimTimer) return;
+    // 真机实测：固件连上 WiFi 后立即断开 BLE 退出配网态，不回 status=0 帧。
+    // 配网帧已下发后的断开不判失败，直接转认领轮询——
+    // 设备是否真上线以 loginMac + provision-candidates 为准（60s 轮询兜底）。
+    if (this.provisionTimer) {
+      clearTimeout(this.provisionTimer);
+      this.provisionTimer = 0;
     }
+    this.setData({ provisionStatusText: "设备已断开蓝牙，正在确认联网结果…" });
+    this.startClaimPolling();
   },
 
   finishWithError(message: string) {
@@ -539,6 +650,10 @@ Page({
       scanHint: "",
       connectError: "",
       ssid: "",
+      ssidEditable: false,
+      wifiList: [],
+      wifiListLoading: false,
+      phoneSsid: "",
       password: "",
       success: false,
       alreadyBound: false,
@@ -562,6 +677,10 @@ Page({
     if (this.provisionTimer) {
       clearTimeout(this.provisionTimer);
       this.provisionTimer = 0;
+    }
+    if (this.wifiListTimer) {
+      clearTimeout(this.wifiListTimer);
+      this.wifiListTimer = 0;
     }
     this.receiver = null;
     if (this.client) {

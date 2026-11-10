@@ -91,6 +91,17 @@ async function enterWifiStep(page: any) {
   const onDevice = mockClient.startScan.mock.calls[0][0];
   onDevice(ANDROID_DEVICE);
   await page.onSelectDevice({ currentTarget: { dataset: { index: 0 } } });
+  // 设备推送 20 01 列表（含手机当前网络）→ 自动选中 Home_WiFi
+  page.handleMessage({
+    t1: 0x20,
+    t2: 0x01,
+    data: {
+      wifiList: [
+        { ssid: "Neighbor", rssi: -60 },
+        { ssid: "Home_WiFi", rssi: -40 },
+      ],
+    },
+  });
 }
 
 /** 推进到 status=0 已收到、认领轮询已启动的状态 */
@@ -142,13 +153,21 @@ describe("device-provision 配网页", () => {
     expect(page.data.step).toBe(1);
   });
 
-  it("扫描 → 选择设备 → 进入 WiFi 步骤，SSID 锁定为手机当前网络", async () => {
+  it("扫描 → 选择设备 → 收到列表后当前手机 WiFi 默认选中并置顶高亮", async () => {
     await enterWifiStep(page);
 
     expect(mockClient.connect).toHaveBeenCalledWith("AA:BB:CC:DD:EE:FF");
     expect(mockClient.enableNotify).toHaveBeenCalled();
     expect(page.data.step).toBe(3);
+    expect(page.data.phoneSsid).toBe("Home_WiFi");
+    // 列表按信号降序，Home_WiFi 排前；手机当前网络被默认选中
+    expect(page.data.wifiList.map((it: any) => it.ssid)).toEqual([
+      "Home_WiFi",
+      "Neighbor",
+    ]);
     expect(page.data.ssid).toBe("Home_WiFi");
+    expect(page.data.wifiSecure).toBe(true);
+    expect(page.data.wifiListLoading).toBe(false);
   });
 
   it("完整链路：status=0 → 轮询到单台候选 → 自动绑定成功", async () => {
@@ -351,6 +370,67 @@ describe("device-provision 配网页", () => {
     expect(page.data.alreadyBound).toBe(true);
   });
 
+  it("配网帧下发后 BLE 断开（固件不回 status=0）：不判失败，转认领完成绑定", async () => {
+    mockApi.getProvisionCandidates.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { devices: [CANDIDATE_A] },
+    });
+    mockApi.bindDevice.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: {
+        success: true,
+        deviceId: CANDIDATE_A.deviceId,
+        alreadyBound: false,
+      },
+    });
+
+    await enterWifiStep(page);
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+    expect(page.data.step).toBe(4);
+
+    // 真机行为：固件连上 WiFi 即断 BLE、不回 status=0 → 转认领轮询
+    page.handleUnexpectedDisconnect();
+    await flushMicrotasks();
+
+    expect(page.data.resultText).not.toContain("蓝牙连接已断开");
+    expect(mockApi.bindDevice).toHaveBeenCalledWith({
+      deviceId: CANDIDATE_A.deviceId,
+    });
+    expect(page.data.step).toBe(5);
+    expect(page.data.success).toBe(true);
+    expect(page.data.resultText).toContain("配网成功");
+  });
+
+  it("配网帧下发后 BLE 断开且设备未上线：认领超时明确失败，不误报成功", async () => {
+    mockApi.getProvisionCandidates.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { devices: [] },
+    });
+
+    await enterWifiStep(page);
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+
+    jest.useFakeTimers();
+    try {
+      page.handleUnexpectedDisconnect();
+      await jest.advanceTimersByTimeAsync(62000);
+
+      expect(mockApi.bindDevice).not.toHaveBeenCalled();
+      expect(page.data.step).toBe(5);
+      expect(page.data.success).toBe(false);
+      expect(page.data.claimTimeout).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("设备返回 status=4：失败文案含 2.4GHz 提示，不发起认领", async () => {
     await enterWifiStep(page);
     mockClient.sendFrame.mockResolvedValue(undefined);
@@ -392,6 +472,119 @@ describe("device-provision 配网页", () => {
 
     expect(harness.wx.showToast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "请输入 WiFi 密码" }),
+    );
+    expect(mockClient.sendFrame).not.toHaveBeenCalled();
+    expect(page.data.step).toBe(3);
+  });
+
+  it("读取当前 WiFi 失败：不阻断，设备列表到达后仍可手动选择并完成配网", async () => {
+    grantLocation();
+    mockClient.init.mockResolvedValue(undefined);
+    mockClient.startDiscovery.mockResolvedValue(undefined);
+    mockClient.startScan.mockReturnValue(jest.fn());
+    mockClient.connect.mockResolvedValue(undefined);
+    mockClient.enableNotify.mockResolvedValue(undefined);
+    mockWifi.getCurrentWifi.mockRejectedValue(
+      new Error("读取当前 WiFi 超时，请手动输入"),
+    );
+
+    await page.onStartScan();
+    const onDevice = mockClient.startScan.mock.calls[0][0];
+    onDevice(ANDROID_DEVICE);
+    await page.onSelectDevice({ currentTarget: { dataset: { index: 0 } } });
+
+    // 关键：不踢回重扫、不断开 BLE，停留在步骤 3 等列表
+    expect(mockClient.disconnect).not.toHaveBeenCalled();
+    expect(page.data.step).toBe(3);
+    expect(page.data.ssidEditable).toBe(false);
+    expect(page.data.phoneSsid).toBe("");
+
+    // 列表到达：无 phoneSsid，不做默认选中；用户手动选择
+    page.handleMessage({
+      t1: 0x20,
+      t2: 0x01,
+      data: { wifiList: [{ ssid: "Neighbor_WiFi", rssi: -50 }] },
+    });
+    expect(page.data.wifiList).toHaveLength(1);
+    expect(page.data.ssid).toBe("");
+
+    page.onSelectWifi({
+      currentTarget: { dataset: { ssid: "Neighbor_WiFi" } },
+    });
+    expect(page.data.ssid).toBe("Neighbor_WiFi");
+
+    // 选择 + 密码，正常组帧下发
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+
+    expect(mockClient.sendFrame).toHaveBeenCalled();
+    const frame = mockClient.sendFrame.mock.calls[0][0] as Uint8Array;
+    const frameText = Array.from(frame)
+      .map((b) => String.fromCharCode(b))
+      .join("");
+    expect(frameText).toContain("Neighbor_WiFi");
+    expect(page.data.step).toBe(4);
+  });
+
+  it("选择列表中其他 WiFi（非手机当前网络）：密码按必填处理", async () => {
+    await enterWifiStep(page);
+
+    page.onSelectWifi({ currentTarget: { dataset: { ssid: "Neighbor" } } });
+    expect(page.data.ssid).toBe("Neighbor");
+    expect(page.data.wifiSecure).toBe(true);
+
+    // 不输入密码提交 → 拦截
+    await page.onSubmitProvision();
+    expect(harness.wx.showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "请输入 WiFi 密码" }),
+    );
+    expect(mockClient.sendFrame).not.toHaveBeenCalled();
+  });
+
+  it("设备 WiFi 列表 10 秒未到达：结束等待，可走手动输入入口", async () => {
+    grantLocation();
+    mockClient.init.mockResolvedValue(undefined);
+    mockClient.startDiscovery.mockResolvedValue(undefined);
+    mockClient.startScan.mockReturnValue(jest.fn());
+    mockClient.connect.mockResolvedValue(undefined);
+    mockClient.enableNotify.mockResolvedValue(undefined);
+    mockWifi.getCurrentWifi.mockResolvedValue({
+      ssid: "Home_WiFi",
+      secure: true,
+    });
+
+    jest.useFakeTimers();
+    try {
+      await page.onStartScan();
+      const onDevice = mockClient.startScan.mock.calls[0][0];
+      onDevice(ANDROID_DEVICE);
+      await page.onSelectDevice({ currentTarget: { dataset: { index: 0 } } });
+      expect(page.data.wifiListLoading).toBe(true);
+
+      await jest.advanceTimersByTimeAsync(10000);
+      expect(page.data.wifiListLoading).toBe(false);
+      expect(page.data.wifiList).toHaveLength(0);
+
+      // 手动输入降级入口
+      page.onEnableManualInput();
+      expect(page.data.ssidEditable).toBe(true);
+      expect(page.data.ssid).toBe("");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("手动输入模式下未输入 SSID：toast 拦截，不下发配网帧", async () => {
+    await enterWifiStep(page);
+
+    page.onEnableManualInput();
+    expect(page.data.ssidEditable).toBe(true);
+
+    await page.onSubmitProvision();
+
+    expect(harness.wx.showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "请输入手机当前连接的 WiFi 名称" }),
     );
     expect(mockClient.sendFrame).not.toHaveBeenCalled();
     expect(page.data.step).toBe(3);
