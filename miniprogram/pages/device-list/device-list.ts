@@ -1,6 +1,5 @@
 import {
   getDeviceList,
-  bindDevice,
   getDeviceStatus,
   getDeviceCurrentConfig,
   Device,
@@ -8,16 +7,6 @@ import {
   DeviceConfig,
   ensureAuthToken,
 } from "../../api/api";
-import { isDevEnv } from "../../config/api.config";
-
-/** 本地联调样机 DEV001 */
-const DEV001_DEVICE: Device = {
-  id: "dev-local-001",
-  name: "DEV001（联调样机）",
-  deviceId: "dev-local-001",
-  deviceCode: "DEV001",
-  networkType: "4G",
-};
 
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
@@ -44,8 +33,7 @@ interface DeviceDisplayItem extends Device {
 
 /**
  * 设备列表页
- * 从后端拉取当前登录用户的真实绑定设备；空列表时仅开发环境自动绑定联调样机 DEV001，
- * 非开发环境展示空态并引导手动绑定。
+ * 从后端拉取当前登录用户的真实绑定设备；空列表展示空态并引导去配网绑定。
  */
 Page({
   data: {
@@ -70,7 +58,7 @@ Page({
   },
 
   /**
-   * 加载设备列表：优先真实绑定，dev 环境空列表自动绑定 DEV001
+   * 加载设备列表
    */
   async loadDeviceList() {
     this.hasInitialLoaded = true;
@@ -78,14 +66,7 @@ Page({
 
     try {
       await ensureAuthToken();
-      let devices = await this.fetchBoundDevices();
-
-      if (devices.length === 0 && isDevEnv()) {
-        // 仅开发环境：空列表自动绑定联调样机 DEV001；线上空列表走空态引导手动绑定
-        console.log("[device-list] no bound devices, auto-bind DEV001");
-        await bindDevice({ deviceId: DEV001_DEVICE.deviceId });
-        devices = await this.fetchBoundDevices();
-      }
+      const devices = await this.fetchBoundDevices();
 
       const displayItems = await this.enrichDevices(devices);
       this.setData({ devices: displayItems, loading: false });
@@ -295,11 +276,11 @@ Page({
   },
 
   /**
-   * 添加设备：跳转绑定页
+   * 添加设备：跳转配网页
    */
   onAddDevice() {
     wx.navigateTo({
-      url: "/pages/device-bind/device-bind",
+      url: "/pages/device-provision/device-provision",
     });
   },
 

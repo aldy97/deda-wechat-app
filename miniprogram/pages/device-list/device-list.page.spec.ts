@@ -167,19 +167,11 @@ describe("device-list card display mapping", () => {
     });
   });
 
-  describe("添加设备入口与 DEV001 自动绑定门控", () => {
-    const DEV001 = {
-      id: "dev-local-001",
-      name: "DEV001（联调样机）",
-      deviceId: "dev-local-001",
-      deviceCode: "DEV001",
-      networkType: "4G",
-    };
-
-    it("点击添加设备 → 跳转绑定页", () => {
+  describe("添加设备入口", () => {
+    it("点击添加设备 → 跳转配网页", () => {
       page.onAddDevice();
       expect(harness.wx.navigateTo).toHaveBeenCalledWith({
-        url: "/pages/device-bind/device-bind",
+        url: "/pages/device-provision/device-provision",
       });
     });
 
@@ -192,65 +184,18 @@ describe("device-list card display mapping", () => {
       });
     });
 
-    it("dev 环境空列表：自动绑定 DEV001 联调样机并重新拉取", async () => {
+    it("空列表：不自动绑定（DEV001 联调逻辑已下线），停留空态", async () => {
       mockApi.ensureAuthToken.mockResolvedValue(undefined);
-      mockApi.bindDevice.mockResolvedValue({
+      mockApi.getDeviceList.mockResolvedValue({
         code: 0,
         message: "",
-        data: { success: true, deviceId: "dev-local-001", alreadyBound: false },
-      });
-      mockApi.getDeviceList
-        .mockResolvedValueOnce({ code: 0, message: "", data: [] })
-        .mockResolvedValueOnce({ code: 0, message: "", data: [DEV001] });
-      mockApi.getDeviceStatus.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: {
-          deviceId: "dev-local-001",
-          status: "online",
-          battery: 65,
-          isCharging: null,
-          lastActiveAt: new Date().toISOString(),
-        },
-      });
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
+        data: [],
       });
 
       await page.loadDeviceList();
 
-      expect(mockApi.bindDevice).toHaveBeenCalledWith({
-        deviceId: "dev-local-001",
-      });
-      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
-      expect(page.data.devices).toHaveLength(1);
+      expect(page.data.devices).toEqual([]);
       expect(page.data.loading).toBe(false);
-    });
-
-    it("非 dev 环境空列表：不自动绑定，停留空态", async () => {
-      harness.wx.getAccountInfoSync.mockReturnValue({
-        miniProgram: { envVersion: "release" },
-      });
-      try {
-        mockApi.ensureAuthToken.mockResolvedValue(undefined);
-        mockApi.getDeviceList.mockResolvedValue({
-          code: 0,
-          message: "",
-          data: [],
-        });
-
-        await page.loadDeviceList();
-
-        expect(mockApi.bindDevice).not.toHaveBeenCalled();
-        expect(page.data.devices).toEqual([]);
-        expect(page.data.loading).toBe(false);
-      } finally {
-        harness.wx.getAccountInfoSync.mockReturnValue({
-          miniProgram: { envVersion: "develop" },
-        });
-      }
     });
   });
 });

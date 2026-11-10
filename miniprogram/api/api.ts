@@ -334,6 +334,29 @@ export async function bindDevice(params: {
   );
 }
 
+/** 配网认领候选设备（MINI_PROGRAM_API.md 3.10） */
+export interface ProvisionCandidate {
+  /** 设备业务 ID（十二位小写 MAC） */
+  deviceId: string;
+  /** MAC 后 6 位，多设备并列时供用户辨认 */
+  macTail: string;
+  /** 上线时间（ISO 8601） */
+  lastSeenAt: string;
+}
+
+/**
+ * 查询配网认领候选：最近窗口内（服务端默认 120s）通过 loginMac 上线、
+ * 且未绑定当前用户的设备，按上线时间倒序。
+ */
+export async function getProvisionCandidates(): Promise<
+  ApiResponse<{ devices: ProvisionCandidate[] }>
+> {
+  return request<{ devices: ProvisionCandidate[] }>({
+    method: "GET",
+    url: "/devices/provision-candidates",
+  });
+}
+
 /**
  * 获取设备实时状态（电量、在线状态、充电状态）
  * 调用 deda-server GET /devices/{deviceId}/status

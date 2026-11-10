@@ -20,11 +20,18 @@
  */
 const STAGING_BASE_URL = "https://your-staging-domain.com";
 
+/**
+ * staging（联调）后端地址。
+ * develop（开发者工具/真机调试）统一指向它：真机上 127.0.0.1 是手机自身，
+ * 无法访问电脑本地后端。本地起后端联调时，临时改回 http://127.0.0.1:3000。
+ */
+const STAGING_HTTP_BASE_URL = "http://8.133.236.127:3001";
+
 function getApiBaseUrl(): string {
   try {
     const envVersion = wx.getAccountInfoSync().miniProgram.envVersion;
     if (envVersion === "develop") {
-      return "http://127.0.0.1:3000";
+      return STAGING_HTTP_BASE_URL;
     }
     if (envVersion === "trial") {
       // TODO(灰度): staging 后端部署完成后改为 return STAGING_BASE_URL
@@ -42,8 +49,8 @@ export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * 是否开发环境（开发者工具/开发版）。
- * 用于门控联调专用行为（如 device-list 空列表自动绑定 DEV001、
- * device-bind 页的测试编码提示），trial/release 一律关闭。
+ * 用于门控联调专用行为（如 device-provision 页的广播诊断输出），
+ * trial/release 一律关闭。
  */
 export function isDevEnv(): boolean {
   try {

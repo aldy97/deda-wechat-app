@@ -6,7 +6,7 @@
     "pages/learning-data/learning-data",
     "pages/chat-history/chat-history",
     "pages/device-setting/device-setting",
-    "pages/device-bind/device-bind",
+    "pages/device-provision/device-provision",
     "pages/about-device/about-device",
     "pages/owner-info/owner-info",
     "pages/sleep-manage/sleep-manage",
@@ -52,5 +52,10 @@
     ]
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于搜索蓝牙设备并读取当前WiFi为机芯配网"
+    }
+  }
 }
