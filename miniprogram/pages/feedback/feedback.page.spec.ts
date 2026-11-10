@@ -1,5 +1,6 @@
 import {
   ensureAuthToken,
+  getDeviceList,
   getWechatPhoneNumber,
   submitFeedback,
 } from "../../api/api";
@@ -7,11 +8,13 @@ import { installPageHarness } from "../../tests/page-harness";
 
 jest.mock("../../api/api", () => ({
   ensureAuthToken: jest.fn(),
+  getDeviceList: jest.fn(),
   getWechatPhoneNumber: jest.fn(),
   submitFeedback: jest.fn(),
 }));
 
 const mockEnsureAuthToken = ensureAuthToken as jest.Mock;
+const mockGetDeviceList = getDeviceList as jest.Mock;
 const mockGetWechatPhoneNumber = getWechatPhoneNumber as jest.Mock;
 const mockSubmitFeedback = submitFeedback as jest.Mock;
 
@@ -25,6 +28,12 @@ describe("feedback page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockEnsureAuthToken.mockResolvedValue("token");
+    // 默认有 1 台已绑定设备：保持既有用例行为不变
+    mockGetDeviceList.mockResolvedValue({
+      code: 0,
+      message: "success",
+      data: [{ id: "dev-1", name: "Elly" }],
+    });
     mockGetWechatPhoneNumber.mockResolvedValue({
       code: 0,
       message: "success",
@@ -146,5 +155,102 @@ describe("feedback page", () => {
     expect(mockSubmitFeedback).toHaveBeenCalledTimes(1);
     resolveRequest({ code: 0, message: "success", data: {} });
     await firstRequest;
+  });
+
+  describe("无设备门控（方案 A 页面内门控）", () => {
+    it("有设备：检查完成后表单可用、无提示", async () => {
+      const page = harness.createInstance();
+
+      await page.onLoad();
+
+      expect(mockGetDeviceList).toHaveBeenCalledTimes(1);
+      expect(page.data.hasNoDevice).toBe(false);
+      expect(page.data.deviceCheckLoading).toBe(false);
+    });
+
+    it("无设备：hasNoDevice=true，onSubmit 被拦截不发请求", async () => {
+      mockGetDeviceList.mockResolvedValue({
+        code: 0,
+        message: "success",
+        data: [],
+      });
+      const page = harness.createInstance();
+      await page.onLoad();
+
+      expect(page.data.hasNoDevice).toBe(true);
+      expect(page.data.deviceCheckLoading).toBe(false);
+
+      page.onContentInput({ detail: { value: "反馈内容" } });
+      await page.onSubmit();
+      expect(mockSubmitFeedback).not.toHaveBeenCalled();
+    });
+
+    it("无设备时点击「去绑定设备」→ 跳转 BLE 配网页", async () => {
+      mockGetDeviceList.mockResolvedValue({
+        code: 0,
+        message: "success",
+        data: [],
+      });
+      const page = harness.createInstance();
+      await page.onLoad();
+
+      page.onGoBindDevice();
+
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/device-provision/device-provision",
+      });
+    });
+
+    it("设备查询失败 fail-open：不当作无设备，表单可用", async () => {
+      mockGetDeviceList.mockRejectedValue(new Error("Network error"));
+      const page = harness.createInstance();
+      await page.onLoad();
+
+      expect(page.data.hasNoDevice).toBe(false);
+      expect(page.data.deviceCheckLoading).toBe(false);
+
+      page.onContentInput({ detail: { value: "反馈内容" } });
+      await page.onSubmit();
+      expect(mockSubmitFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    it("检查中：loading 标记为 true 且不显示无设备提示", async () => {
+      let resolveList: (v: unknown) => void = () => {};
+      mockGetDeviceList.mockReturnValue(
+        new Promise((resolve) => (resolveList = resolve)),
+      );
+      const page = harness.createInstance();
+      const loading = page.onLoad();
+
+      expect(page.data.deviceCheckLoading).toBe(true);
+      expect(page.data.hasNoDevice).toBe(false);
+
+      resolveList({ code: 0, message: "success", data: [] });
+      await loading;
+      expect(page.data.deviceCheckLoading).toBe(false);
+      expect(page.data.hasNoDevice).toBe(true);
+    });
+
+    it("onShow：仅上次检查为无设备时重查；有设备时不发请求", async () => {
+      // 有设备 → onShow 不重查
+      const pageWithDevice = harness.createInstance();
+      await pageWithDevice.onLoad();
+      expect(mockGetDeviceList).toHaveBeenCalledTimes(1);
+      pageWithDevice.onShow();
+      expect(mockGetDeviceList).toHaveBeenCalledTimes(1);
+
+      // 无设备 → onShow 重查；重查到有设备后门控解除
+      mockGetDeviceList.mockResolvedValueOnce({
+        code: 0,
+        message: "success",
+        data: [],
+      });
+      const pageNoDevice = harness.createInstance();
+      await pageNoDevice.onLoad();
+      expect(pageNoDevice.data.hasNoDevice).toBe(true);
+
+      await pageNoDevice.onShow();
+      expect(pageNoDevice.data.hasNoDevice).toBe(false);
+    });
   });
 });
