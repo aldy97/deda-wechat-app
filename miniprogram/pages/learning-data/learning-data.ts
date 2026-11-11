@@ -160,12 +160,18 @@ Page({
   async onShow() {
     // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新
     if (this.networkStarted && !this.data.loadingDevices) {
-      await this.loadReportData();
+      if (!this.data.selectedDeviceId) {
+        // 首载时无设备（或选中设备失效）：重拉设备列表，
+        // 否则绑定设备后回到本页会永远停在「先绑定」空态
+        await this.initialize();
+      } else {
+        await this.loadReportData();
+      }
     }
   },
 
   async onPullDownRefresh() {
-    if (this.data.deviceError) {
+    if (this.data.deviceError || !this.data.selectedDeviceId) {
       await this.initialize();
     } else {
       await this.loadReportData();

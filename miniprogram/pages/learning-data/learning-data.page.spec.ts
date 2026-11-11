@@ -742,4 +742,52 @@ describe("learning-data parent report page", () => {
     expect(usage).toHaveLength(1);
     expect(usage[0].label).toBe("legacy_mode");
   });
+
+  describe("设备列表刷新时序（空 → 绑定后回来必须解除空态）", () => {
+    it("首载无设备，onShow 时重拉设备列表并解除空态", async () => {
+      // 首载：无设备
+      mockApi.getDeviceList.mockResolvedValueOnce({ data: [] });
+      await page.onLoad();
+      await page.onReady();
+      expect(page.data.devices).toEqual([]);
+      expect(page.data.selectedDeviceId).toBe("");
+
+      // 用户在设备页完成绑定后回到本页
+      await page.onShow();
+
+      // 重拉了设备列表（而不是只刷报告数据）
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+      expect(page.data.devices).toHaveLength(2);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      // 解除空态后报告数据随之加载
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d1",
+        page.data.reportDate,
+      );
+    });
+
+    it("已有设备时 onShow 不重拉设备列表，只静默刷报告", async () => {
+      await page.onLoad();
+      await page.onReady();
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+
+      await page.onShow();
+
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+      expect(mockApi.getParentReport).toHaveBeenCalledTimes(2);
+    });
+
+    it("下拉刷新时无选中设备：走 initialize 重拉设备列表", async () => {
+      mockApi.getDeviceList.mockResolvedValueOnce({ data: [] });
+      await page.onLoad();
+      await page.onReady();
+      expect(page.data.selectedDeviceId).toBe("");
+
+      await page.onPullDownRefresh();
+
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(harness.wx.stopPullDownRefresh).toHaveBeenCalled();
+    });
+  });
 });
