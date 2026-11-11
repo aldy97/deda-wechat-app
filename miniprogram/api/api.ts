@@ -764,3 +764,31 @@ export async function submitParentReportFeedback(
     },
   });
 }
+
+export interface ReportPushSubscriptionParams {
+  templateId: string;
+  result: "accept" | "reject";
+  /** 本次新增额度（仅 accept 有效），默认 1，上限 30 */
+  count?: number;
+}
+
+export interface PushSubscriptionState {
+  templateId: string;
+  quota: number;
+  status: "active" | "rejected" | "exhausted";
+}
+
+/**
+ * 上报订阅消息授权结果（契约 11.1）
+ * 调用 deda-server POST /push-subscriptions
+ * accept 累计额度、reject 清零；templateId 不在后端白名单返回 400
+ */
+export async function reportPushSubscription(
+  params: ReportPushSubscriptionParams,
+): Promise<ApiResponse<PushSubscriptionState>> {
+  return request<PushSubscriptionState>({
+    method: "POST",
+    url: "/push-subscriptions",
+    data: params,
+  });
+}

@@ -4,6 +4,7 @@ import {
   getLearningStatsModeUsage,
   getSleepConfig,
   controlDeviceVolume,
+  reportPushSubscription,
   submitFeedback,
   updateDeviceOrder,
   updateSleepConfig,
@@ -68,6 +69,40 @@ describe("learning stats daily request", () => {
       data: {
         content: "建议增加夜间模式",
         contact: "13800138000",
+      },
+    });
+  });
+
+  it("posts push subscription report to /push-subscriptions", async () => {
+    await reportPushSubscription({
+      templateId: "tmpl-sleep-reminder",
+      result: "accept",
+      count: 1,
+    });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/push-subscriptions",
+      data: {
+        templateId: "tmpl-sleep-reminder",
+        result: "accept",
+        count: 1,
+      },
+    });
+  });
+
+  it("posts push subscription reject without count", async () => {
+    await reportPushSubscription({
+      templateId: "tmpl-sleep-reminder",
+      result: "reject",
+    });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/push-subscriptions",
+      data: {
+        templateId: "tmpl-sleep-reminder",
+        result: "reject",
       },
     });
   });

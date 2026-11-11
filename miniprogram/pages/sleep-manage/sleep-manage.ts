@@ -3,6 +3,13 @@ import {
   updateSleepConfig,
   UpdateSleepConfigDto,
 } from "../../api/api";
+import {
+  requestSleepReminderSubscription,
+  silentTopUpSleepReminder,
+} from "../../utils/push-subscription";
+
+/** 「是否已显式请求过哄睡通知授权」的本地标记 */
+const SUBSCRIBE_ASKED_KEY = "sleepReminderSubscribeAsked";
 
 /** 哄睡内容类型 → 展示文案 */
 const CONTENT_LABELS: Record<string, string> = {
@@ -48,6 +55,8 @@ Page({
     /** 时长弹窗中的临时模式与分钟数（确定后才写回） */
     tempDurationMode: "default" as "default" | "custom",
     tempDurationMinutes: FALLBACK_DURATION_MINUTES,
+    /** 本页是否已请求过哄睡通知授权（持久标记在 storage） */
+    subscriptionAsked: false,
   },
 
   onLoad(options) {
@@ -105,13 +114,30 @@ Page({
     }
   },
 
+  /**
+   * 哄睡通知订阅：首次保存操作时显式弹窗授权一次，之后寄生手势静默补额。
+   * 必须同步运行在 tap 手势链路上（wx.requestSubscribeMessage 硬限制），
+   * 因此放在各保存 handler 顶部、saveConfig 之前；授权结果不阻塞保存。
+   */
+  maybeRequestSleepSubscription() {
+    if (this.data.subscriptionAsked || wx.getStorageSync(SUBSCRIBE_ASKED_KEY)) {
+      silentTopUpSleepReminder();
+      return;
+    }
+    wx.setStorageSync(SUBSCRIBE_ASKED_KEY, "1");
+    this.setData({ subscriptionAsked: true });
+    void requestSleepReminderSubscription();
+  },
+
   onToggleEnabled(event: WechatMiniprogram.TouchEvent) {
+    this.maybeRequestSleepSubscription();
     const enabled = event.detail as unknown as boolean;
     this.setData({ enabled });
     this.saveConfig({ enabled }, { enabled: !enabled });
   },
 
   onToggleForce(event: WechatMiniprogram.TouchEvent) {
+    this.maybeRequestSleepSubscription();
     const forceSleep = event.detail as unknown as boolean;
     this.setData({ forceSleep });
     this.saveConfig({ forceSleep }, { forceSleep: !forceSleep });
@@ -156,6 +182,7 @@ Page({
    * 确认时间选择并保存
    */
   onConfirmTime() {
+    this.maybeRequestSleepSubscription();
     const previous = this.data.sleepTime;
     const sleepTime = this.data.tempTime;
     this.setData({ sleepTime, showTimePicker: false });
@@ -198,6 +225,7 @@ Page({
    * 确认哄睡时长并保存
    */
   onConfirmDuration() {
+    this.maybeRequestSleepSubscription();
     const { tempDurationMode, tempDurationMinutes } = this.data;
     const rollback = {
       durationMode: this.data.durationMode,
