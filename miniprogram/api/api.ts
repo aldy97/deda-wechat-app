@@ -56,25 +56,6 @@ export async function submitFeedback(
   });
 }
 
-/** 微信手机号换取结果 */
-export interface WechatPhoneNumberResult {
-  phone: string;
-}
-
-/**
- * 使用 getPhoneNumber 返回的一次性 code 换取手机号。
- * 后端需调用微信 phonenumber.getPhoneNumber 接口，不接受客户端直接上传手机号作为换取结果。
- */
-export async function getWechatPhoneNumber(
-  code: string,
-): Promise<ApiResponse<WechatPhoneNumberResult>> {
-  return request<WechatPhoneNumberResult>({
-    method: "POST",
-    url: "/users/wechat-phone",
-    data: { code },
-  });
-}
-
 /** 设备基础信息 */
 export interface Device {
   id: string; // 对应 server 的 deviceId

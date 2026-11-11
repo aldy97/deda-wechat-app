@@ -3,7 +3,6 @@ import {
   getLearningStatsDaily,
   getLearningStatsModeUsage,
   getSleepConfig,
-  getWechatPhoneNumber,
   controlDeviceVolume,
   submitFeedback,
   updateDeviceOrder,
@@ -70,16 +69,6 @@ describe("learning stats daily request", () => {
         content: "建议增加夜间模式",
         contact: "13800138000",
       },
-    });
-  });
-
-  it("exchanges the one-time Wechat phone code through the backend", async () => {
-    await getWechatPhoneNumber("phone-code");
-
-    expect(mockRequest).toHaveBeenCalledWith({
-      method: "POST",
-      url: "/users/wechat-phone",
-      data: { code: "phone-code" },
     });
   });
 
