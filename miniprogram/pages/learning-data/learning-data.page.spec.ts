@@ -600,6 +600,61 @@ describe("learning-data parent report page", () => {
     expect(page.data.usageError).toBe(false);
   });
 
+  it("缓存恢复后 usage 静默刷新期间：usageActualDays 保持可用（副标题不随 loadingUsage 闪隐）", async () => {
+    page.onLoad(); // 设定 reportDate
+    const cacheKey = page.reportCacheKey("d1");
+    const reportCache = {
+      cachedAt: Date.now(),
+      trendBars: [],
+      modeUsage: [
+        {
+          mode: "free_chat",
+          label: "自由对话",
+          count: 17,
+          percent: 81,
+          color: "var(--color-mode-1)",
+        },
+      ],
+      usageActualDays: 7,
+      durationMinutes: 20,
+      summary: null,
+      hasSummaryContent: false,
+      hasReportActivity: true,
+      feedback: null,
+      reportGeneratedAt: "2026-10-31 23:05",
+    };
+    harness.wx.getStorageSync.mockImplementation((key: string) =>
+      key === cacheKey ? reportCache : "",
+    );
+    try {
+      expect(page.restoreReportCache("d1")).toBe(true);
+      expect(page.data.usageActualDays).toBe(7);
+      // loadUsageStats 有过期请求守卫，需与当前选中设备一致
+      page.setData({ selectedDeviceId: "d1" });
+
+      // usage 接口未返回（静默刷新进行中）：副标题数据必须保持
+      let resolveUsage!: (v: unknown) => void;
+      mockApi.getLearningStatsModeUsage.mockReturnValue(
+        new Promise((resolve) => {
+          resolveUsage = resolve;
+        }),
+      );
+      const pending = page.loadUsageStats("d1");
+      await Promise.resolve();
+
+      expect(page.data.loadingUsage).toBe(true);
+      expect(page.data.usageActualDays).toBe(7);
+      expect(page.data.usageError).toBe(false);
+
+      resolveUsage({ data: modeUsage() });
+      await pending;
+      expect(page.data.loadingUsage).toBe(false);
+      expect(page.data.usageActualDays).toBe(7);
+    } finally {
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    }
+  });
+
   it("submits boolean feedback with deviceId and reportDate", async () => {
     await page.onLoad();
     await page.onReady();

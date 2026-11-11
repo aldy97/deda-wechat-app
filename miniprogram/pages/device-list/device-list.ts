@@ -13,6 +13,9 @@ const MODE_DISPLAY_MAP: Record<string, string> = {
   free_chat: "自由对话",
 };
 
+/** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
+const DEVICE_LIST_CACHE_KEY = "device_list_cache";
+
 /** 设备展示项 = 基础信息 + 状态信息 + 卡片内容 */
 interface DeviceDisplayItem extends Device {
   status?: DeviceStatus["status"];
@@ -51,32 +54,85 @@ Page({
   },
 
   onShow() {
-    // 真机首个 onShow 早于 onReady，跳过避免双请求；之后每次回前台刷新
+    // 真机首个 onShow 早于 onReady，跳过避免双请求；之后每次回前台静默刷新
     if (this.hasInitialLoaded) {
-      this.loadDeviceList();
+      this.loadDeviceList({ silent: true });
     }
   },
 
   /**
-   * 加载设备列表
+   * 加载设备列表（SWR）：
+   * - 无缓存首次进入：整页 loading
+   * - 有缓存：首帧直出缓存快照，后台刷新后原地更新
+   * - silent（回前台/下拉刷新）：不翻 loading、不清空列表，失败保留旧数据
    */
-  async loadDeviceList() {
+  async loadDeviceList(options?: { silent?: boolean }) {
+    const silent = !!options?.silent;
     this.hasInitialLoaded = true;
-    this.setData({ loading: true });
+
+    const hasRendered = this.data.devices.length > 0;
+    const restored = hasRendered ? false : this.restoreDeviceListCache();
+    if (!hasRendered && !restored) {
+      this.setData({ loading: true });
+    }
 
     try {
       await ensureAuthToken();
       const devices = await this.fetchBoundDevices();
 
-      const displayItems = await this.enrichDevices(devices);
+      const displayItems = await this.enrichDevices(
+        devices,
+        silent ? this.data.devices : undefined,
+      );
       this.setData({ devices: displayItems, loading: false });
+      this.writeDeviceListCache(displayItems);
     } catch (error) {
+      if (silent || hasRendered || restored) {
+        // 静默刷新失败：保留旧数据，不打扰用户
+        console.warn("[device-list] silent refresh failed:", error);
+        this.setData({ loading: false });
+        return;
+      }
       console.error("[device-list] load device list failed:", error);
       wx.showToast({
         title: error instanceof Error ? error.message : "加载设备失败",
         icon: "none",
       });
       this.setData({ devices: [], loading: false });
+    }
+  },
+
+  /**
+   * 读取设备列表缓存用于首帧直出；返回是否有可用缓存
+   */
+  restoreDeviceListCache(): boolean {
+    try {
+      const cached = wx.getStorageSync(DEVICE_LIST_CACHE_KEY);
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.setData({ devices: cached, loading: false });
+        return true;
+      }
+    } catch (error) {
+      console.warn("[device-list] 读取设备列表缓存失败", error);
+    }
+    return false;
+  },
+
+  /**
+   * 写入设备列表缓存（剔除 statusLoading 等瞬态字段）
+   */
+  writeDeviceListCache(items: DeviceDisplayItem[]) {
+    try {
+      wx.setStorageSync(
+        DEVICE_LIST_CACHE_KEY,
+        items.map((item) => {
+          const snapshot = { ...item };
+          delete snapshot.statusLoading;
+          return snapshot;
+        }),
+      );
+    } catch (error) {
+      console.warn("[device-list] 写入设备列表缓存失败", error);
     }
   },
 
@@ -89,12 +145,37 @@ Page({
   },
 
   /**
-   * 为设备列表补充状态与当前配置
+   * 为设备列表补充状态与当前配置。
+   * 静默刷新时传入 previous：沿用旧状态/电量/卡片快照，避免「电量...」闪烁。
    */
-  async enrichDevices(devices: Device[]): Promise<DeviceDisplayItem[]> {
+  async enrichDevices(
+    devices: Device[],
+    previous?: DeviceDisplayItem[],
+  ): Promise<DeviceDisplayItem[]> {
+    const previousById = new Map(
+      (previous || []).map((item) => [item.id, item]),
+    );
     return Promise.all(
       devices.map(async (device) => {
-        const item: DeviceDisplayItem = { ...device, statusLoading: true };
+        const prev = previousById.get(device.id);
+        const item: DeviceDisplayItem = {
+          ...device,
+          statusLoading: !prev,
+          // 静默刷新：先展示旧快照，接口返回后再原地更新
+          ...(prev
+            ? {
+                status: prev.status,
+                battery: prev.battery,
+                isCharging: prev.isCharging,
+                lastActiveAt: prev.lastActiveAt,
+                lastActiveText: prev.lastActiveText,
+                statusNotFound: prev.statusNotFound,
+                cardTitle: prev.cardTitle,
+                cardSubtitle: prev.cardSubtitle,
+                cardDesc: prev.cardDesc,
+              }
+            : {}),
+        };
 
         const cachedConfig = this.getDeviceConfigCache(item.id);
         if (cachedConfig) {
@@ -328,10 +409,10 @@ Page({
   },
 
   /**
-   * 下拉刷新
+   * 下拉刷新：静默刷新，列表保持渲染
    */
   async onPullDownRefresh() {
-    await this.loadDeviceList();
+    await this.loadDeviceList({ silent: true });
     wx.stopPullDownRefresh();
   },
 });
