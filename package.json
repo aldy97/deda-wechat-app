@@ -28,6 +28,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@arms/js-sdk": "^1.8.36-beta.13",
     "@vant/weapp": "^1.11.7"
   },
   "devDependencies": {
