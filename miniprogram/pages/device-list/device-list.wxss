@@ -220,20 +220,22 @@
   width: 100%;
 }
 
-/* 常驻添加设备入口 */
-.add-device-entry {
+/* 左上角圆形添加设备入口 */
+.add-device-fab {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
-  padding: 24rpx 0;
-  border: 2rpx dashed var(--color-secondary);
-  border-radius: 24rpx;
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0 0 24rpx;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  box-shadow: 0 4rpx 16rpx var(--color-shadow);
 }
 
-.add-device-text {
-  font-size: 26rpx;
-  color: var(--color-primary);
+.add-device-fab-hover {
+  background-color: var(--color-brand-light);
 }
 
 /* 卡片中部 */

@@ -146,7 +146,8 @@
             <text class="section-title">功能使用情况</text>
             <!-- <button class="usage-help" bind:tap="onUsageHelp" aria-label="了解功能使用统计">?</button> -->
           </view>
-          <text wx:if="{{ !loadingUsage && !usageError && usageActualDays > 0 }}" class="section-subtitle">近 {{ usageActualDays }} 天 · 功能互动占比</text>
+          <!-- 副标题不依赖 loadingUsage：缓存首帧/静默刷新期间保持显示，不再晚一秒出现 -->
+          <text wx:if="{{ !usageError && usageActualDays > 0 }}" class="section-subtitle">近 {{ usageActualDays }} 天 · 功能互动占比</text>
         </view>
       </view>
       <view wx:if="{{ loadingUsage && modeUsage.length === 0 && !usagePieVisible }}" class="sk-pie-wrap sk-anim">

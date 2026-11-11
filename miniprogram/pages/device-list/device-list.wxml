@@ -14,6 +14,17 @@
     </view>
 
     <block wx:else>
+    <!-- 左上角圆形添加设备入口 -->
+    <view
+      class="add-device-fab"
+      bind:tap="onAddDevice"
+      hover-class="add-device-fab-hover"
+      aria-role="button"
+      aria-label="添加设备"
+    >
+      <van-icon name="plus" size="40rpx" color="var(--color-primary)" />
+    </view>
+
     <view
       class="device-card card"
       wx:for="{{ devices }}"
@@ -94,12 +105,6 @@
           <text class="action-text">音量控制</text>
         </view>
       </view>
-    </view>
-
-    <!-- 常驻添加设备入口 -->
-    <view class="add-device-entry" bind:tap="onAddDevice">
-      <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
-      <text class="add-device-text">添加设备</text>
     </view>
     </block>
   </view>

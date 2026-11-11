@@ -14,8 +14,15 @@ const mockApi = {
 };
 jest.mock("../../api/api", () => mockApi);
 
+const harness = installPageHarness();
+
+async function flushMicrotasks(times = 10) {
+  for (let i = 0; i < times; i += 1) {
+    await Promise.resolve();
+  }
+}
+
 describe("device-list card display mapping", () => {
-  const harness = installPageHarness();
   let page: any;
 
   beforeAll(() => {
@@ -196,6 +203,172 @@ describe("device-list card display mapping", () => {
 
       expect(page.data.devices).toEqual([]);
       expect(page.data.loading).toBe(false);
+    });
+  });
+
+  describe("SWR 缓存首帧直出与静默刷新", () => {
+    beforeEach(() => {
+      // getStorageSync 的 mockImplementation 不被 clearAllMocks 清除，按用例隔离
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    });
+
+    const CACHED_ITEM = {
+      id: "dev-cache",
+      name: "缓存设备",
+      status: "online",
+      battery: 80,
+      isCharging: null,
+      lastActiveAt: "2026-11-11T04:00:00.000Z",
+      lastActiveText: "最近活跃 刚刚",
+      cardTitle: "自由闲聊",
+      cardDesc: "轻松闲聊。",
+    };
+
+    function mockNetworkList(devices: unknown[]) {
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: devices,
+      });
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-net",
+          status: "offline",
+          battery: 55,
+          isCharging: null,
+          lastActiveAt: null,
+        },
+      });
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: null,
+      });
+    }
+
+    it("有缓存：网络返回前即渲染缓存列表，不整页转圈", async () => {
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === "device_list_cache" ? [CACHED_ITEM] : "",
+      );
+      let resolveList!: (v: unknown) => void;
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockReturnValue(
+        new Promise((resolve) => {
+          resolveList = resolve;
+        }),
+      );
+
+      const pending = page.loadDeviceList();
+
+      // 网络尚未返回：首帧已是缓存内容，且无 loading
+      expect(page.data.loading).toBe(false);
+      expect(page.data.devices.map((d: any) => d.id)).toEqual(["dev-cache"]);
+
+      mockNetworkList([{ id: "dev-net", name: "新设备" }]);
+      resolveList({
+        code: 0,
+        message: "",
+        data: [{ id: "dev-net", name: "新设备" }],
+      });
+      await pending;
+
+      expect(page.data.devices.map((d: any) => d.id)).toEqual(["dev-net"]);
+      expect(page.data.loading).toBe(false);
+    });
+
+    it("刷新成功后写入缓存（剔除 statusLoading 等瞬态字段）", async () => {
+      mockNetworkList([{ id: "dev-net", name: "新设备" }]);
+
+      await page.loadDeviceList();
+
+      expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+        "device_list_cache",
+        expect.arrayContaining([
+          expect.objectContaining({ id: "dev-net", battery: 55 }),
+        ]),
+      );
+      const written = harness.wx.setStorageSync.mock.calls.find(
+        (c: unknown[]) => c[0] === "device_list_cache",
+      )[1];
+      expect(written[0].statusLoading).toBeUndefined();
+    });
+
+    it("onShow 二次进入：静默刷新，loading 不翻 true、旧列表保持渲染", async () => {
+      mockNetworkList([{ id: "dev-net", name: "新设备" }]);
+      await page.loadDeviceList();
+      expect(page.data.devices).toHaveLength(1);
+
+      let resolveList!: (v: unknown) => void;
+      mockApi.getDeviceList.mockReturnValue(
+        new Promise((resolve) => {
+          resolveList = resolve;
+        }),
+      );
+      page.onShow();
+      // getDeviceList 在 await ensureAuthToken 之后发起，先让微任务跑完
+      await flushMicrotasks();
+
+      // 刷新进行中：旧列表仍在，loading 保持 false
+      expect(page.data.loading).toBe(false);
+      expect(page.data.devices.map((d: any) => d.id)).toEqual(["dev-net"]);
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+
+      resolveList({
+        code: 0,
+        message: "",
+        data: [{ id: "dev-net", name: "新设备" }],
+      });
+      await flushMicrotasks();
+    });
+
+    it("静默刷新失败：保留旧列表，不 toast 不闪空态", async () => {
+      mockNetworkList([{ id: "dev-net", name: "新设备" }]);
+      await page.loadDeviceList();
+      harness.wx.showToast.mockClear();
+
+      mockApi.getDeviceList.mockRejectedValue(new Error("network down"));
+      await page.loadDeviceList({ silent: true });
+
+      expect(page.data.devices.map((d: any) => d.id)).toEqual(["dev-net"]);
+      expect(page.data.loading).toBe(false);
+      expect(harness.wx.showToast).not.toHaveBeenCalled();
+    });
+
+    it("静默刷新期间保留旧状态/电量展示，不闪「电量...」加载态", async () => {
+      mockNetworkList([{ id: "dev-net", name: "新设备" }]);
+      await page.loadDeviceList();
+      const before = page.data.devices[0];
+      expect(before.status).toBe("offline");
+
+      let resolveStatus!: (v: unknown) => void;
+      mockApi.getDeviceStatus.mockReturnValue(
+        new Promise((resolve) => {
+          resolveStatus = resolve;
+        }),
+      );
+      const pending = page.loadDeviceList({ silent: true });
+      await flushMicrotasks();
+
+      // enrich 进行中：沿用旧状态快照，statusLoading 不再亮起
+      expect(page.data.devices[0].status).toBe("offline");
+      expect(page.data.devices[0].battery).toBe(55);
+
+      resolveStatus({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-net",
+          status: "online",
+          battery: 90,
+          isCharging: null,
+          lastActiveAt: "2026-11-11T05:00:00.000Z",
+        },
+      });
+      await pending;
+      await flushMicrotasks();
     });
   });
 });
