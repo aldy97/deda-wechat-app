@@ -82,28 +82,6 @@
   font-size: 32rpx;
 }
 
-.phone-prefill-button {
-  flex-shrink: 0;
-  height: 64rpx;
-  margin: 0 0 0 16rpx;
-  padding: 0 12rpx;
-  border-radius: 12rpx;
-  background-color: transparent;
-  color: var(--color-primary);
-  font-size: 26rpx;
-  line-height: 64rpx;
-}
-
-.phone-prefill-button::after {
-  border: 0;
-}
-
-.phone-prefill-button[disabled] {
-  background-color: transparent;
-  color: var(--color-secondary);
-  opacity: 1;
-}
-
 .submit-error {
   display: flex;
   align-items: flex-start;

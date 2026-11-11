@@ -1,21 +1,14 @@
-import {
-  ensureAuthToken,
-  getDeviceList,
-  getWechatPhoneNumber,
-  submitFeedback,
-} from "../../api/api";
+import { ensureAuthToken, getDeviceList, submitFeedback } from "../../api/api";
 import { installPageHarness } from "../../tests/page-harness";
 
 jest.mock("../../api/api", () => ({
   ensureAuthToken: jest.fn(),
   getDeviceList: jest.fn(),
-  getWechatPhoneNumber: jest.fn(),
   submitFeedback: jest.fn(),
 }));
 
 const mockEnsureAuthToken = ensureAuthToken as jest.Mock;
 const mockGetDeviceList = getDeviceList as jest.Mock;
-const mockGetWechatPhoneNumber = getWechatPhoneNumber as jest.Mock;
 const mockSubmitFeedback = submitFeedback as jest.Mock;
 
 describe("feedback page", () => {
@@ -33,11 +26,6 @@ describe("feedback page", () => {
       code: 0,
       message: "success",
       data: [{ id: "dev-1", name: "Elly" }],
-    });
-    mockGetWechatPhoneNumber.mockResolvedValue({
-      code: 0,
-      message: "success",
-      data: { phone: "13800138000" },
     });
     mockSubmitFeedback.mockResolvedValue({
       code: 0,
@@ -75,29 +63,11 @@ describe("feedback page", () => {
     });
   });
 
-  it("prefills the phone number returned by the Wechat authorization flow", async () => {
+  it("联系方式仅手动输入：不再提供微信预填入口（后端无 wechat-phone 路由）", () => {
     const page = harness.createInstance();
 
-    await page.onGetPhoneNumber({
-      detail: { code: "phone-code", errMsg: "getPhoneNumber:ok" },
-    });
-
-    expect(mockEnsureAuthToken).toHaveBeenCalledTimes(1);
-    expect(mockGetWechatPhoneNumber).toHaveBeenCalledWith("phone-code");
-    expect(page.data.contact).toBe("13800138000");
-    expect(page.data.phoneLoading).toBe(false);
-  });
-
-  it("keeps manual input available when phone authorization is denied", async () => {
-    const page = harness.createInstance();
-
-    await page.onGetPhoneNumber({
-      detail: { code: "", errMsg: "getPhoneNumber:fail user deny" },
-    });
-
-    expect(mockGetWechatPhoneNumber).not.toHaveBeenCalled();
-    expect(page.data.contact).toBe("");
-    expect(harness.wx.showToast).not.toHaveBeenCalled();
+    expect(page.onGetPhoneNumber).toBeUndefined();
+    expect(page.data.phoneLoading).toBeUndefined();
   });
 
   it("submits trimmed content with the authenticated user context", async () => {

@@ -41,22 +41,12 @@
         value="{{ contact }}"
         type="number"
         maxlength="11"
-        placeholder="请输入联系手机号"
+        placeholder="请输入联系手机号（选填）"
         placeholder-class="field-placeholder"
         disabled="{{ hasNoDevice || deviceCheckLoading }}"
         aria-label="联系手机号，选填"
         bind:input="onContactInput"
       />
-      <button
-        class="phone-prefill-button"
-        open-type="getPhoneNumber"
-        disabled="{{ phoneLoading || hasNoDevice || deviceCheckLoading }}"
-        hover-class="none"
-        aria-label="使用微信手机号预填写"
-        bind:getphonenumber="onGetPhoneNumber"
-      >
-        {{ phoneLoading ? '获取中…' : '微信预填写' }}
-      </button>
     </view>
   </view>
 

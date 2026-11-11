@@ -1,9 +1,4 @@
-import {
-  ensureAuthToken,
-  getDeviceList,
-  getWechatPhoneNumber,
-  submitFeedback,
-} from "../../api/api";
+import { ensureAuthToken, getDeviceList, submitFeedback } from "../../api/api";
 
 const MAX_CONTENT_LENGTH = 200;
 const MAINLAND_PHONE_PATTERN = /^1[3-9]\d{9}$/;
@@ -24,7 +19,6 @@ Page({
     canSubmit: false,
     submitting: false,
     submitFailed: false,
-    phoneLoading: false,
     /** 设备门控：是否正在查询绑定设备 */
     deviceCheckLoading: true,
     /** 设备门控：确认无任何绑定设备（查询失败 fail-open，不置 true） */
@@ -93,34 +87,6 @@ Page({
     const contact = String(event.detail.value || "").trim();
     this.setData({ contact });
     return contact;
-  },
-
-  async onGetPhoneNumber(
-    event: WechatMiniprogram.ButtonGetPhoneNumber,
-  ): Promise<void> {
-    const { code, errMsg } = event.detail;
-    if (!code) {
-      if (errMsg && !/deny|cancel/.test(errMsg)) {
-        wx.showToast({ title: "获取失败，请手动输入", icon: "none" });
-      }
-      return;
-    }
-    if (this.data.phoneLoading) return;
-
-    this.setData({ phoneLoading: true });
-    try {
-      await ensureAuthToken();
-      const res = await getWechatPhoneNumber(code);
-      const contact = String(res.data.phone || "");
-      if (!MAINLAND_PHONE_PATTERN.test(contact)) {
-        throw new Error("Invalid phone number");
-      }
-      this.setData({ contact, submitFailed: false });
-    } catch (error) {
-      wx.showToast({ title: "获取失败，请手动输入", icon: "none" });
-    } finally {
-      this.setData({ phoneLoading: false });
-    }
   },
 
   async onSubmit() {
