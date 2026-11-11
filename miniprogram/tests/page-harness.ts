@@ -25,6 +25,7 @@ export interface PageHarness {
 export function installPageHarness(): PageHarness {
   const wxStub: Record<string, jest.Mock> = {
     navigateTo: jest.fn(),
+    redirectTo: jest.fn(),
     switchTab: jest.fn(),
     navigateBack: jest.fn(),
     reLaunch: jest.fn(),

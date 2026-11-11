@@ -6,6 +6,15 @@
 
   <!-- 编辑表单 -->
   <view wx:else>
+    <!-- 绑定成功引导横幅（仅 from=bind 进入时展示） -->
+    <view class="bind-guide-banner" wx:if="{{ fromBind }}">
+      <van-icon name="checked" size="36rpx" color="var(--color-success)" />
+      <view class="bind-guide-text">
+        <text class="bind-guide-title">绑定成功！</text>
+        <text class="bind-guide-subtitle">完善孩子信息，让 Elly 更懂 TA</text>
+      </view>
+    </view>
+
     <van-cell-group inset class="form-group">
       <van-field
         label="名字"
@@ -49,6 +58,14 @@
       >
         保存
       </van-button>
+      <!-- 绑定引导链路允许跳过 -->
+      <view
+        wx:if="{{ fromBind }}"
+        class="skip-bind-guide"
+        bind:tap="onSkipBindGuide"
+        aria-role="button"
+        aria-label="稍后再填"
+      >稍后再填</view>
     </view>
   </view>
 

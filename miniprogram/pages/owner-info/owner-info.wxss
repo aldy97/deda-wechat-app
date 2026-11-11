@@ -25,6 +25,42 @@
   margin: 48rpx 24rpx 0;
 }
 
+/* 绑定成功引导横幅 */
+.bind-guide-banner {
+  display: flex;
+  align-items: center;
+  margin: 0 24rpx 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 16rpx;
+  background-color: var(--color-success-bg);
+}
+
+.bind-guide-text {
+  display: flex;
+  flex-direction: column;
+  margin-left: 16rpx;
+}
+
+.bind-guide-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-title);
+}
+
+.bind-guide-subtitle {
+  font-size: 26rpx;
+  color: var(--color-body);
+  margin-top: 4rpx;
+}
+
+/* 绑定引导「稍后再填」 */
+.skip-bind-guide {
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--color-secondary);
+  padding: 32rpx 0 calc(32rpx + env(safe-area-inset-bottom));
+}
+
 /* 性别选择弹窗 */
 .gender-picker {
   padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));

@@ -319,19 +319,28 @@ export async function updateDeviceOrder(
  * 绑定设备
  * @param params deviceId 或 deviceCode 至少传一个
  */
+export interface BindDeviceResult {
+  success: boolean;
+  deviceId: string;
+  /** true 表示当前用户此前已绑定过该设备 */
+  alreadyBound: boolean;
+  /**
+   * 该设备当前是否已存在孩子档案（填过任意字段即为 true）；
+   * 与是否本人绑过无关。false 时前端在绑定成功后直接引导填写孩子信息。
+   * 对齐 deda-server MINI_PROGRAM_API.md 3.1（2026-11 新增字段）。
+   */
+  hasChildProfile: boolean;
+}
+
 export async function bindDevice(params: {
   deviceId?: string;
   deviceCode?: string;
-}): Promise<
-  ApiResponse<{ success: boolean; deviceId: string; alreadyBound: boolean }>
-> {
-  return request<{ success: boolean; deviceId: string; alreadyBound: boolean }>(
-    {
-      method: "POST",
-      url: "/devices/bind",
-      data: params,
-    },
-  );
+}): Promise<ApiResponse<BindDeviceResult>> {
+  return request<BindDeviceResult>({
+    method: "POST",
+    url: "/devices/bind",
+    data: params,
+  });
 }
 
 /** 配网认领候选设备（MINI_PROGRAM_API.md 3.10） */

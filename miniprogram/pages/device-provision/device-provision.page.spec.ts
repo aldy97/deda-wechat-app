@@ -183,6 +183,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_A.deviceId,
         alreadyBound: false,
+        hasChildProfile: true,
       },
     });
 
@@ -213,6 +214,68 @@ describe("device-provision 配网页", () => {
     expect(page.data.step).toBe(5);
     expect(page.data.success).toBe(true);
     expect(page.data.resultText).toContain("配网成功");
+    expect(harness.wx.redirectTo).not.toHaveBeenCalled();
+  });
+
+  it("绑定成功且设备无孩子档案：立即 redirectTo 孩子信息页，不停留成功页", async () => {
+    mockApi.getProvisionCandidates.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { devices: [CANDIDATE_A] },
+    });
+    mockApi.bindDevice.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: {
+        success: true,
+        deviceId: CANDIDATE_A.deviceId,
+        alreadyBound: false,
+        hasChildProfile: false,
+      },
+    });
+
+    await enterWifiStep(page);
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+    await page.handleMessage({ t1: 0x10, t2: 0x02, data: { status: 0 } });
+    await flushMicrotasks();
+
+    expect(harness.wx.redirectTo).toHaveBeenCalledWith({
+      url: `/pages/owner-info/owner-info?id=${CANDIDATE_A.deviceId}&from=bind`,
+    });
+    // 直接离开配网页：不渲染成功页
+    expect(page.data.step).toBe(4);
+    expect(page.data.success).toBeFalsy();
+  });
+
+  it("本人重绑但设备仍无孩子档案：同样跳转孩子信息页", async () => {
+    mockApi.getProvisionCandidates.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { devices: [CANDIDATE_A] },
+    });
+    mockApi.bindDevice.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: {
+        success: true,
+        deviceId: CANDIDATE_A.deviceId,
+        alreadyBound: true,
+        hasChildProfile: false,
+      },
+    });
+
+    await enterWifiStep(page);
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+    await page.handleMessage({ t1: 0x10, t2: 0x02, data: { status: 0 } });
+    await flushMicrotasks();
+
+    expect(harness.wx.redirectTo).toHaveBeenCalledWith({
+      url: `/pages/owner-info/owner-info?id=${CANDIDATE_A.deviceId}&from=bind`,
+    });
   });
 
   it("多台候选：禁止自动绑定，展示列表由用户选择", async () => {
@@ -228,6 +291,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_B.deviceId,
         alreadyBound: false,
+        hasChildProfile: true,
       },
     });
 
@@ -287,6 +351,7 @@ describe("device-provision 配网页", () => {
           success: true,
           deviceId: CANDIDATE_A.deviceId,
           alreadyBound: true,
+          hasChildProfile: true,
         },
       });
       page.onRetryClaim();
@@ -318,6 +383,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_A.deviceId,
         alreadyBound: false,
+        hasChildProfile: true,
       },
     });
 
@@ -361,6 +427,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_A.deviceId,
         alreadyBound: true,
+        hasChildProfile: true,
       },
     });
     await page.onRetryBind();
@@ -383,6 +450,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_A.deviceId,
         alreadyBound: false,
+        hasChildProfile: true,
       },
     });
 

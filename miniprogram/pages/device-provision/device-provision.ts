@@ -560,6 +560,15 @@ Page({
       } catch (e) {
         // ignore
       }
+      if (!res.data.hasChildProfile) {
+        // 设备当前无孩子档案（全新设备 / wipe 后重入网 / 绑过但没填档案）：
+        // 不停留成功页，直接引导填写孩子信息；redirectTo 替换本页，
+        // 保存或跳过后由 owner-info 统一 switchTab 回设备列表。
+        wx.redirectTo({
+          url: `/pages/owner-info/owner-info?id=${encodeURIComponent(deviceId)}&from=bind`,
+        });
+        return true;
+      }
       this.finished = true;
       this.setData({
         step: 5,
