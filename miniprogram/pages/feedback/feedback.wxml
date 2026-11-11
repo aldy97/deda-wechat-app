@@ -1,4 +1,13 @@
 <view class="feedback-page">
+  <!-- 无设备提示：绑定设备后才能提交反馈 -->
+  <view
+    wx:if="{{ hasNoDevice }}"
+    class="no-device-banner"
+    aria-role="alert"
+  >
+    <text class="no-device-text">绑定设备后，才能提交使用反馈</text>
+  </view>
+
   <view class="field-group">
     <view class="field-label">
       <text>问题或建议</text>
@@ -14,6 +23,7 @@
         auto-height="{{ false }}"
         fixed="{{ true }}"
         show-confirm-bar="{{ false }}"
+        disabled="{{ hasNoDevice || deviceCheckLoading }}"
         aria-label="问题或建议，最多 200 字"
         bind:input="onContentInput"
       ></textarea>
@@ -33,13 +43,14 @@
         maxlength="11"
         placeholder="请输入联系手机号"
         placeholder-class="field-placeholder"
+        disabled="{{ hasNoDevice || deviceCheckLoading }}"
         aria-label="联系手机号，选填"
         bind:input="onContactInput"
       />
       <button
         class="phone-prefill-button"
         open-type="getPhoneNumber"
-        disabled="{{ phoneLoading }}"
+        disabled="{{ phoneLoading || hasNoDevice || deviceCheckLoading }}"
         hover-class="none"
         aria-label="使用微信手机号预填写"
         bind:getphonenumber="onGetPhoneNumber"
@@ -63,9 +74,20 @@
     </view>
   </view>
 
+  <!-- 无设备：主按钮替换为「去绑定设备」 -->
   <button
+    wx:if="{{ hasNoDevice }}"
     class="submit-button"
-    disabled="{{ !canSubmit || submitting }}"
+    hover-class="none"
+    aria-label="去绑定设备"
+    bind:tap="onGoBindDevice"
+  >
+    去绑定设备
+  </button>
+  <button
+    wx:else
+    class="submit-button"
+    disabled="{{ !canSubmit || submitting || deviceCheckLoading }}"
     loading="{{ submitting }}"
     hover-class="none"
     aria-label="{{ submitFailed ? '重新提交反馈' : '提交反馈' }}"
