@@ -11,6 +11,8 @@ const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 Page({
   data: {
     deviceId: "",
+    /** 绑定成功后自动引导进入（来自配网页 redirectTo） */
+    fromBind: false,
     /** 页面加载中 */
     loading: true,
     /** 保存中 */
@@ -34,7 +36,10 @@ Page({
 
   onLoad(options) {
     const deviceId = options?.id || "";
-    this.setData({ deviceId });
+    this.setData({
+      deviceId,
+      fromBind: options?.from === "bind",
+    });
   },
 
   onReady() {
@@ -182,12 +187,24 @@ Page({
       // 保存成功后清除设备列表缓存，确保返回列表页时重新加载
       this.clearDeviceListCache();
       setTimeout(() => {
-        wx.navigateBack();
+        if (this.data.fromBind) {
+          // 绑定引导链路：配网页已 redirectTo 销毁，统一回设备列表
+          wx.switchTab({ url: "/pages/device-list/device-list" });
+        } else {
+          wx.navigateBack();
+        }
       }, 800);
     } catch (error) {
       this.setData({ saving: false });
       wx.showToast({ title: "保存失败", icon: "none" });
     }
+  },
+
+  /**
+   * 绑定引导链路「稍后再填」：跳过档案填写，回设备列表
+   */
+  onSkipBindGuide() {
+    wx.switchTab({ url: "/pages/device-list/device-list" });
   },
 
   /**

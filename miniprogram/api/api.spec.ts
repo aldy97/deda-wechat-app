@@ -1,4 +1,5 @@
 import {
+  bindDevice,
   getLearningStatsDaily,
   getLearningStatsModeUsage,
   getSleepConfig,
@@ -89,6 +90,16 @@ describe("learning stats daily request", () => {
       method: "PUT",
       url: "/devices/order",
       data: { orderedDeviceIds: ["dev-002", "dev-001"] },
+    });
+  });
+
+  it("binds a device by deviceId", async () => {
+    await bindDevice({ deviceId: "aabbccddeeff" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "POST",
+      url: "/devices/bind",
+      data: { deviceId: "aabbccddeeff" },
     });
   });
 });
