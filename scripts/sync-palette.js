@@ -33,18 +33,24 @@ fs.writeFileSync(appJsonPath, `${JSON.stringify(appJson, null, 2)}\n`);
 const canvasColors = Array.from({ length: 6 }, (_, index) =>
   resolve(`color-mode-${index + 1}`),
 );
-const canvasUiColors = {
-  surface: resolve("color-surface"),
-  text: resolve("color-text"),
-  primary: resolve("color-primary"),
-};
+// 手写对象字面量而非 JSON.stringify：JSON 会加引号且不带尾逗号，
+// 与 prettier 格式冲突，导致每次 npm run build 都把 palette.ts 改脏
+const canvasUiEntries = [
+  ["surface", resolve("color-surface")],
+  ["text", resolve("color-text")],
+  ["primary", resolve("color-primary")],
+]
+  .map(([key, value]) => `  ${key}: ${JSON.stringify(value)},`)
+  .join("\n");
 const paletteTsPath = path.join(root, "miniprogram/styles/palette.ts");
 const paletteTs = `/** 由 scripts/sync-palette.js 从 palette.wxss 生成，仅供 Canvas 使用。 */
 export const CANVAS_MODE_COLORS = [
 ${canvasColors.map((color) => `  ${JSON.stringify(color)},`).join("\n")}
 ];
 
-export const CANVAS_UI_COLORS = ${JSON.stringify(canvasUiColors, null, 2)} as const;
+export const CANVAS_UI_COLORS = {
+${canvasUiEntries}
+} as const;
 `;
 fs.writeFileSync(paletteTsPath, paletteTs);
 console.log("已从唯一色板同步 app.json 与 Canvas 色板");
