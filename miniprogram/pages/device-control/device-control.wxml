@@ -13,18 +13,20 @@
         <text class="current-mode-text" slot="right-icon">{{ currentModeDisplay }}</text>
       </van-cell>
 
-      <!-- 音量：契约 3.6 中唯一真实下发的控制项 -->
-      <van-cell title="音量：{{ volume }}">
-        <van-slider
-          value="{{ volume }}"
-          min="0"
-          max="100"
-          disabled="{{ sliderDisabled }}"
-          bind:change="onVolumeChange"
-          bind:dragend="onVolumeDragEnd"
-          slot="right-icon"
-          custom-class="volume-slider"
-        />
+      <!-- 音量：契约 3.6 中唯一真实下发的控制项。自绘步进器，只允许以 10 为步长；
+           设备未上报音量时显示 -- 且两侧按钮禁用，不用猜测值下发 -->
+      <van-cell title="音量">
+        <view class="volume-stepper" slot="right-icon">
+          <view
+            class="volume-step-btn {{ minusDisabled ? 'volume-step-btn--disabled' : '' }}"
+            bind:tap="onVolumeMinus"
+          >−</view>
+          <text class="volume-value">{{ volumeUnknown ? '--' : volume }}</text>
+          <view
+            class="volume-step-btn {{ plusDisabled ? 'volume-step-btn--disabled' : '' }}"
+            bind:tap="onVolumePlus"
+          >+</view>
+        </view>
       </van-cell>
     </van-cell-group>
 
