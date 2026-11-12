@@ -8,8 +8,39 @@
   padding: 120rpx 0;
 }
 
-.volume-slider {
-  width: 320rpx;
+/* 自绘音量步进器：交互上只允许以 10 为步长，音量未知时按钮禁用 */
+.volume-stepper {
+  display: flex;
+  align-items: center;
+}
+
+.volume-step-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border: 2rpx solid var(--color-border);
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.volume-step-btn--disabled {
+  border-color: var(--color-divider);
+  background-color: var(--color-neutral-soft);
+  color: var(--color-disabled);
+}
+
+.volume-value {
+  min-width: 76rpx;
+  margin: 0 20rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--color-heading);
 }
 
 .mode-card {

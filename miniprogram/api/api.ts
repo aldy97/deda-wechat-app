@@ -71,16 +71,20 @@ export interface Device {
 }
 
 /**
- * 设备实时状态（电量、在线状态等）
- * 对齐 deda-server MINI_PROGRAM_API.md 3.4（2026-11 起接 MQTT 真实状态）：
+ * 设备实时状态（在线状态、电量、音量、充电状态）
+ * 对齐 deda-server MINI_PROGRAM_API.md 3.4（2026-11 起接机芯厂 MQTT 真实状态）：
  * - status 仅 online/offline，15 秒无心跳即 offline
- * - battery / isCharging / lastActiveAt 均可能为 null（设备未上报；isCharging 协议暂缺，固定 null）
+ * - battery / volume / isCharging / lastActiveAt 均可能为 null（设备未上报）
+ * - isCharging 对应厂商 query.data.charging（契约 boolean | null），null = 未知；
+ *   charging → isCharging 的改名在服务端 devices.service 完成，前端全程只用 isCharging
+ * - volume 为设备真实音量；下发（3.6）后回读本字段即可确认设备是否已生效
  */
 export interface DeviceStatus {
   deviceId: string;
   status: "online" | "offline";
-  battery: number | null; // 电量 0-100，未上报为 null
-  isCharging: boolean | null;
+  battery: number | null; // 电量 0-100，未上报为 null（当前固件为占位值）
+  volume: number | null; // 音量 0-100，未上报为 null
+  isCharging: boolean | null; // 是否充电中，null = 未知（当前固件恒发 null）
   lastActiveAt: string | null; // ISO 8601，从未上报为 null
 }
 

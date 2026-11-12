@@ -45,7 +45,7 @@
             <van-loading type="spinner" size="20rpx">电量...</van-loading>
           </view>
 
-          <!-- 电量显示（isCharging 协议暂缺、固定 null，不显示充电态；404 设备不展示电量） -->
+          <!-- 电量显示（isCharging 厂商契约 boolean|null，当前固件恒发 null，充电态分支保留不触发；404 设备不展示电量） -->
           <block wx:elif="{{ !item.statusNotFound }}">
             <view wx:if="{{ item.battery !== undefined && item.battery !== null }}" class="battery-wrap {{ item.isCharging ? 'battery-charging' : '' }}">
               <view class="battery-icon">

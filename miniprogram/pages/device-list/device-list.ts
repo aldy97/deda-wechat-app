@@ -21,7 +21,7 @@ interface DeviceDisplayItem extends Device {
   status?: DeviceStatus["status"];
   /** 电量 0-100；设备未上报为 null，勿按 0% 展示 */
   battery?: number | null;
-  /** 机芯厂协议暂无充电字段，当前固定 null */
+  /** 是否充电中，null = 未知（厂商契约 boolean | null，当前固件恒发 null） */
   isCharging?: boolean | null;
   lastActiveAt?: string | null;
   /** 最近活跃的展示文案；从未上报为「暂未连接」 */
@@ -247,6 +247,7 @@ Page({
         deviceId,
         status: "offline",
         battery: null,
+        volume: null,
         isCharging: null,
         lastActiveAt: null,
       };
