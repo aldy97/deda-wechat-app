@@ -88,36 +88,10 @@ export interface DeviceStatus {
   lastActiveAt: string | null; // ISO 8601，从未上报为 null
 }
 
-/** 对话模式顶层分类 */
-export interface ConversationModeCategory {
-  id: string;
-  key: string;
-  name: string;
-  description?: string | null;
-  sortOrder: number;
-  isActive: boolean;
-}
-
-/** 对话模式细粒度子模式 */
-export interface ConversationMode {
-  id: string;
-  categoryId: string;
-  key: string;
-  name: string;
-  description?: string | null;
-  sortOrder: number;
-  isActive: boolean;
-  configSchema?: Record<string, unknown> | null;
-  promptTemplate?: string | null;
-}
-
 /** 设备当前生效配置 */
 export interface DeviceConfig {
   deviceId: string;
-  mode: "free_chat";
-  conversationModeKey?: string | null;
-  conversationModeName?: string | null;
-  conversationModeDescription?: string | null;
+  mode: string;
   language?: string | null;
   speechRate?: string | null;
 }
@@ -168,7 +142,6 @@ export interface OwnerInfo {
 
 export interface LearningStatsContext {
   mode?: string;
-  conversationModeKey?: string;
   scope?: "all";
 }
 
@@ -178,10 +151,6 @@ function appendContextQuery(
 ): void {
   if (!ctx) return;
   if (ctx.mode) queryParts.push(`mode=${encodeURIComponent(ctx.mode)}`);
-  if (ctx.conversationModeKey)
-    queryParts.push(
-      `conversationModeKey=${encodeURIComponent(ctx.conversationModeKey)}`,
-    );
   if (ctx.scope) queryParts.push(`scope=${encodeURIComponent(ctx.scope)}`);
 }
 
@@ -365,35 +334,6 @@ export async function getDeviceStatus(
 }
 
 /**
- * 获取对话模式顶层分类
- * 调用 deda-server GET /conversation-modes/categories
- */
-export async function getConversationModeCategories(): Promise<
-  ApiResponse<ConversationModeCategory[]>
-> {
-  return request<ConversationModeCategory[]>({
-    method: "GET",
-    url: "/conversation-modes/categories",
-  });
-}
-
-/**
- * 获取对话子模式列表
- * 调用 deda-server GET /conversation-modes?categoryKey=...
- */
-export async function getConversationModes(
-  categoryKey?: string,
-): Promise<ApiResponse<ConversationMode[]>> {
-  const query = categoryKey
-    ? `?categoryKey=${encodeURIComponent(categoryKey)}`
-    : "";
-  return request<ConversationMode[]>({
-    method: "GET",
-    url: `/conversation-modes${query}`,
-  });
-}
-
-/**
  * 获取设备当前生效配置
  */
 export async function getDeviceCurrentConfig(
@@ -406,7 +346,7 @@ export async function getDeviceCurrentConfig(
 }
 
 /**
- * 切换对话模式/子模式
+ * 切换设备对话模式（mode 已平级化：free_chat / english_chat）
  */
 export async function switchDeviceMode(
   deviceId: string,
@@ -544,7 +484,7 @@ interface GetChatRecordsParams {
   page?: number;
   pageSize?: number;
   deviceId?: string;
-  conversationModeKey?: string;
+  mode?: string;
 }
 
 /**
@@ -554,16 +494,14 @@ interface GetChatRecordsParams {
 export async function getChatRecords(
   params: GetChatRecordsParams = {},
 ): Promise<ApiResponse<PaginatedResponse<ChatRecord>>> {
-  const { page = 1, pageSize = 100, deviceId, conversationModeKey } = params;
+  const { page = 1, pageSize = 100, deviceId, mode } = params;
   const queryParts = [
     `page=${encodeURIComponent(String(page))}`,
     `pageSize=${encodeURIComponent(String(pageSize))}`,
   ];
   if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (conversationModeKey)
-    queryParts.push(
-      `conversationModeKey=${encodeURIComponent(conversationModeKey)}`,
-    );
+  if (mode)
+    queryParts.push(`mode=${encodeURIComponent(mode)}`);
   return request<PaginatedResponse<ChatRecord>>({
     method: "GET",
     url: `/conversations?${queryParts.join("&")}`,

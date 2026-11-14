@@ -33,7 +33,6 @@ describe("chat-history page wiring", () => {
         mode: "locked_unit",
         textbookId: "unlock-l1-speaking-listening",
         unitId: "unit-2",
-        conversationModeKey: null,
       },
     });
 
@@ -46,32 +45,30 @@ describe("chat-history page wiring", () => {
     expect(callArg.unitId).toBeUndefined();
   });
 
-  it("prefers explicit URL conversationModeKey over the device config", async () => {
+  it("prefers explicit URL mode over the device config", async () => {
     mockApi.getDeviceCurrentConfig.mockResolvedValue({
       data: {
         deviceId: "dev-001",
         mode: "free_chat",
-        conversationModeKey: "free_chat_casual",
       },
     });
 
     await page.onLoad({
       id: "dev-001",
-      conversationModeKey: "free_chat_qa",
+      mode: "free_chat_casual",
     });
     await page.onReady();
 
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
-      expect.objectContaining({ conversationModeKey: "free_chat_qa" }),
+      expect.objectContaining({ mode: "free_chat_casual" }),
     );
   });
 
-  it("derives conversationModeKey filter for free_chat config", async () => {
+  it("derives mode filter from config", async () => {
     mockApi.getDeviceCurrentConfig.mockResolvedValue({
       data: {
         deviceId: "dev-001",
         mode: "free_chat",
-        conversationModeKey: "free_chat_roleplay",
       },
     });
 
@@ -79,7 +76,7 @@ describe("chat-history page wiring", () => {
     await page.onReady();
 
     expect(mockApi.getChatRecords).toHaveBeenCalledWith(
-      expect.objectContaining({ conversationModeKey: "free_chat_roleplay" }),
+      expect.objectContaining({ mode: "free_chat" }),
     );
   });
 
@@ -88,7 +85,6 @@ describe("chat-history page wiring", () => {
       data: {
         deviceId: "dev-001",
         mode: "free_chat",
-        conversationModeKey: "free_chat_qa",
       },
     });
     mockApi.getChatRecords
@@ -139,7 +135,6 @@ describe("chat-history page wiring", () => {
         data: {
           deviceId: "dev-001",
           mode: "free_chat",
-          conversationModeKey: "free_chat_qa",
         },
       });
       mockApi.getChatRecords
@@ -195,7 +190,6 @@ describe("chat-history page wiring", () => {
       data: {
         deviceId: "dev-001",
         mode: "free_chat",
-        conversationModeKey: "free_chat_casual",
       },
     });
 
@@ -207,7 +201,7 @@ describe("chat-history page wiring", () => {
     await page.onReady();
 
     const callArg = mockApi.getChatRecords.mock.calls[0][0];
-    expect(callArg.conversationModeKey).toBe("free_chat_casual");
+    expect(callArg.mode).toBe("free_chat");
     expect(callArg.textbookId).toBeUndefined();
     expect(callArg.unitId).toBeUndefined();
   });

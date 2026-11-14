@@ -3,6 +3,7 @@ import {
   getDeviceCurrentConfig,
   DeviceConfig,
 } from "../../api/api";
+import { MODE_LABELS } from "../learning-data/learning-data";
 import {
   buildDisplayRecords,
   computeHasMore,
@@ -13,7 +14,7 @@ import {
 
 interface ChatHistoryData {
   deviceId: string;
-  conversationModeKey: string;
+  mode: string;
   loading: boolean;
   records: DisplayRecord[];
   hasMore: boolean;
@@ -33,7 +34,7 @@ interface ChatHistoryData {
 Page<ChatHistoryData, Record<string, any>>({
   data: {
     deviceId: "",
-    conversationModeKey: "",
+    mode: "",
     loading: false,
     records: [],
     hasMore: true,
@@ -47,25 +48,25 @@ Page<ChatHistoryData, Record<string, any>>({
   onLoad(options) {
     const deviceId = options?.deviceId || options?.id || "";
     // textbookId/unitId 为已废弃的教材参数，静默忽略
-    const conversationModeKey = options?.conversationModeKey || "";
-    this.setData({ deviceId, conversationModeKey });
+    const mode = options?.mode || "";
+    this.setData({ deviceId, mode });
   },
 
   async onReady() {
-    const { deviceId, conversationModeKey } = this.data;
+    const { deviceId, mode } = this.data;
     // 先完成语境解析（含配置兜底过滤）再首次查询,避免竞态发出未过滤请求
-    await this.loadContext(deviceId, conversationModeKey);
+    await this.loadContext(deviceId, mode);
     this.loadInitialRecords();
   },
 
   /**
-   * 加载页面上下文：优先使用 URL 传入的参数，否则回退到设备当前配置
+   * 加载页面上下文：优先使用 URL 传入的 mode，否则回退到设备当前配置
    */
-  async loadContext(deviceId: string, conversationModeKey: string) {
+  async loadContext(deviceId: string, mode: string) {
     if (!deviceId) return;
 
-    if (conversationModeKey) {
-      wx.setNavigationBarTitle({ title: conversationModeKey });
+    if (mode) {
+      wx.setNavigationBarTitle({ title: MODE_LABELS[mode] || mode });
       this.setData({ contextHint: "" });
       return;
     }
@@ -77,7 +78,7 @@ Page<ChatHistoryData, Record<string, any>>({
       const config = res.data;
       const filters = resolveHistoryFilters({}, config);
       this.setData({
-        conversationModeKey: filters.conversationModeKey ?? "",
+        mode: filters.mode ?? "",
       });
       this.applyContext(config);
     } catch (error) {
@@ -88,19 +89,9 @@ Page<ChatHistoryData, Record<string, any>>({
   },
 
   applyContext(config: DeviceConfig) {
-    let title = "";
-    let hint = "";
-
-    if (config.mode === "free_chat" && config.conversationModeName) {
-      title = config.conversationModeName;
-      hint = config.conversationModeDescription || "";
-    } else {
-      title = config.conversationModeName || "对话记录";
-      hint = config.conversationModeDescription || "";
-    }
-
-    wx.setNavigationBarTitle({ title });
-    this.setData({ contextHint: hint });
+    const modeName = MODE_LABELS[config.mode] || config.mode;
+    wx.setNavigationBarTitle({ title: modeName });
+    this.setData({ contextHint: "" });
   },
 
   /**
@@ -113,7 +104,7 @@ Page<ChatHistoryData, Record<string, any>>({
         page: 1,
         pageSize: this.data.pageSize,
         deviceId: this.data.deviceId,
-        conversationModeKey: this.data.conversationModeKey,
+        mode: this.data.mode,
       });
       const items = res.data.items || [];
       const total = res.data.total || 0;
@@ -162,7 +153,7 @@ Page<ChatHistoryData, Record<string, any>>({
           page: this.data.page,
           pageSize: this.data.pageSize,
           deviceId: this.data.deviceId,
-          conversationModeKey: this.data.conversationModeKey,
+          mode: this.data.mode,
         }),
       );
       const items = res.data.items || [];

@@ -7,6 +7,7 @@ import {
   DeviceConfig,
   ensureAuthToken,
 } from "../../api/api";
+import { MODE_LABELS } from "../learning-data/learning-data";
 
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
@@ -202,18 +203,9 @@ Page({
             item.lastActiveText = this.formatLastActive(status.lastActiveAt);
           }
           if (serverConfig) {
-            // 服务端配置不含 name/description，需与本地缓存合并保留
-            const mergedConfig: DeviceConfig = {
-              ...serverConfig,
-              conversationModeName:
-                serverConfig.conversationModeName ||
-                cachedConfig?.conversationModeName,
-              conversationModeDescription:
-                serverConfig.conversationModeDescription ||
-                cachedConfig?.conversationModeDescription,
-            };
-            this.applyConfigToDevice(item, mergedConfig);
-            this.saveDeviceConfigCache(mergedConfig);
+            // 服务端配置不再含独立 name/description 字段；直接使用
+            this.applyConfigToDevice(item, serverConfig);
+            this.saveDeviceConfigCache(serverConfig);
           }
         } catch (error) {
           item.status = item.status || "offline";
@@ -290,22 +282,11 @@ Page({
    * 将配置应用到设备展示项
    */
   applyConfigToDevice(device: DeviceDisplayItem, config: DeviceConfig) {
-    const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
+    const modeName = MODE_LABELS[config.mode] || MODE_DISPLAY_MAP[config.mode] || config.mode;
 
-    if (config.mode === "free_chat") {
-      // 自由对话：标题显示子模式中文名，描述显示子模式描述
-      device.cardTitle =
-        config.conversationModeName || config.conversationModeKey || modeName;
-      device.cardSubtitle = "";
-      device.cardDesc =
-        config.conversationModeDescription ||
-        "自由对话模式，随时陪伴孩子聊天互动。";
-    } else {
-      // 兜底
-      device.cardTitle = modeName;
-      device.cardSubtitle = "";
-      device.cardDesc = "DEDA AI 玩偶，随时在线陪伴孩子学习与成长。";
-    }
+    device.cardTitle = modeName;
+    device.cardSubtitle = "";
+    device.cardDesc = "DEDA AI 玩偶，随时在线陪伴孩子学习与成长。";
   },
 
   /**
@@ -396,16 +377,6 @@ Page({
     const { id } = event.currentTarget.dataset;
     wx.navigateTo({
       url: `/pages/device-setting/device-setting?id=${id}`,
-    });
-  },
-
-  /**
-   * 切换模式：跳转切换模式页
-   */
-  onSwitchMode(event: WechatMiniprogram.TouchEvent) {
-    const { id } = event.currentTarget.dataset;
-    wx.navigateTo({
-      url: `/pages/switch-mode/switch-mode?id=${id}`,
     });
   },
 

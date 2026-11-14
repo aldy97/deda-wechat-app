@@ -60,10 +60,8 @@ describe("device-control mode display", () => {
     return page.formatModeDisplay({ deviceId: "dev-001", ...config });
   }
 
-  it("free_chat 模式展示 模式名 / 子模式 key", () => {
-    expect(
-      format({ mode: "free_chat", conversationModeKey: "free_chat_casual" }),
-    ).toBe("自由对话 / free_chat_casual");
+  it("free_chat 模式展示模式名", () => {
+    expect(format({ mode: "free_chat" })).toBe("自由对话");
   });
 
   it("历史教材模式 key 回退为原始 key（教材功能已删除）", () => {

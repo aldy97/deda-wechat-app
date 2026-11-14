@@ -6,14 +6,14 @@ export interface DisplayRecord extends ChatRecord {
 }
 
 export interface HistoryFilters {
-  conversationModeKey?: string | null;
+  mode?: string | null;
 }
 
 /**
  * 聊天记录过滤参数决策：
  * - URL 显式参数优先（直通「查看指定语境」）；
  *   textbookId / unitId 为已废弃的教材参数，一律静默忽略
- * - 无参时按设备当前配置推导：free_chat → 子模式
+ * - 无参时按设备当前配置推导
  * - 无配置 → 不过滤（全部记录）
  * 后端 /conversations 只认显式传参、不读设备配置（契约见 integration.md）。
  */
@@ -22,16 +22,13 @@ export function resolveHistoryFilters(
   config: DeviceConfig | null,
 ): HistoryFilters {
   // URL 显式参数优先
-  if (params.conversationModeKey) {
-    return { conversationModeKey: params.conversationModeKey };
+  if (params.mode) {
+    return { mode: params.mode };
   }
 
   if (!config) return {};
 
-  if (config.mode === "free_chat" && config.conversationModeKey) {
-    return { conversationModeKey: config.conversationModeKey };
-  }
-  return {};
+  return { mode: config.mode };
 }
 
 /** 加载指示的最短展示时长：本地快返回也能被用户看见，避免一闪而过 */
