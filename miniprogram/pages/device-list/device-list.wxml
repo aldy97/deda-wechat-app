@@ -96,10 +96,6 @@
           <van-icon class="action-icon" name="chat-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看对话</text>
         </view>
-        <view class="action-btn" bind:tap="onSwitchMode" data-id="{{ item.id }}">
-          <van-icon class="action-icon" name="exchange" size="32rpx" color="var(--color-primary)" />
-          <text class="action-text">切换模式</text>
-        </view>
         <view class="action-btn" bind:tap="onVolumeControl" data-id="{{ item.id }}">
           <van-icon class="action-icon" name="volume-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">音量控制</text>

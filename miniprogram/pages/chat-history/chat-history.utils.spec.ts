@@ -75,29 +75,25 @@ describe("chat-history utils", () => {
       ({
         deviceId: "dev-001",
         mode: "free_chat",
-        conversationModeKey: null,
         ...over,
       }) as DeviceConfig;
 
     it("prefers explicit URL params over the device config", () => {
       const result = resolveHistoryFilters(
-        { conversationModeKey: "free_chat_qa" },
-        config({ conversationModeKey: "free_chat_casual" }),
+        { mode: "free_chat_qa" },
+        config({ mode: "free_chat_casual" }),
       );
-      expect(result).toEqual({ conversationModeKey: "free_chat_qa" });
+      expect(result).toEqual({ mode: "free_chat_qa" });
     });
 
-    it("derives conversationModeKey filter from free_chat config", () => {
+    it("derives mode filter from config", () => {
       expect(
-        resolveHistoryFilters(
-          {},
-          config({ conversationModeKey: "free_chat_casual" }),
-        ),
-      ).toEqual({ conversationModeKey: "free_chat_casual" });
+        resolveHistoryFilters({}, config({ mode: "free_chat_casual" })),
+      ).toEqual({ mode: "free_chat_casual" });
     });
 
-    it("returns empty filter when free_chat config has no sub-mode key", () => {
-      expect(resolveHistoryFilters({}, config({}))).toEqual({});
+    it("returns mode filter when config is available", () => {
+      expect(resolveHistoryFilters({}, config({}))).toEqual({ mode: "free_chat" });
     });
 
     it("returns empty filter when no config is available", () => {

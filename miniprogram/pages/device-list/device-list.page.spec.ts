@@ -40,15 +40,12 @@ describe("device-list card display mapping", () => {
     return device;
   }
 
-  it("free_chat 模式展示子模式名称与描述", () => {
+  it("free_chat 模式展示模式名称与默认描述", () => {
     const device = applyConfig({
       mode: "free_chat",
-      conversationModeKey: "free_chat_casual",
-      conversationModeName: "自由闲聊",
-      conversationModeDescription: "轻松闲聊。",
     });
-    expect(device.cardTitle).toBe("自由闲聊");
-    expect(device.cardDesc).toBe("轻松闲聊。");
+    expect(device.cardTitle).toBe("自由对话");
+    expect(device.cardDesc).toBe("DEDA AI 玩偶，随时在线陪伴孩子学习与成长。");
   });
 
   it("历史教材模式 key 走兜底分支（教材功能已删除）", () => {

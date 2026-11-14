@@ -13,7 +13,10 @@
  * 页面增删 / 新增导航无需修改本文件；guard 会自动拦截不一致。
  */
 
-import { resolveModeRoute } from "../pages/switch-mode/switch-mode.utils";
+// 本文件不再 import 任何模块（switch-mode 页已随子模式一并删除），但必须保持
+// ES module 语义：否则下面的顶层 const 会落到全局作用域，与
+// tests/npm-artifacts.spec.ts 的同名声明冲突（TS2451 Cannot redeclare）。
+export {};
 
 // 小程序 wx typings 与 @types/node 全局声明冲突，不能混用；
 // 这里用 wx typings 已声明的全局 require 引入 node 模块（返回 any）。
@@ -106,7 +109,6 @@ function extractRouteRefs(files: string[]): RouteRef[] {
 
 /**
  * 提取源码中所有 `/pages/...` 字符串字面量。
- * 覆盖 resolveModeRoute 等「先返回路由字符串、再由变量跳转」的间接导航。
  */
 function extractPagePathLiterals(files: string[]): string[] {
   const pattern = /[`'"](\/pages\/[^`'"]+)[`'"]/g;
@@ -202,18 +204,4 @@ describe("app.json 路由完整性", () => {
     expect(unregistered.sort()).toEqual([...KNOWN_UNREGISTERED_PAGES].sort());
   });
 
-  it("resolveModeRoute 返回的每个路由均已注册", () => {
-    const modeKeys = [
-      "free_chat",
-      "textbook_learning",
-      "locked_unit",
-      "free_textbook",
-    ];
-    for (const key of modeKeys) {
-      const route = resolveModeRoute(key, "dev-001");
-      if (route === null) continue;
-      const target = toPagePath(route);
-      expect(pages).toContain(target);
-    }
   });
-});

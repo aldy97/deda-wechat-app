@@ -200,9 +200,6 @@ Page({
    */
   formatModeDisplay(config: DeviceConfig): string {
     const modeName = MODE_DISPLAY_MAP[config.mode] || config.mode;
-    if (config.mode === "free_chat" && config.conversationModeKey) {
-      return `${modeName} / ${config.conversationModeKey}`;
-    }
     return modeName;
   },
 

@@ -36,7 +36,17 @@ interface ModeUsageView {
   paintColor: string;
 }
 
-const MODE_LABELS: Record<string, string> = {
+/**
+ * 当前会新写入的 7 个平级 mode（primary）：
+ *   free_chat / english_chat / english_story / idiom_story /
+ *   sleep_story / adventure_story / free_story
+ *
+ * Legacy 兜底（仅翻译历史数据，永不新写入）：
+ *   free_chat_casual / free_chat_roleplay / free_chat_qa
+ *   daily_adventure / adventure / story / sleep / bedtime / music
+ *   device_control / unknown
+ */
+export const MODE_LABELS: Record<string, string> = {
   free_chat: "自由对话",
   free_chat_casual: "自由闲聊",
   free_chat_roleplay: "角色扮演",

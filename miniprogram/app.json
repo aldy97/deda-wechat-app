@@ -11,8 +11,6 @@
     "pages/owner-info/owner-info",
     "pages/sleep-manage/sleep-manage",
     "pages/user-manual/user-manual",
-    "pages/switch-mode/switch-mode",
-    "pages/choose-free-chat-mode/choose-free-chat-mode",
     "pages/mine/mine",
     "pages/child-list/child-list",
     "pages/child-info/child-info",
