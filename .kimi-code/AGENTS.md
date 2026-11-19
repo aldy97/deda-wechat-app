@@ -78,3 +78,43 @@
 `jest` 全部通过 + `npm run palette:check` 通过。
 等价的一键命令是 `npm run pre-commit`（tsc --noEmit + guard:artifacts + jest），
 但它不含 palette:check 与 build，需另行补跑。
+
+## PR 正文规范（模板是唯一事实来源）
+
+11. 本仓只有 main 一条分支线，段落骨架只写在 `.github/PULL_REQUEST_TEMPLATE/feature-to-main.md`
+    （flat 形态：7 个 H2 必需段 + 2 个 H3 子段）。**两条创建路径，都要显式指名模板**：
+    - agent 自己写正文：`gh pr create --body-file <已按骨架填好的正文>`
+    - 人工/交互式创建：`gh pr create --template feature-to-main.md` 取骨架再填
+      `--template` 与 `--body`/`--body-file` 是两条路径，不要同时传。
+12. 「需要人工测试的地方」子段只有两个：作者已实测（合并前）／合并到 main 后需要人工点。
+    每项必须带期望结果，勾上的必须带取证；确实无需人工测试 → 写「无」+ 一句理由。
+    **禁止留空、禁止删段**：空 = 歧义，`无 + 理由` = 可审计。
+13. `ci.yml` 的 `pr-hygiene` job 跑 `.github/scripts/pr-hygiene.mjs`。**段表不写在脚本里，而是从模板
+    派生**：base → 模板的映射在 `.github/pr-hygiene.json`（本仓只设 `default`，无 `byBase`——因为只有
+    main 一条线）。派生规则：模板最浅一级标题 = 必需段；若最浅一级只有 1 个标题且下面还有更深一级
+    （包裹 H2 + H3 的习惯），必需段取深一级那批、包裹标题不判定；必需段下再深一级 = 该段的必需子段。
+    段落内容含 `<!-- optional -->` → 该段可整段缺席，但写了标题仍须非空。正文侧对层级宽容（H2/H3 都认），
+    「平铺 H2」与「包裹 H2 + H3」两种写法都放行。**改模板即改闸口，不需要同步改脚本段表**。
+    闸口 fail-open：`PR_BODY` 未注入、配置／模板读不到或畸形、脚本自身异常，一律 exit 0 并在 stdout 打印
+    含 `fail-open` 的原因；只有明确缺段／空段才 exit 1。它**不进**分支保护 required checks，但按铁律 6
+    「CI 全绿才允许 merge」，红了就不许合。
+    `.github/scripts/pr-hygiene.mjs` 是三仓（deda-server / deda-dashboard / deda-wechat-app）**逐字节
+    相同**的副本：改它必须三仓同改并用 `shasum -a 256` 比对一致；仓库差异只允许落在
+    `.github/pr-hygiene.json` 与 `PULL_REQUEST_TEMPLATE/` 两处。
+14. PR 有未勾的「合并到 main 后需要人工点」项时，创建时带 `--label 人工验证`。
+
+## 仓库级测试（repo-tests/）
+
+15. `repo-tests/` 存放不依赖小程序运行时的仓库级测试（CI 闸口、配置校验等），用 `node:test` +
+    `node:assert/strict` 写纯 `.mjs`，不经过 Jest/ts-jest。原因：
+    - Jest 的 `roots` 在 `miniprogram/`，根级文件不进测试范围
+    - `miniprogramRoot = "miniprogram/"` 会导致根级目录不进上传包
+    - 本仓无 `@types/node`，不能用 TS 写 gate 测试
+16. 运行命令：`node --test repo-tests/*.mjs`——**glob 必须交给 shell 展开，不要加引号**。
+    实测（2026-11-19）：裸目录参数 `node --test repo-tests/` 在 Node v25.2.1 下 exit 1
+    （目录被当成测试文件本身去跑）；加引号的 `'repo-tests/*.mjs'` 依赖 node 内建 glob 匹配，
+    而 `ci.yml` 的 `gate` / `pr-hygiene` 两个 job 都是 node 20、内建 glob 是 v21 才加的，会在 CI 上炸。
+    交给 shell 展开成文件列表后，两个版本看到的都只是显式路径，最稳。
+    已接入两处：`ci.yml` 的 `gate` job（独立步骤，**不加 `if`**，push 到 main/master 时也跑，
+    防仓库级配置与模板漂移）与 `package.json` 的 `pre-commit`。
+    新增 `repo-tests/*.mjs` **无需改这两处**，glob 会自动带上。
