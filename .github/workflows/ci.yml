@@ -44,9 +44,36 @@ jobs:
             | grep -E '^(miniprogram/.+\.js|\.runtime/)' \
             && { echo '❌ PR 中包含 miniprogram 下 .js 编译产物或 .runtime 文件，请移除'; exit 1; } || exit 0
 
+      - name: 仓库级闸口测试（repo-tests，node:test）
+        # 不加 if：push 到 main/master 时也要跑，防止仓库级配置/模板漂移。
+        # glob 故意不加引号——由 shell 展开成文件列表，Node 20（本 job 的版本）
+        # 不支持 --test 的 glob 匹配（v21 才加），也不接受裸目录参数（Node 25 实测 exit 1）。
+        run: node --test repo-tests/*.mjs
+
       - name: 上传构建产物（供审查/下载，非发布）
         uses: actions/upload-artifact@v4
         with:
           name: miniprogram-build
           path: miniprogram
           retention-days: 7
+
+  # PR 正文结构闸口（L2）：只查段落骨架齐不齐、填没填，不查措辞，不做 checkbox 正则。
+  # 不设 needs，与 gate 并行；也不进分支保护 required checks——强制力来自协作铁律
+  # 「CI 全绿才允许 merge」，避免单人仓库把自己锁死。
+  # 脚本零依赖，本 job 不需要装依赖。
+  # 脚本自身 fail-open：body 取不到或解析异常一律放过，只拦「明确缺段/明确空段」。
+  pr-hygiene:
+    name: PR 正文规范
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_BASE: ${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: node .github/scripts/pr-hygiene.mjs
