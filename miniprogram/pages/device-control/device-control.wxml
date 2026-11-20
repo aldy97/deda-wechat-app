@@ -35,7 +35,7 @@
       <text class="status-hint-text">{{ statusHint }}</text>
     </view>
 
-    <!-- 协议暂不支持的控制项：灰显占位，不制造「已生效」错觉 -->
+    <!-- 设备电源 / 工作模式：协议暂未支持，UI 暂时隐藏（2026-11-20）
     <van-cell-group inset class="card">
       <van-cell title="设备电源" label="协议暂未支持，敬请期待">
         <van-switch checked="{{ false }}" disabled slot="right-icon" />
@@ -53,6 +53,7 @@
         <van-radio name="rest" disabled>休息模式</van-radio>
       </van-radio-group>
     </view>
+    -->
 
     <view class="actions">
       <van-button type="primary" block bind:click="onRefresh">
