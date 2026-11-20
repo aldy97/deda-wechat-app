@@ -3,7 +3,7 @@ import {
   getDeviceCurrentConfig,
   DeviceConfig,
 } from "../../api/api";
-import { MODE_LABELS } from "../learning-data/learning-data";
+import { MODE_LABELS } from "../../constants/modes";
 import {
   buildDisplayRecords,
   computeHasMore,
