@@ -7,7 +7,7 @@ import {
   DeviceConfig,
   ensureAuthToken,
 } from "../../api/api";
-import { MODE_LABELS } from "../learning-data/learning-data";
+import { MODE_LABELS } from "../../constants/modes";
 
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
