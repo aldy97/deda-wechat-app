@@ -105,6 +105,30 @@
   background-color: var(--color-secondary);
 }
 
+/* 网络徽标：只在「一般/弱」与 4G 时出现，正常信号不占位 */
+.network-badge {
+  display: flex;
+  align-items: center;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+
+.network-neutral {
+  color: var(--color-secondary);
+  background-color: var(--color-neutral-soft);
+}
+
+.network-warning {
+  color: var(--color-warning);
+  background-color: var(--color-warning-soft);
+}
+
+.network-danger {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
 /* 电量未知（设备未上报） */
 .battery-unknown-text {
   font-size: 24rpx;

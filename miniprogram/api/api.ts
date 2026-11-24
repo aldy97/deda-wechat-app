@@ -82,9 +82,13 @@ export interface Device {
 export interface DeviceStatus {
   deviceId: string;
   status: "online" | "offline";
-  battery: number | null; // 电量 0-100，未上报为 null（当前固件为占位值）
+  battery: number | null; // 电量 0-100，未上报为 null（协议 v1.8 起未知时上报 100）
   volume: number | null; // 音量 0-100，未上报为 null
-  isCharging: boolean | null; // 是否充电中，null = 未知（当前固件恒发 null）
+  isCharging: boolean | null; // 协议 v1.8 起恒为 boolean（USB 是否接入），老固件为 null
+  /** 当前网络模式；null = 切网中或老固件未知（API 不区分） */
+  networkMode: "wifi" | "4g" | null;
+  /** WiFi 信号强度 dBm；仅 networkMode="wifi" 时有意义，4G/未上报为 null */
+  wifiRssi: number | null;
   lastActiveAt: string | null; // ISO 8601，从未上报为 null
 }
 

@@ -8,6 +8,7 @@ import {
   ensureAuthToken,
 } from "../../api/api";
 import { MODE_LABELS } from "../../constants/modes";
+import { describeNetworkBadge, NetworkBadge } from "../../utils/wifi-signal";
 
 /** 模式展示名映射 */
 const MODE_DISPLAY_MAP: Record<string, string> = {
@@ -27,6 +28,12 @@ interface DeviceDisplayItem extends Device {
   lastActiveAt?: string | null;
   /** 最近活跃的展示文案；从未上报为「暂未连接」 */
   lastActiveText?: string;
+  /** 网络模式：null 含「切网中」与「老固件未知」，API 不区分 */
+  networkMode?: "wifi" | "4g" | null;
+  /** WiFi 信号强度 dBm；仅 wifi 模式有意义 */
+  wifiRssi?: number | null;
+  /** 信号徽标：仅「一般/弱」与 4G 展示，其余为 null */
+  networkBadge?: NetworkBadge | null;
   /** status 接口返回 404（设备不存在/已被 wipe） */
   statusNotFound?: boolean;
   statusLoading?: boolean;
@@ -170,6 +177,9 @@ Page({
                 isCharging: prev.isCharging,
                 lastActiveAt: prev.lastActiveAt,
                 lastActiveText: prev.lastActiveText,
+                networkMode: prev.networkMode,
+                wifiRssi: prev.wifiRssi,
+                networkBadge: prev.networkBadge,
                 statusNotFound: prev.statusNotFound,
                 cardTitle: prev.cardTitle,
                 cardSubtitle: prev.cardSubtitle,
@@ -194,11 +204,21 @@ Page({
             item.status = "offline";
             item.battery = null;
             item.isCharging = null;
+            item.networkMode = null;
+            item.wifiRssi = null;
+            item.networkBadge = null;
             item.lastActiveAt = null;
           } else {
             item.status = status.status;
             item.battery = status.battery;
             item.isCharging = status.isCharging;
+            item.networkMode = status.networkMode ?? null;
+            item.wifiRssi = status.wifiRssi ?? null;
+            item.networkBadge = describeNetworkBadge({
+              status: item.status,
+              networkMode: item.networkMode,
+              wifiRssi: item.wifiRssi,
+            });
             item.lastActiveAt = status.lastActiveAt;
             item.lastActiveText = this.formatLastActive(status.lastActiveAt);
           }
@@ -241,6 +261,8 @@ Page({
         battery: null,
         volume: null,
         isCharging: null,
+        networkMode: null,
+        wifiRssi: null,
         lastActiveAt: null,
       };
     }
