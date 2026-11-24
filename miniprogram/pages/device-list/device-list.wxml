@@ -40,12 +40,17 @@
             <text>{{ item.statusNotFound ? '设备不存在' : item.status === 'online' ? '在线' : '离线' }}</text>
           </view>
 
-          <!-- 网络徽标：仅「一般/弱」与 4G 展示；正常与未知不渲染 -->
+          <!-- 网络徽标：在线时常显网络类型（WiFi/4G）+ WiFi 信号格；离线/未知不渲染 -->
           <view
             wx:if="{{ !item.statusNotFound && item.networkBadge }}"
             class="network-badge network-{{ item.networkBadge.tone }}"
           >
-            {{ item.networkBadge.text }}
+            <view wx:if="{{ item.networkBadge.level !== null }}" class="signal-bars">
+              <view class="signal-bar bar-1 {{ item.networkBadge.level >= 1 ? 'bar-on' : '' }}"></view>
+              <view class="signal-bar bar-2 {{ item.networkBadge.level >= 2 ? 'bar-on' : '' }}"></view>
+              <view class="signal-bar bar-3 {{ item.networkBadge.level >= 3 ? 'bar-on' : '' }}"></view>
+            </view>
+            <text class="network-badge-text">{{ item.networkBadge.text }}</text>
           </view>
 
           <!-- 电量加载中 -->
