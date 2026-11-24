@@ -171,6 +171,205 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("网络信号徽标（MQTT v1.8）", () => {
+    function mockWifiStatus(rssi: number | null, extra: Record<string, unknown> = {}) {
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status: "online",
+          battery: 70,
+          isCharging: false,
+          networkMode: "wifi",
+          wifiRssi: rssi,
+          lastActiveAt: null,
+          ...extra,
+        },
+      });
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: null,
+      });
+    }
+
+    async function enrichOne(previous?: any[]) {
+      const items = await page.enrichDevices(
+        [{ id: "dev-001", name: "样机" }],
+        previous,
+      );
+      return items[0];
+    }
+
+    it("wifi 强信号（-48）：不制造噪音，徽标为 null 但字段透传", async () => {
+      mockWifiStatus(-48);
+      const item = await enrichOne();
+      expect(item.networkMode).toBe("wifi");
+      expect(item.wifiRssi).toBe(-48);
+      expect(item.networkBadge).toBeNull();
+    });
+
+    it("wifi 一般（-65）：展示「信号一般」", async () => {
+      mockWifiStatus(-65);
+      const item = await enrichOne();
+      expect(item.networkBadge).toEqual({
+        tone: "warning",
+        text: "信号一般",
+      });
+    });
+
+    it("wifi 弱（-75）：展示「信号弱」", async () => {
+      mockWifiStatus(-75);
+      const item = await enrichOne();
+      expect(item.networkBadge).toEqual({ tone: "danger", text: "信号弱" });
+    });
+
+    it("4G：展示 4G 标签，wifiRssi 为 null", async () => {
+      mockWifiStatus(null, { networkMode: "4g" });
+      const item = await enrichOne();
+      expect(item.networkMode).toBe("4g");
+      expect(item.wifiRssi).toBeNull();
+      expect(item.networkBadge).toEqual({ tone: "neutral", text: "4G" });
+    });
+
+    it("离线：不展示徽标，但保留最后已知网络字段", async () => {
+      mockWifiStatus(-75, { status: "offline" });
+      const item = await enrichOne();
+      expect(item.status).toBe("offline");
+      expect(item.wifiRssi).toBe(-75);
+      expect(item.networkBadge).toBeNull();
+    });
+
+    it("老固件/切网中（字段缺失或 null）：不展示", async () => {
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status: "online",
+          battery: 70,
+          isCharging: false,
+          lastActiveAt: null,
+        },
+      });
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: null,
+      });
+      const item = await enrichOne();
+      expect(item.networkMode).toBeNull();
+      expect(item.wifiRssi).toBeNull();
+      expect(item.networkBadge).toBeNull();
+    });
+
+    it("status 404：清空网络字段与徽标", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue(
+        Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
+      );
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: null,
+      });
+      const item = await enrichOne([
+        { id: "dev-001", networkMode: "wifi", wifiRssi: -75 },
+      ]);
+      expect(item.networkMode).toBeNull();
+      expect(item.wifiRssi).toBeNull();
+      expect(item.networkBadge).toBeNull();
+    });
+
+    it("刷新失败（非 404）：按离线兜底清空徽标，不抛错", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue(new Error("Network error"));
+      mockApi.getDeviceCurrentConfig.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: null,
+      });
+      const item = await enrichOne([
+        {
+          id: "dev-001",
+          status: "online",
+          networkMode: "wifi",
+          wifiRssi: -75,
+          networkBadge: { tone: "danger", text: "信号弱" },
+        },
+      ]);
+      // 与既有电量口径一致：非 404 失败按离线处理，不展示可能已过期的信号
+      expect(item.status).toBe("offline");
+      expect(item.networkBadge).toBeNull();
+    });
+
+    it("静默刷新：网络返回前沿用旧徽标，不闪烁", async () => {
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: [{ id: "dev-001", name: "样机" }],
+      });
+      mockWifiStatus(-75);
+      await page.loadDeviceList();
+      expect(page.data.devices[0].networkBadge).toEqual({
+        tone: "danger",
+        text: "信号弱",
+      });
+
+      let resolveStatus!: (v: unknown) => void;
+      mockApi.getDeviceStatus.mockReturnValue(
+        new Promise((resolve) => {
+          resolveStatus = resolve;
+        }),
+      );
+      const pending = page.loadDeviceList({ silent: true });
+      await flushMicrotasks();
+      expect(page.data.devices[0].networkBadge).toEqual({
+        tone: "danger",
+        text: "信号弱",
+      });
+
+      resolveStatus({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status: "online",
+          battery: 70,
+          isCharging: false,
+          networkMode: "wifi",
+          wifiRssi: -48,
+          lastActiveAt: null,
+        },
+      });
+      await pending;
+      await flushMicrotasks();
+      expect(page.data.devices[0].networkBadge).toBeNull();
+    });
+
+    it("缓存快照包含网络字段（首帧直出不丢字段）", async () => {
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: [{ id: "dev-001", name: "样机" }],
+      });
+      mockWifiStatus(-65);
+
+      await page.loadDeviceList();
+
+      const written = harness.wx.setStorageSync.mock.calls.find(
+        (c: unknown[]) => c[0] === "device_list_cache",
+      )[1];
+      expect(written[0].networkMode).toBe("wifi");
+      expect(written[0].wifiRssi).toBe(-65);
+      expect(written[0].networkBadge).toEqual({
+        tone: "warning",
+        text: "信号一般",
+      });
+    });
+  });
+
   describe("添加设备入口", () => {
     it("点击添加设备 → 跳转配网页", () => {
       page.onAddDevice();

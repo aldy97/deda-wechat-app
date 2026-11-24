@@ -40,6 +40,14 @@
             <text>{{ item.statusNotFound ? '设备不存在' : item.status === 'online' ? '在线' : '离线' }}</text>
           </view>
 
+          <!-- 网络徽标：仅「一般/弱」与 4G 展示；正常与未知不渲染 -->
+          <view
+            wx:if="{{ !item.statusNotFound && item.networkBadge }}"
+            class="network-badge network-{{ item.networkBadge.tone }}"
+          >
+            {{ item.networkBadge.text }}
+          </view>
+
           <!-- 电量加载中 -->
           <view class="battery-loading" wx:if="{{ item.statusLoading }}">
             <van-loading type="spinner" size="20rpx">电量...</van-loading>
