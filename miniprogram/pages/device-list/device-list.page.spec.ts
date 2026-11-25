@@ -237,6 +237,64 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("顶部状态标签", () => {
+    it("加载中：标签为连接中，不提前判离线", () => {
+      const item: Record<string, unknown> = { statusLoading: true };
+      page.applyStatusTag(item);
+
+      expect(item.statusLabel).toBe("连接中");
+      expect(item.statusTone).toBe("offline");
+    });
+
+    it("在线/离线透传到标签", async () => {
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status: "online",
+          battery: 70,
+          isCharging: null,
+          lastActiveAt: null,
+        },
+      });
+      const [online] = await page.enrichDevices([
+        { id: "dev-001", name: "样机" },
+      ]);
+      expect(online.statusLabel).toBe("在线");
+      expect(online.statusTone).toBe("online");
+
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status: "offline",
+          battery: 70,
+          isCharging: null,
+          lastActiveAt: null,
+        },
+      });
+      const [offline] = await page.enrichDevices([
+        { id: "dev-001", name: "样机" },
+      ]);
+      expect(offline.statusLabel).toBe("离线");
+      expect(offline.statusTone).toBe("offline");
+    });
+
+    it("404：标签为设备不存在", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue(
+        Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
+      );
+      const [item] = await page.enrichDevices([
+        { id: "dev-001", name: "样机" },
+      ]);
+
+      expect(item.statusLabel).toBe("设备不存在");
+      expect(item.statusTone).toBe("offline");
+    });
+  });
+
   describe("网络信号徽标（MQTT v1.8）", () => {
     function mockWifiStatus(
       rssi: number | null,
@@ -630,6 +688,8 @@ describe("device-list card display mapping", () => {
       expect(written[0].cardTitle).toBeUndefined();
       expect(written[0].cardSubtitle).toBeUndefined();
       expect(written[0].cardDesc).toBeUndefined();
+      expect(written[0].statusLabel).toBeUndefined();
+      expect(written[0].statusTone).toBeUndefined();
     });
 
     it("onShow 二次进入：静默刷新，loading 不翻 true、旧列表保持渲染", async () => {

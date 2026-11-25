@@ -1,5 +1,6 @@
 import {
   buildCardCopy,
+  buildStatusTag,
   formatDurationMinutes,
   isTodayUsageFresh,
   localDateKey,
@@ -79,5 +80,35 @@ describe("buildCardCopy", () => {
       subtitle: "",
       desc: "",
     });
+  });
+});
+
+describe("buildStatusTag", () => {
+  it("加载中显示连接中，不提前判离线", () => {
+    expect(buildStatusTag({ statusLoading: true })).toEqual({
+      label: "连接中",
+      tone: "offline",
+    });
+  });
+
+  it("404 显示设备不存在", () => {
+    expect(buildStatusTag({ statusNotFound: true, status: "offline" })).toEqual(
+      { label: "设备不存在", tone: "offline" },
+    );
+  });
+
+  it("在线/离线按契约展示", () => {
+    expect(buildStatusTag({ status: "online" })).toEqual({
+      label: "在线",
+      tone: "online",
+    });
+    expect(buildStatusTag({ status: "offline" })).toEqual({
+      label: "离线",
+      tone: "offline",
+    });
+  });
+
+  it("状态未知且非加载中：按离线兜底", () => {
+    expect(buildStatusTag({})).toEqual({ label: "离线", tone: "offline" });
   });
 });

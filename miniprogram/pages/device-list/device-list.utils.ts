@@ -6,6 +6,31 @@ export interface CardCopy {
   desc: string;
 }
 
+export interface StatusTagInput {
+  status?: "online" | "offline";
+  statusLoading?: boolean;
+  statusNotFound?: boolean;
+}
+
+export interface StatusTag {
+  label: string;
+  tone: "online" | "offline";
+}
+
+/** 顶部状态标签：加载中不提前判离线，404 用设备不存在兜底 */
+export function buildStatusTag(input: StatusTagInput): StatusTag {
+  if (input.statusNotFound) {
+    return { label: "设备不存在", tone: "offline" };
+  }
+  if (input.statusLoading) {
+    return { label: "连接中", tone: "offline" };
+  }
+  if (input.status === "online") {
+    return { label: "在线", tone: "online" };
+  }
+  return { label: "离线", tone: "offline" };
+}
+
 /** 分钟 → 卡片文案；整小时不展示 0 分钟 */
 export function formatDurationMinutes(minutes: number): string {
   const safe = Math.max(0, Math.round(minutes));

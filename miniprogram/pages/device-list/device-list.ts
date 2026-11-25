@@ -7,7 +7,11 @@ import {
   ensureAuthToken,
 } from "../../api/api";
 import { describeNetworkBadge, NetworkBadge } from "../../utils/wifi-signal";
-import { buildCardCopy, isTodayUsageFresh } from "./device-list.utils";
+import {
+  buildCardCopy,
+  buildStatusTag,
+  isTodayUsageFresh,
+} from "./device-list.utils";
 
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -37,6 +41,9 @@ interface DeviceDisplayItem extends Device {
   cardTitle?: string;
   cardSubtitle?: string;
   cardDesc?: string;
+  /** 顶部状态标签（由 buildStatusTag 派生，不写缓存） */
+  statusLabel?: string;
+  statusTone?: "online" | "offline";
 }
 
 /**
@@ -124,6 +131,7 @@ Page({
               : null,
           };
           this.applyCardCopy(next);
+          this.applyStatusTag(next);
           return next;
         });
         this.setData({ devices, loading: false });
@@ -148,6 +156,8 @@ Page({
           delete snapshot.cardTitle;
           delete snapshot.cardSubtitle;
           delete snapshot.cardDesc;
+          delete snapshot.statusLabel;
+          delete snapshot.statusTone;
           return snapshot;
         }),
       );
@@ -199,6 +209,7 @@ Page({
             : {}),
         };
         this.applyCardCopy(item);
+        this.applyStatusTag(item);
 
         try {
           const status = await this.fetchDeviceStatus(item.id);
@@ -235,6 +246,7 @@ Page({
         } finally {
           item.statusLoading = false;
           this.applyCardCopy(item);
+          this.applyStatusTag(item);
         }
 
         return item;
@@ -250,6 +262,19 @@ Page({
     item.cardTitle = copy.title;
     item.cardSubtitle = copy.subtitle;
     item.cardDesc = copy.desc;
+  },
+
+  /**
+   * 顶部状态标签：加载中显示「连接中」，避免冷启动误标离线
+   */
+  applyStatusTag(item: DeviceDisplayItem) {
+    const tag = buildStatusTag({
+      status: item.status,
+      statusLoading: item.statusLoading,
+      statusNotFound: item.statusNotFound,
+    });
+    item.statusLabel = tag.label;
+    item.statusTone = tag.tone;
   },
 
   /**

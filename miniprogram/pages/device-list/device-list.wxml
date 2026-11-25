@@ -34,10 +34,10 @@
       <!-- 卡片顶部：状态/电量居左，孩子姓名居中，设置居右 -->
       <view class="card-top">
         <view class="status-battery-row">
-          <!-- 状态标签：契约仅 online/offline；status 404 时给「设备不存在」兜底 -->
-          <view class="status-tag {{ !item.statusNotFound && item.status === 'online' ? 'status-online' : 'status-offline' }}">
+          <!-- 状态标签：由 buildStatusTag 派生；加载中显示「连接中」，404 给「设备不存在」兜底 -->
+          <view class="status-tag status-{{ item.statusTone }}">
             <text class="status-dot"></text>
-            <text>{{ item.statusNotFound ? '设备不存在' : item.status === 'online' ? '在线' : '离线' }}</text>
+            <text>{{ item.statusLabel }}</text>
           </view>
 
           <!-- 网络徽标：仅「一般/弱」与 4G 展示；正常与未知不渲染 -->
