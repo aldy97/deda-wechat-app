@@ -1,19 +1,17 @@
 import {
   getDeviceList,
   getDeviceStatus,
-  getDeviceCurrentConfig,
   Device,
   DeviceStatus,
-  DeviceConfig,
+  DeviceTodayUsage,
   ensureAuthToken,
 } from "../../api/api";
-import { MODE_LABELS } from "../../constants/modes";
 import { describeNetworkBadge, NetworkBadge } from "../../utils/wifi-signal";
-
-/** 模式展示名映射 */
-const MODE_DISPLAY_MAP: Record<string, string> = {
-  free_chat: "自由对话",
-};
+import {
+  buildCardCopy,
+  buildStatusTag,
+  isTodayUsageFresh,
+} from "./device-list.utils";
 
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -37,9 +35,15 @@ interface DeviceDisplayItem extends Device {
   /** status 接口返回 404（设备不存在/已被 wipe） */
   statusNotFound?: boolean;
   statusLoading?: boolean;
+  /** 服务端按设备时区统计的今日陪伴摘要；旧服务端/统计失败为 null */
+  todayUsage?: DeviceTodayUsage | null;
+  /** 卡片正文文案（由 buildCardCopy 派生，不写缓存） */
   cardTitle?: string;
   cardSubtitle?: string;
   cardDesc?: string;
+  /** 顶部状态标签（由 buildStatusTag 派生，不写缓存） */
+  statusLabel?: string;
+  statusTone?: "online" | "offline";
 }
 
 /**
@@ -111,13 +115,26 @@ Page({
   },
 
   /**
-   * 读取设备列表缓存用于首帧直出；返回是否有可用缓存
+   * 读取设备列表缓存用于首帧直出；返回是否有可用缓存。
+   * 缓存里的 todayUsage 跨天即作废，并按最新数据重算卡片文案。
    */
   restoreDeviceListCache(): boolean {
     try {
       const cached = wx.getStorageSync(DEVICE_LIST_CACHE_KEY);
       if (Array.isArray(cached) && cached.length > 0) {
-        this.setData({ devices: cached, loading: false });
+        const now = new Date();
+        const devices = cached.map((item: DeviceDisplayItem) => {
+          const next: DeviceDisplayItem = {
+            ...item,
+            todayUsage: isTodayUsageFresh(item.todayUsage, now)
+              ? item.todayUsage
+              : null,
+          };
+          this.applyCardCopy(next);
+          this.applyStatusTag(next);
+          return next;
+        });
+        this.setData({ devices, loading: false });
         return true;
       }
     } catch (error) {
@@ -127,7 +144,7 @@ Page({
   },
 
   /**
-   * 写入设备列表缓存（剔除 statusLoading 等瞬态字段）
+   * 写入设备列表缓存（剔除 statusLoading 与卡片派生文案，恢复时重算）
    */
   writeDeviceListCache(items: DeviceDisplayItem[]) {
     try {
@@ -136,6 +153,11 @@ Page({
         items.map((item) => {
           const snapshot = { ...item };
           delete snapshot.statusLoading;
+          delete snapshot.cardTitle;
+          delete snapshot.cardSubtitle;
+          delete snapshot.cardDesc;
+          delete snapshot.statusLabel;
+          delete snapshot.statusTone;
           return snapshot;
         }),
       );
@@ -153,8 +175,9 @@ Page({
   },
 
   /**
-   * 为设备列表补充状态与当前配置。
-   * 静默刷新时传入 previous：沿用旧状态/电量/卡片快照，避免「电量...」闪烁。
+   * 为设备列表补充状态，并生成状态驱动的卡片文案。
+   * 静默刷新时传入 previous：沿用旧状态/电量快照，避免「电量...」闪烁；
+   * todayUsage 始终以本次列表响应为准，不接受旧快照覆盖。
    */
   async enrichDevices(
     devices: Device[],
@@ -168,6 +191,7 @@ Page({
         const prev = previousById.get(device.id);
         const item: DeviceDisplayItem = {
           ...device,
+          todayUsage: device.todayUsage ?? null,
           statusLoading: !prev,
           // 静默刷新：先展示旧快照，接口返回后再原地更新
           ...(prev
@@ -181,27 +205,19 @@ Page({
                 wifiRssi: prev.wifiRssi,
                 networkBadge: prev.networkBadge,
                 statusNotFound: prev.statusNotFound,
-                cardTitle: prev.cardTitle,
-                cardSubtitle: prev.cardSubtitle,
-                cardDesc: prev.cardDesc,
               }
             : {}),
         };
-
-        const cachedConfig = this.getDeviceConfigCache(item.id);
-        if (cachedConfig) {
-          this.applyConfigToDevice(item, cachedConfig);
-        }
+        this.applyCardCopy(item);
+        this.applyStatusTag(item);
 
         try {
-          const [status, serverConfig] = await Promise.all([
-            this.fetchDeviceStatus(item.id),
-            this.fetchDeviceCurrentConfig(item.id),
-          ]);
+          const status = await this.fetchDeviceStatus(item.id);
           if (status === null) {
             // status 404：设备不存在（可能已解绑/被 wipe），给兜底态，不弹窗不白屏
             item.statusNotFound = true;
             item.status = "offline";
+            item.todayUsage = null;
             item.battery = null;
             item.isCharging = null;
             item.networkMode = null;
@@ -222,11 +238,6 @@ Page({
             item.lastActiveAt = status.lastActiveAt;
             item.lastActiveText = this.formatLastActive(status.lastActiveAt);
           }
-          if (serverConfig) {
-            // 服务端配置不再含独立 name/description 字段；直接使用
-            this.applyConfigToDevice(item, serverConfig);
-            this.saveDeviceConfigCache(serverConfig);
-          }
         } catch (error) {
           item.status = item.status || "offline";
           // 状态拉取失败不等于设备没电：保持 null，由 WXML 展示「--」
@@ -234,11 +245,36 @@ Page({
           item.isCharging = item.isCharging ?? null;
         } finally {
           item.statusLoading = false;
+          this.applyCardCopy(item);
+          this.applyStatusTag(item);
         }
 
         return item;
       }),
     );
+  },
+
+  /**
+   * 根据今日陪伴摘要生成卡片正文（状态信息由顶部承担）
+   */
+  applyCardCopy(item: DeviceDisplayItem) {
+    const copy = buildCardCopy(item.todayUsage);
+    item.cardTitle = copy.title;
+    item.cardSubtitle = copy.subtitle;
+    item.cardDesc = copy.desc;
+  },
+
+  /**
+   * 顶部状态标签：加载中显示「连接中」，避免冷启动误标离线
+   */
+  applyStatusTag(item: DeviceDisplayItem) {
+    const tag = buildStatusTag({
+      status: item.status,
+      statusLoading: item.statusLoading,
+      statusNotFound: item.statusNotFound,
+    });
+    item.statusLabel = tag.label;
+    item.statusTone = tag.tone;
   },
 
   /**
@@ -282,72 +318,6 @@ Page({
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `最近活跃 ${hours} 小时前`;
     return `最近活跃 ${Math.floor(hours / 24)} 天前`;
-  },
-
-  /**
-   * 获取设备当前生效配置
-   */
-  async fetchDeviceCurrentConfig(
-    deviceId: string,
-  ): Promise<DeviceConfig | null> {
-    try {
-      await ensureAuthToken();
-      const res = await getDeviceCurrentConfig(deviceId);
-      return res.data;
-    } catch (error) {
-      console.error("[device-list] fetch current config failed:", error);
-      return null;
-    }
-  },
-
-  /**
-   * 将配置应用到设备展示项
-   */
-  applyConfigToDevice(device: DeviceDisplayItem, config: DeviceConfig) {
-    const modeName = MODE_LABELS[config.mode] || MODE_DISPLAY_MAP[config.mode] || config.mode;
-
-    device.cardTitle = modeName;
-    device.cardSubtitle = "";
-    device.cardDesc = "DEDA AI 玩偶，随时在线陪伴孩子学习与成长。";
-  },
-
-  /**
-   * 读取本地配置缓存
-   */
-  getDeviceConfigCache(deviceId: string): DeviceConfig | null {
-    try {
-      return (
-        (wx.getStorageSync(`device_config_${deviceId}`) as
-          DeviceConfig | undefined) || null
-      );
-    } catch (error) {
-      return null;
-    }
-  },
-
-  /**
-   * 写入本地配置缓存
-   */
-  saveDeviceConfigCache(config: DeviceConfig) {
-    try {
-      wx.setStorageSync(`device_config_${config.deviceId}`, config);
-    } catch (error) {
-      console.warn("[device-list] save config cache failed:", error);
-    }
-  },
-
-  /**
-   * 供其他页面调用，直接更新设备列表中的配置显示
-   */
-  updateDeviceConfig(config: DeviceConfig) {
-    const { devices } = this.data;
-    const index = devices.findIndex((d) => d.id === config.deviceId);
-    if (index === -1) return;
-
-    const device = { ...devices[index] };
-    this.applyConfigToDevice(device, config);
-    this.setData({ [`devices[${index}]`]: device });
-    this.saveDeviceConfigCache(config);
   },
 
   /**

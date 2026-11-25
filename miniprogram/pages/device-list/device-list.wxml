@@ -34,10 +34,10 @@
       <!-- 卡片顶部：状态/电量居左，孩子姓名居中，设置居右 -->
       <view class="card-top">
         <view class="status-battery-row">
-          <!-- 状态标签：契约仅 online/offline；status 404 时给「设备不存在」兜底 -->
-          <view class="status-tag {{ !item.statusNotFound && item.status === 'online' ? 'status-online' : 'status-offline' }}">
+          <!-- 状态标签：由 buildStatusTag 派生；加载中显示「连接中」，404 给「设备不存在」兜底 -->
+          <view class="status-tag status-{{ item.statusTone }}">
             <text class="status-dot"></text>
-            <text>{{ item.statusNotFound ? '设备不存在' : item.status === 'online' ? '在线' : '离线' }}</text>
+            <text>{{ item.statusLabel }}</text>
           </view>
 
           <!-- 网络徽标：仅「一般/弱」与 4G 展示；正常与未知不渲染 -->
@@ -84,15 +84,15 @@
         </view>
       </view>
 
-      <!-- 卡片中部：标题、副标题、描述 -->
-      <view class="card-body">
+      <!-- 卡片中部：只放今日数据与最近活跃；在线/离线等状态已在顶部 -->
+      <view class="card-body" wx:if="{{ item.cardTitle || item.cardSubtitle || item.cardDesc || (!item.statusLoading && item.lastActiveText) }}">
         <view class="card-info">
-          <view class="card-title-row">
-            <text class="card-title">{{ item.cardTitle || 'DEDA AI 玩偶' }}</text>
+          <view class="card-title-row" wx:if="{{ item.cardTitle }}">
+            <text class="card-title">{{ item.cardTitle }}</text>
             <!-- <image class="title-icon" src="" mode="aspectFill" /> -->
           </view>
           <text class="card-subtitle" wx:if="{{ item.cardSubtitle }}">{{ item.cardSubtitle }}</text>
-          <text class="card-desc">{{ item.cardDesc || 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。' }}</text>
+          <text class="card-desc" wx:if="{{ item.cardDesc }}">{{ item.cardDesc }}</text>
           <!-- 最近活跃时间；从未上报为「暂未连接」 -->
           <text class="last-active-text" wx:if="{{ !item.statusLoading && item.lastActiveText }}">{{ item.lastActiveText }}</text>
         </view>
