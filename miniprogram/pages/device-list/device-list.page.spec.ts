@@ -780,3 +780,72 @@ describe("device-list card display mapping", () => {
     });
   });
 });
+
+describe("自定义导航栏尺寸（与微信胶囊按钮对齐）", () => {
+  let page: any;
+
+  beforeAll(() => {
+    require("./device-list");
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    page = harness.createInstance();
+  });
+
+  it("按状态栏高度与胶囊中线计算导航栏高度", () => {
+    harness.wx.getWindowInfo.mockReturnValueOnce({ statusBarHeight: 24 });
+    harness.wx.getMenuButtonBoundingClientRect.mockReturnValueOnce({
+      top: 28,
+      height: 30,
+    });
+
+    page.onLoad();
+
+    // (28 - 24) * 2 + 30 = 38
+    expect(page.data.statusBarHeight).toBe(24);
+    expect(page.data.navBarHeight).toBe(38);
+  });
+
+  it("默认胶囊（状态栏 20 / top 26 / 高 32）：高度 44", () => {
+    page.onLoad();
+
+    expect(page.data.statusBarHeight).toBe(20);
+    expect(page.data.navBarHeight).toBe(44);
+  });
+
+  it("胶囊数据异常（top 小于状态栏或高度为 0）：高度回退 44", () => {
+    harness.wx.getWindowInfo.mockReturnValueOnce({ statusBarHeight: 24 });
+    harness.wx.getMenuButtonBoundingClientRect.mockReturnValueOnce({
+      top: 10,
+      height: 0,
+    });
+
+    page.onLoad();
+
+    expect(page.data.statusBarHeight).toBe(24);
+    expect(page.data.navBarHeight).toBe(44);
+  });
+
+  it("取胶囊信息抛异常：整套回退 20 / 44，页面不崩", () => {
+    harness.wx.getMenuButtonBoundingClientRect.mockImplementationOnce(() => {
+      throw new Error("no capsule");
+    });
+
+    expect(() => page.onLoad()).not.toThrow();
+
+    expect(page.data.statusBarHeight).toBe(20);
+    expect(page.data.navBarHeight).toBe(44);
+  });
+
+  it("取窗口信息抛异常：整套回退 20 / 44，页面不崩", () => {
+    harness.wx.getWindowInfo.mockImplementationOnce(() => {
+      throw new Error("no window info");
+    });
+
+    expect(() => page.onLoad()).not.toThrow();
+
+    expect(page.data.statusBarHeight).toBe(20);
+    expect(page.data.navBarHeight).toBe(44);
+  });
+});

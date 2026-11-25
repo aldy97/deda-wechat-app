@@ -1,4 +1,21 @@
-<view class="container device-list-page">
+<view class="device-list-page">
+  <!-- 自定义导航栏：左侧添加设备圆形按钮，标题与按钮同排居中 -->
+  <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
+      <view
+        class="add-device-fab"
+        bind:tap="onAddDevice"
+        hover-class="add-device-fab-hover"
+        aria-role="button"
+        aria-label="添加设备"
+      >
+        <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
+      </view>
+      <text class="device-nav-title">我的设备</text>
+    </view>
+  </view>
+
+  <view class="container">
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{ loading }}">
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
@@ -14,17 +31,6 @@
     </view>
 
     <block wx:else>
-    <!-- 左上角圆形添加设备入口 -->
-    <view
-      class="add-device-fab"
-      bind:tap="onAddDevice"
-      hover-class="add-device-fab-hover"
-      aria-role="button"
-      aria-label="添加设备"
-    >
-      <van-icon name="plus" size="40rpx" color="var(--color-primary)" />
-    </view>
-
     <view
       class="device-card card"
       wx:for="{{ devices }}"
@@ -112,5 +118,6 @@
       </view>
     </view>
     </block>
+  </view>
   </view>
 </view>

@@ -16,6 +16,10 @@ import {
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
+/** 自定义导航栏兜底尺寸（px）：老基础库或测试环境取不到胶囊信息时使用 */
+const DEFAULT_STATUS_BAR_HEIGHT = 20;
+const DEFAULT_NAV_BAR_HEIGHT = 44;
+
 /** 设备展示项 = 基础信息 + 状态信息 + 卡片内容 */
 interface DeviceDisplayItem extends Device {
   status?: DeviceStatus["status"];
@@ -54,12 +58,43 @@ Page({
   data: {
     loading: true,
     devices: [] as DeviceDisplayItem[],
+    /** 自定义导航栏：状态栏高度（px） */
+    statusBarHeight: DEFAULT_STATUS_BAR_HEIGHT,
+    /** 自定义导航栏：导航栏内容高度（px），与微信胶囊按钮垂直对齐 */
+    navBarHeight: DEFAULT_NAV_BAR_HEIGHT,
   },
 
   /** 首次加载是否已发起（onShow 每次触发，仅在首次之后才重复拉取） */
   hasInitialLoaded: false,
 
-  onLoad() {},
+  onLoad() {
+    this.applyNavBarMetrics();
+  },
+
+  /**
+   * 自定义导航栏尺寸：状态栏高度 + 菜单胶囊按钮的水平中线对齐。
+   * 老基础库或测试环境取不到胶囊信息时退回 20 / 44 默认值。
+   */
+  applyNavBarMetrics() {
+    let statusBarHeight = DEFAULT_STATUS_BAR_HEIGHT;
+    let navBarHeight = DEFAULT_NAV_BAR_HEIGHT;
+
+    try {
+      const info = wx.getWindowInfo();
+      if (typeof info?.statusBarHeight === "number") {
+        statusBarHeight = info.statusBarHeight;
+      }
+
+      const menu = wx.getMenuButtonBoundingClientRect();
+      if (menu && menu.top >= statusBarHeight && menu.height > 0) {
+        navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+      }
+    } catch (error) {
+      // 取不到胶囊信息时保留默认值，页面仍可正常渲染
+    }
+
+    this.setData({ statusBarHeight, navBarHeight });
+  },
 
   onReady() {
     this.loadDeviceList();
