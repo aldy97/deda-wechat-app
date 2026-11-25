@@ -34,6 +34,11 @@ jobs:
       - name: 素材模块覆盖率闸口（100%）
         run: npm run test:assets:cov
 
+      # 颜色唯一来源是 styles/palette.wxss；业务代码出现直接色值、
+      # 变量未定义、或原生配置与色板漂移都会在这里变红。
+      - name: 配色板检查
+        run: npm run palette:check
+
       - name: 构建（tsc 编译产物，仅存在于 CI 环境，不进仓库）
         run: npm run build
 

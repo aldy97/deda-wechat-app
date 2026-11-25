@@ -4,8 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  validateAssetKeys,
+  validateFallbacks,
+} from './lib/asset-fallbacks-core.mjs';
+
 // 仓库级闸口：扫描所有 wxml 中的 <elly-image>，校验 fallback 与 asset-key。
 // 零用法也应通过（本闸口只对「已经出现」的用法做断言）。
+// 判定逻辑在 ./lib/asset-fallbacks-core.mjs，fixture 测试在 ./asset-gates.test.mjs。
 
 const REPO_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const MINIPROGRAM_ROOT = path.join(REPO_ROOT, 'miniprogram');
@@ -62,6 +68,11 @@ function collectUsages() {
   return usages;
 }
 
+const fileSystem = {
+  exists: (relative) => fs.existsSync(path.join(MINIPROGRAM_ROOT, relative)),
+  sizeOf: (relative) => fs.statSync(path.join(MINIPROGRAM_ROOT, relative)).size,
+};
+
 describe('elly-image fallback/asset-key gate', { concurrency: false }, () => {
   let usages;
   let knownKeys;
@@ -71,50 +82,11 @@ describe('elly-image fallback/asset-key gate', { concurrency: false }, () => {
     knownKeys = readKnownKeys();
   });
 
-  it('fallback 是存在的 /static 文件且非 webp', () => {
-    const errors = [];
-    for (const usage of usages) {
-      const where = usage.file;
-      if (!usage.fallback) {
-        errors.push(`${where}: <elly-image> 缺少 fallback`);
-        continue;
-      }
-      if (usage.fallback.includes('{{')) {
-        errors.push(`${where}: fallback 必须为静态路径，禁止动态绑定`);
-        continue;
-      }
-      if (!usage.fallback.startsWith('/static/')) {
-        errors.push(
-          `${where}: fallback 必须以 /static/ 开头，实际为 ${usage.fallback}`,
-        );
-        continue;
-      }
-      const rel = usage.fallback.replace(/^\/+/, '');
-      if (!fs.existsSync(path.join(MINIPROGRAM_ROOT, rel))) {
-        errors.push(`${where}: fallback 文件不存在 /${rel}`);
-        continue;
-      }
-      if (path.extname(rel).toLowerCase() === '.webp') {
-        errors.push(`${where}: 本地 fallback 不允许 webp`);
-      }
-    }
-    assert.deepEqual(errors, []);
+  it('fallback 是存在的 /static png/jpg 且不超 200KB', () => {
+    assert.deepEqual(validateFallbacks(usages, fileSystem), []);
   });
 
   it('asset-key 已登记在常量表', () => {
-    const errors = [];
-    for (const usage of usages) {
-      const where = usage.file;
-      if (!usage.assetKey) {
-        errors.push(`${where}: <elly-image> 缺少 asset-key`);
-        continue;
-      }
-      if (!knownKeys.has(usage.assetKey)) {
-        errors.push(
-          `${where}: asset-key "${usage.assetKey}" 未在 app-asset-keys.ts 登记`,
-        );
-      }
-    }
-    assert.deepEqual(errors, []);
+    assert.deepEqual(validateAssetKeys(usages, knownKeys), []);
   });
 });
