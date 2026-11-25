@@ -321,16 +321,6 @@ Page({
   },
 
   /**
-   * 音量控制：跳转音量控制页
-   */
-  onVolumeControl(event: WechatMiniprogram.TouchEvent) {
-    const { id } = event.currentTarget.dataset;
-    wx.navigateTo({
-      url: `/pages/device-control/device-control?id=${id}`,
-    });
-  },
-
-  /**
    * 添加设备：跳转配网页
    */
   onAddDevice() {
