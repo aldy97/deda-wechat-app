@@ -98,6 +98,28 @@ describe("sleep-manage 配置与交互", () => {
 
       expect(mockGetSleepConfig).not.toHaveBeenCalled();
     });
+
+    it("from=bind 标记绑定引导，完成后回我的设备列表", () => {
+      const page = harness.createInstance();
+
+      page.onLoad({ id: "dev-1", from: "bind" });
+
+      expect(page.data.fromBind).toBe(true);
+
+      page.onFinish();
+
+      expect(harness.wx.switchTab).toHaveBeenCalledWith({
+        url: "/pages/device-list/device-list",
+      });
+    });
+
+    it("常规进入不标记绑定引导", () => {
+      const page = harness.createInstance();
+
+      page.onLoad({ id: "dev-1" });
+
+      expect(page.data.fromBind).toBe(false);
+    });
   });
 
   describe("加载哄睡配置", () => {

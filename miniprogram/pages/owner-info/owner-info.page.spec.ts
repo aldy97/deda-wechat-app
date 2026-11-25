@@ -3,7 +3,7 @@
  * 锁定设计稿改版后的行为：
  * - 绑定成功后自动进入（from=bind）与设置入口共用同一页；
  * - 昵称/英文名/性别卡片/生日四项的读取与保存；
- * - 昵称必填；保存成功后按来源返回；
+ * - 昵称必填；保存成功后按来源继续（绑定引导 → 哄睡设置；设置入口 → 返回）；
  * - 自定义导航尺寸与生日上限。
  */
 import { installPageHarness } from "../../tests/page-harness";
@@ -219,7 +219,7 @@ describe("owner-info page", () => {
     expect(page.data.form.name).toBe("乐乐");
   });
 
-  it("from=bind 保存成功：switchTab 回设备列表，不 navigateBack", async () => {
+  it("from=bind 保存成功：redirectTo 哄睡设置，带 from=bind 继续流程", async () => {
     jest.useFakeTimers();
     try {
       const page = createLoadedPage({ id: "dev-002", from: "bind" });
@@ -230,10 +230,40 @@ describe("owner-info page", () => {
       await page.onSave();
       jest.advanceTimersByTime(800);
 
-      expect(harness.wx.switchTab).toHaveBeenCalledWith({
-        url: "/pages/device-list/device-list",
+      expect(harness.wx.redirectTo).toHaveBeenCalledWith({
+        url: "/pages/sleep-manage/sleep-manage?id=dev-002&from=bind",
       });
+      expect(harness.wx.switchTab).not.toHaveBeenCalled();
       expect(harness.wx.navigateBack).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("已有档案预填后不改任何字段，直接保存即可进入哄睡设置", async () => {
+    jest.useFakeTimers();
+    try {
+      const page = createLoadedPage({ id: "dev-003", from: "bind" });
+      await page.onReady();
+      await flushMicrotasks();
+
+      expect(page.data.form).toMatchObject({
+        name: "乐乐",
+        englishName: "Bagel",
+        gender: "female",
+        birthday: "2023-12-21",
+      });
+
+      await page.onSave();
+      jest.advanceTimersByTime(800);
+
+      expect(mockApi.updateOwnerInfo).toHaveBeenCalledWith(
+        "dev-003",
+        expect.objectContaining({ name: "乐乐" }),
+      );
+      expect(harness.wx.redirectTo).toHaveBeenCalledWith({
+        url: "/pages/sleep-manage/sleep-manage?id=dev-003&from=bind",
+      });
     } finally {
       jest.useRealTimers();
     }

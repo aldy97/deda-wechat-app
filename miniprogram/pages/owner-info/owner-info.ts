@@ -221,8 +221,10 @@ Page({
       this.clearDeviceListCache();
       setTimeout(() => {
         if (this.data.fromBind) {
-          // 绑定引导链路：配网页已 redirectTo 销毁，统一回设备列表
-          wx.switchTab({ url: "/pages/device-list/device-list" });
+          // 绑定引导链路：继续下一步（哄睡设置），由哄睡页完成后回设备列表
+          wx.redirectTo({
+            url: `/pages/sleep-manage/sleep-manage?id=${encodeURIComponent(this.data.deviceId)}&from=bind`,
+          });
         } else {
           wx.navigateBack();
         }

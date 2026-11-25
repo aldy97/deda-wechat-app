@@ -295,7 +295,8 @@ export interface BindDeviceResult {
   alreadyBound: boolean;
   /**
    * 该设备当前是否已存在孩子档案（填过任意字段即为 true）；
-   * 与是否本人绑过无关。false 时前端在绑定成功后直接引导填写孩子信息。
+   * 与是否本人绑过无关。前端现统一在绑定成功后走「孩子信息 → 哄睡设置」
+   * 引导流程，该字段不再参与前端跳转分支。
    * 对齐 deda-server MINI_PROGRAM_API.md 3.1（2026-11 新增字段）。
    */
   hasChildProfile: boolean;

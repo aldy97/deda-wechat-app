@@ -560,15 +560,8 @@ Page({
       } catch (e) {
         // ignore
       }
-      if (!res.data.hasChildProfile) {
-        // 设备当前无孩子档案（全新设备 / wipe 后重入网 / 绑过但没填档案）：
-        // 不停留成功页，直接引导填写孩子信息；redirectTo 替换本页，
-        // 保存或跳过后由 owner-info 统一 switchTab 回设备列表。
-        wx.redirectTo({
-          url: `/pages/owner-info/owner-info?id=${encodeURIComponent(deviceId)}&from=bind`,
-        });
-        return true;
-      }
+      // 首次与再次绑定统一停在成功页；由「下一步」进入
+      // 孩子信息 → 哄睡设置 的引导流程，流程结束回我的设备列表。
       this.finished = true;
       this.setData({
         step: 5,
@@ -592,6 +585,15 @@ Page({
       });
       return false;
     }
+  },
+
+  /** 成功页「下一步」：进入孩子信息 → 哄睡设置的绑定引导流程 */
+  onContinueSetup() {
+    const deviceId = this.claimDeviceId;
+    if (!deviceId) return;
+    wx.redirectTo({
+      url: `/pages/owner-info/owner-info?id=${encodeURIComponent(deviceId)}&from=bind`,
+    });
   },
 
   /** 绑定失败重试（deviceId 已知，无需重新配网/轮询） */
@@ -671,12 +673,6 @@ Page({
       bindFailed: false,
       claimTimeout: false,
       resultText: "",
-    });
-  },
-
-  onDone() {
-    wx.navigateBack({
-      fail: () => wx.switchTab({ url: "/pages/device-list/device-list" }),
     });
   },
 

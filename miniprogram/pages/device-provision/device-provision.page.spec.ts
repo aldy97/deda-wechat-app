@@ -217,7 +217,7 @@ describe("device-provision 配网页", () => {
     expect(harness.wx.redirectTo).not.toHaveBeenCalled();
   });
 
-  it("绑定成功且设备无孩子档案：立即 redirectTo 孩子信息页，不停留成功页", async () => {
+  it("绑定成功且设备无孩子档案：仍停在成功页，不自动离开配网页", async () => {
     mockApi.getProvisionCandidates.mockResolvedValue({
       code: 0,
       message: "",
@@ -241,15 +241,44 @@ describe("device-provision 配网页", () => {
     await page.handleMessage({ t1: 0x10, t2: 0x02, data: { status: 0 } });
     await flushMicrotasks();
 
+    expect(harness.wx.redirectTo).not.toHaveBeenCalled();
+    expect(page.data.step).toBe(5);
+    expect(page.data.success).toBe(true);
+    expect(page.data.resultText).toContain("配网成功");
+  });
+
+  it("成功页点「下一步」：redirectTo 孩子信息页并带上 from=bind", async () => {
+    mockApi.getProvisionCandidates.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { devices: [CANDIDATE_A] },
+    });
+    mockApi.bindDevice.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: {
+        success: true,
+        deviceId: CANDIDATE_A.deviceId,
+        alreadyBound: false,
+        hasChildProfile: false,
+      },
+    });
+
+    await enterWifiStep(page);
+    mockClient.sendFrame.mockResolvedValue(undefined);
+    page.setData({ password: "12345678" });
+    await page.onSubmitProvision();
+    await page.handleMessage({ t1: 0x10, t2: 0x02, data: { status: 0 } });
+    await flushMicrotasks();
+
+    page.onContinueSetup();
+
     expect(harness.wx.redirectTo).toHaveBeenCalledWith({
       url: `/pages/owner-info/owner-info?id=${CANDIDATE_A.deviceId}&from=bind`,
     });
-    // 直接离开配网页：不渲染成功页
-    expect(page.data.step).toBe(4);
-    expect(page.data.success).toBeFalsy();
   });
 
-  it("本人重绑但设备仍无孩子档案：同样跳转孩子信息页", async () => {
+  it("本人重绑且设备已有孩子档案：同样进入成功页，下一步仍走引导流程", async () => {
     mockApi.getProvisionCandidates.mockResolvedValue({
       code: 0,
       message: "",
@@ -262,7 +291,7 @@ describe("device-provision 配网页", () => {
         success: true,
         deviceId: CANDIDATE_A.deviceId,
         alreadyBound: true,
-        hasChildProfile: false,
+        hasChildProfile: true,
       },
     });
 
@@ -273,9 +302,20 @@ describe("device-provision 配网页", () => {
     await page.handleMessage({ t1: 0x10, t2: 0x02, data: { status: 0 } });
     await flushMicrotasks();
 
+    expect(page.data.success).toBe(true);
+    expect(page.data.alreadyBound).toBe(true);
+
+    page.onContinueSetup();
+
     expect(harness.wx.redirectTo).toHaveBeenCalledWith({
       url: `/pages/owner-info/owner-info?id=${CANDIDATE_A.deviceId}&from=bind`,
     });
+  });
+
+  it("没有认领到设备时点「下一步」不发跳转", () => {
+    page.onContinueSetup();
+
+    expect(harness.wx.redirectTo).not.toHaveBeenCalled();
   });
 
   it("多台候选：禁止自动绑定，展示列表由用户选择", async () => {

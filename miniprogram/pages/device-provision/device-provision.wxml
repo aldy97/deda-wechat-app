@@ -195,9 +195,9 @@
           type="primary"
           block
           round
-          bind:click="onDone"
+          bind:click="onContinueSetup"
         >
-          完成
+          下一步
         </van-button>
         <van-button
           wx:if="{{ !success && !bindFailed }}"
