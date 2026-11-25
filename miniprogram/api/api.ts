@@ -56,6 +56,16 @@ export async function submitFeedback(
   });
 }
 
+/** 今日陪伴摘要（服务端按设备时区统计，统计失败时为 null） */
+export interface DeviceTodayUsage {
+  /** 设备本地日期 YYYY-MM-DD */
+  date: string;
+  /** 当日陪伴时长（分钟），与家长报告同一估算口径 */
+  durationMinutes: number;
+  /** 当日孩子发言条数（一轮对话一条） */
+  turnCount: number;
+}
+
 /** 设备基础信息 */
 export interface Device {
   id: string; // 对应 server 的 deviceId
@@ -68,6 +78,7 @@ export interface Device {
     name?: string | null;
     englishName?: string | null;
   } | null;
+  todayUsage?: DeviceTodayUsage | null;
 }
 
 /**

@@ -1,15 +1,14 @@
 /**
- * device-list 卡片模式展示测试（最小必要）。
- * 锁定 applyConfigToDevice 的三分支行为，删除教材模式后：
- * 未知 mode（含历史教材 key）必须走兜底分支而不炸。
+ * device-list 卡片展示测试。
+ * 锁定「今日陪伴摘要 + 设备状态」驱动的正文文案、今日数据透传与缓存跨天清理。
  */
 import { installPageHarness } from "../../tests/page-harness";
+import { localDateKey } from "./device-list.utils";
 
 const mockApi = {
   getDeviceList: jest.fn(),
   bindDevice: jest.fn(),
   getDeviceStatus: jest.fn(),
-  getDeviceCurrentConfig: jest.fn(),
   ensureAuthToken: jest.fn(),
 };
 jest.mock("../../api/api", () => mockApi);
@@ -34,44 +33,9 @@ describe("device-list card display mapping", () => {
     page = harness.createInstance();
   });
 
-  function applyConfig(config: Record<string, unknown>) {
-    const device: Record<string, unknown> = { id: "dev-001" };
-    page.applyConfigToDevice(device, { deviceId: "dev-001", ...config });
-    return device;
-  }
-
-  it("free_chat 模式展示模式名称与默认描述", () => {
-    const device = applyConfig({
-      mode: "free_chat",
-    });
-    expect(device.cardTitle).toBe("自由对话");
-    expect(device.cardDesc).toBe("DEDA AI 玩偶，随时在线陪伴孩子学习与成长。");
-  });
-
-  it("历史教材模式 key 走兜底分支（教材功能已删除）", () => {
-    const device = applyConfig({
-      mode: "textbook_learning",
-    });
-    expect(device.cardTitle).toBe("textbook_learning");
-    expect(device.cardSubtitle).toBe("");
-    expect(device.cardDesc).toBe("DEDA AI 玩偶，随时在线陪伴孩子学习与成长。");
-  });
-
-  it("未知 mode 走兜底分支，展示原始 key 与默认文案", () => {
-    const device = applyConfig({ mode: "some_future_mode" });
-    expect(device.cardTitle).toBe("some_future_mode");
-    expect(device.cardSubtitle).toBe("");
-    expect(device.cardDesc).toBe("DEDA AI 玩偶，随时在线陪伴孩子学习与成长。");
-  });
-
   describe("设备状态展示（对齐 MINI_PROGRAM_API.md 3.4 MQTT 真实化契约）", () => {
     function mockStatus(data: Record<string, unknown>) {
       mockApi.getDeviceStatus.mockResolvedValue({ code: 0, message: "", data });
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
     }
 
     async function enrichOne() {
@@ -129,11 +93,6 @@ describe("device-list card display mapping", () => {
       mockApi.getDeviceStatus.mockRejectedValue(
         Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
       );
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
       const item = await enrichOne();
       expect(item.statusNotFound).toBe(true);
       expect(item.status).toBe("offline");
@@ -145,11 +104,6 @@ describe("device-list card display mapping", () => {
 
     it("网络/服务异常（非 404）：离线兜底但电量为 null，绝不显示 0%", async () => {
       mockApi.getDeviceStatus.mockRejectedValue(new Error("Network error"));
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
       const item = await enrichOne();
       expect(item.status).toBe("offline");
       expect(item.battery).toBeNull();
@@ -171,8 +125,121 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("今日陪伴摘要", () => {
+    function mockOnlineStatus(status: "online" | "offline") {
+      mockApi.getDeviceStatus.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: {
+          deviceId: "dev-001",
+          status,
+          battery: 70,
+          isCharging: null,
+          lastActiveAt: null,
+        },
+      });
+    }
+
+    it("列表返回 todayUsage：正文展示时长与句数", async () => {
+      mockOnlineStatus("online");
+      const [item] = await page.enrichDevices([
+        {
+          id: "dev-001",
+          name: "样机",
+          todayUsage: { date: "2026-11-25", durationMinutes: 4, turnCount: 7 },
+        },
+      ]);
+
+      expect(item.cardTitle).toBe("今天陪伴 4 分钟");
+      expect(item.cardSubtitle).toBe("说了 7 句话");
+      expect(item.cardDesc).toBe("");
+    });
+
+    it("离线但有今日数据：补充离线提示", async () => {
+      mockOnlineStatus("offline");
+      const [item] = await page.enrichDevices([
+        {
+          id: "dev-001",
+          name: "样机",
+          todayUsage: { date: "2026-11-25", durationMinutes: 2, turnCount: 3 },
+        },
+      ]);
+
+      expect(item.cardTitle).toBe("今天陪伴 2 分钟");
+      expect(item.cardDesc).toContain("不在线");
+    });
+
+    it("今日 0 数据：引导开始聊天", async () => {
+      mockOnlineStatus("online");
+      const [item] = await page.enrichDevices([
+        {
+          id: "dev-001",
+          name: "样机",
+          todayUsage: { date: "2026-11-25", durationMinutes: 0, turnCount: 0 },
+        },
+      ]);
+
+      expect(item.cardTitle).toBe("今天还没和 Elly 聊天");
+      expect(item.cardDesc).toContain("你好 Elly");
+    });
+
+    it("status 404：不展示今日数据", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue(
+        Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
+      );
+      const [item] = await page.enrichDevices([
+        {
+          id: "dev-001",
+          name: "样机",
+          todayUsage: { date: "2026-11-25", durationMinutes: 4, turnCount: 7 },
+        },
+      ]);
+
+      expect(item.statusNotFound).toBe(true);
+      expect(item.cardTitle).toBe("设备信息暂时不可用");
+    });
+
+    it("旧服务端无 todayUsage：展示在线中性文案", async () => {
+      mockOnlineStatus("online");
+      const [item] = await page.enrichDevices([
+        { id: "dev-001", name: "样机" },
+      ]);
+
+      expect(item.cardTitle).toBe("Elly 在线");
+      expect(item.cardDesc).toBe("随时可以开始聊天。");
+    });
+
+    it("静默刷新失败：沿用旧状态，不把在线设备误标离线", async () => {
+      page.fetchDeviceStatus = jest
+        .fn()
+        .mockRejectedValue(new Error("network down"));
+      const [item] = await page.enrichDevices(
+        [{ id: "dev-001", name: "样机" }],
+        [
+          {
+            id: "dev-001",
+            name: "样机",
+            status: "online",
+            battery: 80,
+            todayUsage: {
+              date: "2026-11-25",
+              durationMinutes: 4,
+              turnCount: 7,
+            },
+          },
+        ],
+      );
+
+      expect(item.status).toBe("online");
+      expect(item.cardTitle).toBe("Elly 在线");
+    });
+  });
+
   describe("网络信号徽标（MQTT v1.8）", () => {
-    function mockWifiStatus(rssi: number | null, extra: Record<string, unknown> = {}) {
+    function mockWifiStatus(
+      rssi: number | null,
+      extra: Record<string, unknown> = {},
+    ) {
       mockApi.getDeviceStatus.mockResolvedValue({
         code: 0,
         message: "",
@@ -186,11 +253,6 @@ describe("device-list card display mapping", () => {
           lastActiveAt: null,
           ...extra,
         },
-      });
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
       });
     }
 
@@ -253,11 +315,6 @@ describe("device-list card display mapping", () => {
           lastActiveAt: null,
         },
       });
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
       const item = await enrichOne();
       expect(item.networkMode).toBeNull();
       expect(item.wifiRssi).toBeNull();
@@ -268,11 +325,6 @@ describe("device-list card display mapping", () => {
       mockApi.getDeviceStatus.mockRejectedValue(
         Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
       );
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
       const item = await enrichOne([
         { id: "dev-001", networkMode: "wifi", wifiRssi: -75 },
       ]);
@@ -283,11 +335,6 @@ describe("device-list card display mapping", () => {
 
     it("刷新失败（非 404）：按离线兜底清空徽标，不抛错", async () => {
       mockApi.getDeviceStatus.mockRejectedValue(new Error("Network error"));
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
       const item = await enrichOne([
         {
           id: "dev-001",
@@ -402,6 +449,44 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("卡片入口", () => {
+    it("onShow 首次进入（onReady 之前）：不重复请求设备列表", () => {
+      page.hasInitialLoaded = false;
+      page.onShow();
+      expect(mockApi.getDeviceList).not.toHaveBeenCalled();
+    });
+
+    it("设置入口：跳转设备设置页", () => {
+      page.onSettingsTap({ currentTarget: { dataset: { id: "dev-001" } } });
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/device-setting/device-setting?id=dev-001",
+      });
+    });
+
+    it("查看对话：跳转对话记录页", () => {
+      page.onViewChat({ currentTarget: { dataset: { id: "dev-001" } } });
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/chat-history/chat-history?id=dev-001",
+      });
+    });
+
+    it("未设置孩子档案：点击姓名区跳转设置页", () => {
+      page.data.devices = [{ id: "dev-001", name: "样机", childProfile: null }];
+      page.onChildNameTap({ currentTarget: { dataset: { id: "dev-001" } } });
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/device-setting/device-setting?id=dev-001",
+      });
+    });
+
+    it("已有孩子档案：点击姓名区不跳转", () => {
+      page.data.devices = [
+        { id: "dev-001", name: "样机", childProfile: { name: "二狗" } },
+      ];
+      page.onChildNameTap({ currentTarget: { dataset: { id: "dev-001" } } });
+      expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+    });
+  });
+
   describe("SWR 缓存首帧直出与静默刷新", () => {
     beforeEach(() => {
       // getStorageSync 的 mockImplementation 不被 clearAllMocks 清除，按用例隔离
@@ -416,8 +501,6 @@ describe("device-list card display mapping", () => {
       isCharging: null,
       lastActiveAt: "2026-11-11T04:00:00.000Z",
       lastActiveText: "最近活跃 刚刚",
-      cardTitle: "自由闲聊",
-      cardDesc: "轻松闲聊。",
     };
 
     function mockNetworkList(devices: unknown[]) {
@@ -438,12 +521,64 @@ describe("device-list card display mapping", () => {
           lastActiveAt: null,
         },
       });
-      mockApi.getDeviceCurrentConfig.mockResolvedValue({
-        code: 0,
-        message: "",
-        data: null,
-      });
     }
+
+    it("缓存读取异常：返回 false 且不抛错", () => {
+      harness.wx.getStorageSync.mockImplementation(() => {
+        throw new Error("storage broken");
+      });
+
+      expect(page.restoreDeviceListCache()).toBe(false);
+    });
+
+    it("缓存写入异常：告警但不影响页面", () => {
+      harness.wx.setStorageSync.mockImplementation(() => {
+        throw new Error("storage full");
+      });
+
+      expect(() => page.writeDeviceListCache([{ id: "dev-x" }])).not.toThrow();
+    });
+
+    it("缓存中的今日数据当天有效：首帧直接展示陪伴时长", () => {
+      const todayUsage = {
+        date: localDateKey(new Date()),
+        durationMinutes: 23,
+        turnCount: 46,
+      };
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === "device_list_cache"
+          ? [{ ...CACHED_ITEM, todayUsage, cardTitle: "旧标题" }]
+          : "",
+      );
+
+      expect(page.restoreDeviceListCache()).toBe(true);
+      expect(page.data.devices[0].todayUsage).toEqual(todayUsage);
+      expect(page.data.devices[0].cardTitle).toBe("今天陪伴 23 分钟");
+      expect(page.data.devices[0].cardSubtitle).toBe("说了 46 句话");
+    });
+
+    it("缓存中的 todayUsage 跨天：恢复时清空并按状态重算", () => {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === "device_list_cache"
+          ? [
+              {
+                ...CACHED_ITEM,
+                todayUsage: {
+                  date: localDateKey(yesterday),
+                  durationMinutes: 23,
+                  turnCount: 46,
+                },
+                cardTitle: "旧标题",
+              },
+            ]
+          : "",
+      );
+
+      expect(page.restoreDeviceListCache()).toBe(true);
+      expect(page.data.devices[0].todayUsage).toBeNull();
+      expect(page.data.devices[0].cardTitle).toBe("Elly 在线");
+    });
 
     it("有缓存：网络返回前即渲染缓存列表，不整页转圈", async () => {
       harness.wx.getStorageSync.mockImplementation((key: string) =>
@@ -490,6 +625,9 @@ describe("device-list card display mapping", () => {
         (c: unknown[]) => c[0] === "device_list_cache",
       )[1];
       expect(written[0].statusLoading).toBeUndefined();
+      expect(written[0].cardTitle).toBeUndefined();
+      expect(written[0].cardSubtitle).toBeUndefined();
+      expect(written[0].cardDesc).toBeUndefined();
     });
 
     it("onShow 二次进入：静默刷新，loading 不翻 true、旧列表保持渲染", async () => {

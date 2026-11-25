@@ -88,11 +88,11 @@
       <view class="card-body">
         <view class="card-info">
           <view class="card-title-row">
-            <text class="card-title">{{ item.cardTitle || 'DEDA AI 玩偶' }}</text>
+            <text class="card-title">{{ item.cardTitle }}</text>
             <!-- <image class="title-icon" src="" mode="aspectFill" /> -->
           </view>
           <text class="card-subtitle" wx:if="{{ item.cardSubtitle }}">{{ item.cardSubtitle }}</text>
-          <text class="card-desc">{{ item.cardDesc || 'DEDA AI 玩偶，随时在线陪伴孩子学习与成长。' }}</text>
+          <text class="card-desc" wx:if="{{ item.cardDesc }}">{{ item.cardDesc }}</text>
           <!-- 最近活跃时间；从未上报为「暂未连接」 -->
           <text class="last-active-text" wx:if="{{ !item.statusLoading && item.lastActiveText }}">{{ item.lastActiveText }}</text>
         </view>
