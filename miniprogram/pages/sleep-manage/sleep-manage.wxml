@@ -132,6 +132,16 @@
     </view>
   </view>
 
+  <!-- 绑定引导流程：完成并进入我的设备 -->
+  <view
+    wx:if="{{ fromBind }}"
+    class="setup-finish"
+    bind:tap="onFinish"
+    hover-class="setup-finish-hover"
+    aria-role="button"
+    aria-label="完成哄睡设置"
+  >完成</view>
+
   <!-- 时间选择弹窗 -->
   <van-popup
     show="{{ showTimePicker }}"

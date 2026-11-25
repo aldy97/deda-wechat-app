@@ -28,6 +28,8 @@ const FALLBACK_DURATION_MINUTES = 15;
 Page({
   data: {
     deviceId: "",
+    /** 是否来自绑定引导流程（末尾展示完成入口，完成后回我的设备） */
+    fromBind: false,
     /** 哄睡总开关 */
     enabled: false,
     /** 哄睡时长展示值 */
@@ -61,13 +63,19 @@ Page({
 
   onLoad(options) {
     const deviceId = options?.id || "";
-    this.setData({ deviceId });
+    const fromBind = options?.from === "bind";
+    this.setData({ deviceId, fromBind });
   },
 
   onReady() {
     if (this.data.deviceId) {
       this.fetchSleepConfig(this.data.deviceId);
     }
+  },
+
+  /** 绑定引导流程完成：回我的设备列表 */
+  onFinish() {
+    wx.switchTab({ url: "/pages/device-list/device-list" });
   },
 
   /**

@@ -539,3 +539,24 @@ page {
   color: var(--color-surface);
   background-color: var(--color-mode-5);
 }
+
+/* 绑定引导流程完成入口 */
+.setup-finish {
+  margin-top: 32rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-surface);
+  background: linear-gradient(
+    90deg,
+    var(--color-kid-cta-start) 0%,
+    var(--color-kid-cta-end) 100%
+  );
+}
+
+.setup-finish-hover {
+  opacity: 0.9;
+}
