@@ -206,6 +206,7 @@ Page({
             // status 404：设备不存在（可能已解绑/被 wipe），给兜底态，不弹窗不白屏
             item.statusNotFound = true;
             item.status = "offline";
+            item.todayUsage = null;
             item.battery = null;
             item.isCharging = null;
             item.networkMode = null;
@@ -242,15 +243,10 @@ Page({
   },
 
   /**
-   * 根据状态与今日陪伴摘要生成卡片正文
+   * 根据今日陪伴摘要生成卡片正文（状态信息由顶部承担）
    */
   applyCardCopy(item: DeviceDisplayItem) {
-    const copy = buildCardCopy({
-      status: item.status,
-      statusLoading: item.statusLoading,
-      statusNotFound: item.statusNotFound,
-      todayUsage: item.todayUsage,
-    });
+    const copy = buildCardCopy(item.todayUsage);
     item.cardTitle = copy.title;
     item.cardSubtitle = copy.subtitle;
     item.cardDesc = copy.desc;

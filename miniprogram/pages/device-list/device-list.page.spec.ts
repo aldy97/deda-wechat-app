@@ -155,7 +155,7 @@ describe("device-list card display mapping", () => {
       expect(item.cardDesc).toBe("");
     });
 
-    it("离线但有今日数据：补充离线提示", async () => {
+    it("离线但有今日数据：不重复顶部离线状态", async () => {
       mockOnlineStatus("offline");
       const [item] = await page.enrichDevices([
         {
@@ -166,10 +166,11 @@ describe("device-list card display mapping", () => {
       ]);
 
       expect(item.cardTitle).toBe("今天陪伴 2 分钟");
-      expect(item.cardDesc).toContain("不在线");
+      expect(item.cardSubtitle).toBe("说了 3 句话");
+      expect(item.cardDesc).toBe("");
     });
 
-    it("今日 0 数据：引导开始聊天", async () => {
+    it("今日 0 数据：只给事实，不附引导", async () => {
       mockOnlineStatus("online");
       const [item] = await page.enrichDevices([
         {
@@ -180,10 +181,11 @@ describe("device-list card display mapping", () => {
       ]);
 
       expect(item.cardTitle).toBe("今天还没和 Elly 聊天");
-      expect(item.cardDesc).toContain("你好 Elly");
+      expect(item.cardSubtitle).toBe("");
+      expect(item.cardDesc).toBe("");
     });
 
-    it("status 404：不展示今日数据", async () => {
+    it("status 404：正文留空，由顶部「设备不存在」表达", async () => {
       mockApi.getDeviceStatus.mockRejectedValue(
         Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
       );
@@ -196,17 +198,17 @@ describe("device-list card display mapping", () => {
       ]);
 
       expect(item.statusNotFound).toBe(true);
-      expect(item.cardTitle).toBe("设备信息暂时不可用");
+      expect(item.cardTitle).toBe("");
     });
 
-    it("旧服务端无 todayUsage：展示在线中性文案", async () => {
+    it("旧服务端无 todayUsage：正文留空，不冒充在线文案", async () => {
       mockOnlineStatus("online");
       const [item] = await page.enrichDevices([
         { id: "dev-001", name: "样机" },
       ]);
 
-      expect(item.cardTitle).toBe("Elly 在线");
-      expect(item.cardDesc).toBe("随时可以开始聊天。");
+      expect(item.cardTitle).toBe("");
+      expect(item.cardDesc).toBe("");
     });
 
     it("静默刷新失败：沿用旧状态，不把在线设备误标离线", async () => {
@@ -231,7 +233,7 @@ describe("device-list card display mapping", () => {
       );
 
       expect(item.status).toBe("online");
-      expect(item.cardTitle).toBe("Elly 在线");
+      expect(item.cardTitle).toBe("");
     });
   });
 
@@ -557,7 +559,7 @@ describe("device-list card display mapping", () => {
       expect(page.data.devices[0].cardSubtitle).toBe("说了 46 句话");
     });
 
-    it("缓存中的 todayUsage 跨天：恢复时清空并按状态重算", () => {
+    it("缓存中的 todayUsage 跨天：恢复时清空，正文留空", () => {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
       harness.wx.getStorageSync.mockImplementation((key: string) =>
         key === "device_list_cache"
@@ -577,7 +579,7 @@ describe("device-list card display mapping", () => {
 
       expect(page.restoreDeviceListCache()).toBe(true);
       expect(page.data.devices[0].todayUsage).toBeNull();
-      expect(page.data.devices[0].cardTitle).toBe("Elly 在线");
+      expect(page.data.devices[0].cardTitle).toBe("");
     });
 
     it("有缓存：网络返回前即渲染缓存列表，不整页转圈", async () => {

@@ -84,10 +84,10 @@
         </view>
       </view>
 
-      <!-- 卡片中部：标题、副标题、描述 -->
-      <view class="card-body">
+      <!-- 卡片中部：只放今日数据与最近活跃；在线/离线等状态已在顶部 -->
+      <view class="card-body" wx:if="{{ item.cardTitle || item.cardSubtitle || item.cardDesc || (!item.statusLoading && item.lastActiveText) }}">
         <view class="card-info">
-          <view class="card-title-row">
+          <view class="card-title-row" wx:if="{{ item.cardTitle }}">
             <text class="card-title">{{ item.cardTitle }}</text>
             <!-- <image class="title-icon" src="" mode="aspectFill" /> -->
           </view>

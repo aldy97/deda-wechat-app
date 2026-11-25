@@ -1,12 +1,5 @@
 import { DeviceTodayUsage } from "../../api/api";
 
-export interface CardCopyInput {
-  status?: "online" | "offline";
-  statusLoading?: boolean;
-  statusNotFound?: boolean;
-  todayUsage?: DeviceTodayUsage | null;
-}
-
 export interface CardCopy {
   title: string;
   subtitle: string;
@@ -38,61 +31,22 @@ export function isTodayUsageFresh(
 }
 
 /**
- * 设备卡正文：优先回答「孩子今天和 Elly 过得怎么样」，
- * 数据缺失时退回设备状态文案，不展示模式与固定营销句。
+ * 设备卡正文：只回答「孩子今天和 Elly 过得怎么样」。
+ * 在线/离线/连接中/设备不存在都在卡片顶部展示，正文不再复述；
+ * 没有今日数据时正文留空，由「最近活跃」行承担信息。
  */
-export function buildCardCopy(input: CardCopyInput): CardCopy {
-  const { status, statusLoading, statusNotFound, todayUsage } = input;
-
-  if (statusNotFound) {
-    return {
-      title: "设备信息暂时不可用",
-      subtitle: "",
-      desc: "下拉刷新试试，或重新绑定这台设备。",
-    };
+export function buildCardCopy(todayUsage?: DeviceTodayUsage | null): CardCopy {
+  if (!todayUsage) {
+    return { title: "", subtitle: "", desc: "" };
   }
 
-  const offline = !statusLoading && status === "offline";
-  const turnCount = todayUsage?.turnCount ?? 0;
-
-  if (todayUsage && turnCount > 0) {
+  if (todayUsage.turnCount > 0) {
     return {
       title: `今天陪伴 ${formatDurationMinutes(todayUsage.durationMinutes)}`,
-      subtitle: `说了 ${turnCount} 句话`,
-      desc: offline ? "Elly 现在不在线，检查网络后就能继续聊。" : "",
+      subtitle: `说了 ${todayUsage.turnCount} 句话`,
+      desc: "",
     };
   }
 
-  if (todayUsage && turnCount === 0) {
-    if (offline) {
-      return {
-        title: "Elly 现在不在线",
-        subtitle: "",
-        desc: "检查网络后就能和 Elly 开始今天的第一次聊天。",
-      };
-    }
-    return {
-      title: "今天还没和 Elly 聊天",
-      subtitle: "",
-      desc: "说一句「你好 Elly」就能开始。",
-    };
-  }
-
-  if (offline) {
-    return {
-      title: "Elly 现在不在线",
-      subtitle: "",
-      desc: "检查网络或重新联网后就能继续聊。",
-    };
-  }
-
-  if (statusLoading) {
-    return { title: "正在连接 Elly…", subtitle: "", desc: "" };
-  }
-
-  if (status === "online") {
-    return { title: "Elly 在线", subtitle: "", desc: "随时可以开始聊天。" };
-  }
-
-  return { title: "Elly", subtitle: "", desc: "下拉刷新获取设备状态。" };
+  return { title: "今天还没和 Elly 聊天", subtitle: "", desc: "" };
 }

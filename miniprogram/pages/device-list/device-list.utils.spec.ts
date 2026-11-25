@@ -45,89 +45,39 @@ describe("localDateKey / isTodayUsageFresh", () => {
 });
 
 describe("buildCardCopy", () => {
-  it("今日有对话：标题为陪伴时长，副标题为发言句数", () => {
-    expect(
-      buildCardCopy({ status: "online", todayUsage: usage(7, 4) }),
-    ).toEqual({
+  it("今日有对话：只展示时长与句数，不重复顶部状态", () => {
+    expect(buildCardCopy(usage(7, 4))).toEqual({
       title: "今天陪伴 4 分钟",
       subtitle: "说了 7 句话",
       desc: "",
     });
   });
 
-  it("今日有对话但设备离线：仍展示今日数据并提示检查网络", () => {
-    expect(
-      buildCardCopy({ status: "offline", todayUsage: usage(3, 2) }),
-    ).toEqual({
-      title: "今天陪伴 2 分钟",
-      subtitle: "说了 3 句话",
-      desc: "Elly 现在不在线，检查网络后就能继续聊。",
+  it("时长超过 1 小时：按小时+分钟展示", () => {
+    expect(buildCardCopy(usage(10, 65))).toEqual({
+      title: "今天陪伴 1 小时 5 分钟",
+      subtitle: "说了 10 句话",
+      desc: "",
     });
   });
 
-  it("在线但今天还没聊：给出开始对话的引导", () => {
-    expect(
-      buildCardCopy({ status: "online", todayUsage: usage(0, 0) }),
-    ).toEqual({
+  it("今日零对话：只给事实，不附状态或引导", () => {
+    expect(buildCardCopy(usage(0, 0))).toEqual({
       title: "今天还没和 Elly 聊天",
-      subtitle: "",
-      desc: "说一句「你好 Elly」就能开始。",
-    });
-  });
-
-  it("今天没聊且离线：优先说明离线", () => {
-    expect(
-      buildCardCopy({ status: "offline", todayUsage: usage(0, 0) }),
-    ).toEqual({
-      title: "Elly 现在不在线",
-      subtitle: "",
-      desc: "检查网络后就能和 Elly 开始今天的第一次聊天。",
-    });
-  });
-
-  it("usage 缺失且离线：提示检查网络或重新联网", () => {
-    expect(buildCardCopy({ status: "offline", todayUsage: null })).toEqual({
-      title: "Elly 现在不在线",
-      subtitle: "",
-      desc: "检查网络或重新联网后就能继续聊。",
-    });
-  });
-
-  it("status 加载中且 usage 缺失：展示连接中", () => {
-    expect(buildCardCopy({ statusLoading: true })).toEqual({
-      title: "正在连接 Elly…",
       subtitle: "",
       desc: "",
     });
   });
 
-  it("在线且 usage 缺失：展示在线中性文案", () => {
-    expect(buildCardCopy({ status: "online", todayUsage: null })).toEqual({
-      title: "Elly 在线",
-      subtitle: "",
-      desc: "随时可以开始聊天。",
-    });
+  it("todayUsage 为 null：正文留空，交给最近活跃行", () => {
+    expect(buildCardCopy(null)).toEqual({ title: "", subtitle: "", desc: "" });
   });
 
-  it("旧缓存没有 status：不冒充在线，提示刷新", () => {
-    expect(buildCardCopy({})).toEqual({
-      title: "Elly",
+  it("todayUsage 缺失：正文留空", () => {
+    expect(buildCardCopy(undefined)).toEqual({
+      title: "",
       subtitle: "",
-      desc: "下拉刷新获取设备状态。",
-    });
-  });
-
-  it("status 404：优先生成兜底文案", () => {
-    expect(
-      buildCardCopy({
-        statusNotFound: true,
-        status: "offline",
-        todayUsage: usage(5, 3),
-      }),
-    ).toEqual({
-      title: "设备信息暂时不可用",
-      subtitle: "",
-      desc: "下拉刷新试试，或重新绑定这台设备。",
+      desc: "",
     });
   });
 });
