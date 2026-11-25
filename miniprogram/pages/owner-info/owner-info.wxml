@@ -40,9 +40,10 @@
       </view>
 
       <view class="kid-hero">
-        <image
+        <elly-image
           class="kid-mascot"
-          src="/static/images/kid-info/logo.png"
+          asset-key="diagnostics/remote-probe"
+          fallback="/static/images/kid-info/logo.png"
           mode="aspectFit"
         />
         <view class="kid-bubble">

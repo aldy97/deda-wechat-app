@@ -62,6 +62,7 @@ page {
 }
 
 .kid-mascot {
+  display: block;
   flex-shrink: 0;
   width: 160rpx;
   height: 160rpx;

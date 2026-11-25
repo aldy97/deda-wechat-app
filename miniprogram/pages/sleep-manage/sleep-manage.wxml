@@ -2,9 +2,10 @@
 <view class="container sleep-manage-page">
   <!-- 吉祥物与引导气泡（始终显示） -->
   <view class="sleep-hero">
-    <image
+    <elly-image
       class="sleep-mascot"
-      src="/static/images/kid-info/logo.png"
+      asset-key="diagnostics/remote-probe"
+      fallback="/static/images/kid-info/logo.png"
       mode="aspectFit"
     />
     <view class="sleep-bubble">

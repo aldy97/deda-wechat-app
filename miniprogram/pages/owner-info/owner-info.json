@@ -3,6 +3,7 @@
   "navigationBarTitleText": "孩子信息",
   "usingComponents": {
     "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "elly-image": "/components/elly-image/elly-image",
     "van-icon": "@vant/weapp/icon/index",
     "van-loading": "@vant/weapp/loading/index",
     "van-popup": "@vant/weapp/popup/index",
