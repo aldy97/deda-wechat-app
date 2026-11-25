@@ -109,13 +109,15 @@
         </view>
       </view>
 
-      <!-- 卡片底部：保留查看对话入口，不再进入学习分析；音量控制已迁到设备设置页 -->
+      <!-- 2026-11-25：对话记录功能暂时下线，卡片「查看对话」入口隐藏。
+      恢复时放开本段，并补回 wxss 中 .card-actions / .action-btn / .action-icon / .action-text 样式。
       <view class="card-actions">
         <view class="action-btn" bind:tap="onViewChat" data-id="{{ item.id }}">
           <van-icon class="action-icon" name="chat-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看对话</text>
         </view>
       </view>
+      -->
     </view>
     </block>
   </view>

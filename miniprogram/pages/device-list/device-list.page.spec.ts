@@ -5,6 +5,9 @@
 import { installPageHarness } from "../../tests/page-harness";
 import { localDateKey } from "./device-list.utils";
 
+// wx typings 不声明 __dirname；读取 wxml 做静态断言时按 app-routing.spec.ts 的做法显式声明
+declare const __dirname: string;
+
 const mockApi = {
   getDeviceList: jest.fn(),
   bindDevice: jest.fn(),
@@ -847,5 +850,33 @@ describe("自定义导航栏尺寸（与微信胶囊按钮对齐）", () => {
 
     expect(page.data.statusBarHeight).toBe(20);
     expect(page.data.navBarHeight).toBe(44);
+  });
+});
+
+describe("对话记录入口隐藏（功能暂时下线）", () => {
+  let page: any;
+
+  beforeAll(() => {
+    require("./device-list");
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    page = harness.createInstance();
+  });
+
+  it("卡片底部不再渲染查看对话按钮，也不留点击绑定", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const wxml = fs
+      .readFileSync(path.join(__dirname, "device-list.wxml"), "utf8")
+      .replace(/<!--[\s\S]*?-->/g, "");
+
+    expect(wxml).not.toContain("查看对话");
+    expect(wxml).not.toContain("onViewChat");
+  });
+
+  it("onViewChat 方法保留：app-routing 的可达性判定依赖静态导航目标", () => {
+    expect(typeof page.onViewChat).toBe("function");
   });
 });

@@ -366,6 +366,9 @@ Page({
 
   /**
    * 查看对话：跳转对话记录页
+   *
+   * 2026-11-25 起卡片入口已隐藏（对话记录功能暂时下线）；方法保留，
+   * app-routing 的可达性判定依赖源码里的静态导航目标。恢复时放开装置卡注释段并补回样式。
    */
   onViewChat(event: WechatMiniprogram.TouchEvent) {
     const { id } = event.currentTarget.dataset;
