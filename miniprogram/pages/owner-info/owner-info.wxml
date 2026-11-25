@@ -64,7 +64,7 @@
           <view class="kid-gender-art">
             <image
               class="kid-gender-img"
-              src="/static/images/kid-info/avatar_boy.webp"
+              src="/static/images/kid-info/avatar_boy.png"
               mode="aspectFill"
             />
           </view>
@@ -81,7 +81,7 @@
           <view class="kid-gender-art">
             <image
               class="kid-gender-img"
-              src="/static/images/kid-info/avatar_girl.webp"
+              src="/static/images/kid-info/avatar_girl.png"
               mode="aspectFill"
             />
           </view>
