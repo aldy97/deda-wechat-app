@@ -504,8 +504,7 @@ export async function getChatRecords(
     `pageSize=${encodeURIComponent(String(pageSize))}`,
   ];
   if (deviceId) queryParts.push(`deviceId=${encodeURIComponent(deviceId)}`);
-  if (mode)
-    queryParts.push(`mode=${encodeURIComponent(mode)}`);
+  if (mode) queryParts.push(`mode=${encodeURIComponent(mode)}`);
   return request<PaginatedResponse<ChatRecord>>({
     method: "GET",
     url: `/conversations?${queryParts.join("&")}`,
@@ -577,40 +576,26 @@ export async function deleteDevice(
   });
 }
 
-/** 关于设备信息 */
+/** 关于设备信息（复用 GET /devices/:id，仅声明展示所需字段） */
 export interface DeviceAboutInfo {
-  deviceCode: string;
-  topicAddress: string;
-  firmwareVersion: string;
-  wifiName: string;
-  macAddress: string;
-  ipAddress: string;
-  networkType: string;
-  timezone: string;
-  subnetMask: string;
-  gateway: string;
-  dns: string;
+  deviceId: string;
+  deviceCode: string | null;
+  firmwareVersion: string | null;
+  networkType: string | null;
+  macAddress: string | null;
+  characterKey?: string | null;
 }
 
 /**
  * 获取关于设备信息
+ * 调用 deda-server GET /devices/:id（当前用户未绑定该设备时 data 为 null）。
  */
 export async function getDeviceAboutInfo(
   deviceId: string,
-): Promise<ApiResponse<DeviceAboutInfo>> {
-  await mockDelay(600);
-  return success({
-    deviceCode: "1608281053529797520",
-    topicAddress: "GwWDKNXo",
-    firmwareVersion: "CMS1W8bd_V1.01_828_brtc_version",
-    wifiName: "wifi名称",
-    macAddress: "a03c:31b2:97dc",
-    ipAddress: "192.168.3.214",
-    networkType: "无线WIFI",
-    timezone: "GMT+8:00",
-    subnetMask: "255.255.255.0",
-    gateway: "192.168.3.1",
-    dns: "192.168.3.1",
+): Promise<ApiResponse<DeviceAboutInfo | null>> {
+  return request<DeviceAboutInfo | null>({
+    method: "GET",
+    url: `/devices/${encodeURIComponent(deviceId)}`,
   });
 }
 

@@ -11,31 +11,33 @@
 }
 
 .info-group {
-  margin: 0 24rpx;
+  margin: 0 24rpx 24rpx;
   border-radius: 16rpx;
   overflow: hidden;
 }
 
-/* 复制成功提示 */
-.copy-toast {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 24rpx 48rpx;
-  background-color: var(--color-overlay-strong);
-  border-radius: 12rpx;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1000;
+/* 固件版本等长文本允许换行，避免撑破 cell */
+.info-value {
+  max-width: 60%;
+  word-break: break-all;
+  text-align: right;
 }
 
-.copy-toast-show {
-  opacity: 1;
+.diagnostics-footer {
+  margin: 8rpx 24rpx 40rpx;
 }
 
-.copy-toast-text {
-  font-size: 30rpx;
-  color: var(--color-surface);
+.diagnostics-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.diagnostics-hint {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: var(--color-secondary);
+  text-align: center;
 }
