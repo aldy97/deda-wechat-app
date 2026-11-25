@@ -1,4 +1,21 @@
-<view class="container device-list-page">
+<view class="device-list-page">
+  <!-- 自定义导航栏：左侧添加设备圆形按钮，标题与按钮同排居中 -->
+  <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
+      <view
+        class="add-device-fab"
+        bind:tap="onAddDevice"
+        hover-class="add-device-fab-hover"
+        aria-role="button"
+        aria-label="添加设备"
+      >
+        <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
+      </view>
+      <text class="device-nav-title">我的设备</text>
+    </view>
+  </view>
+
+  <view class="container">
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{ loading }}">
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
@@ -14,17 +31,6 @@
     </view>
 
     <block wx:else>
-    <!-- 左上角圆形添加设备入口 -->
-    <view
-      class="add-device-fab"
-      bind:tap="onAddDevice"
-      hover-class="add-device-fab-hover"
-      aria-role="button"
-      aria-label="添加设备"
-    >
-      <van-icon name="plus" size="40rpx" color="var(--color-primary)" />
-    </view>
-
     <view
       class="device-card card"
       wx:for="{{ devices }}"
@@ -103,14 +109,25 @@
         </view>
       </view>
 
-      <!-- 卡片底部：保留查看对话入口，不再进入学习分析；音量控制已迁到设备设置页 -->
+      <!-- 2026-11-25：对话记录功能暂时下线，卡片「查看对话」入口隐藏。
+      恢复时放开本段，并补回 wxss 中 .card-actions / .action-btn / .action-icon / .action-text 样式。
       <view class="card-actions">
         <view class="action-btn" bind:tap="onViewChat" data-id="{{ item.id }}">
           <van-icon class="action-icon" name="chat-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看对话</text>
         </view>
       </view>
+      -->
+
+      <!-- 卡片底部：查看成长报告（跳到「更懂TA」tab 并自动选中本设备） -->
+      <view class="card-actions">
+        <view class="action-btn" bind:tap="onViewReport" data-id="{{ item.id }}">
+          <van-icon class="action-icon" name="chart-trending-o" size="32rpx" color="var(--color-primary)" />
+          <text class="action-text">查看成长报告</text>
+        </view>
+      </view>
     </view>
     </block>
+  </view>
   </view>
 </view>

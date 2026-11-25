@@ -75,3 +75,88 @@ export function buildCardCopy(todayUsage?: DeviceTodayUsage | null): CardCopy {
 
   return { title: "今天还没和 Elly 聊天", subtitle: "", desc: "" };
 }
+
+/** 电量显示 deadband（百分点）：小于该变化沿用旧显示，压住 ±1% 抖动 */
+const BATTERY_DISPLAY_DEADBAND = 2;
+
+/**
+ * 电量显示平滑：60s 轮询下设备可能每分钟 ±1% 抖动，小于 2 个百分点不刷新界面；
+ * 未上报（null）立即清空，首轮（无旧值）直接用原始值。
+ */
+export function smoothBatteryDisplay(
+  prevDisplay: number | null,
+  nextRaw: number | null,
+): number | null {
+  if (nextRaw === null) return null;
+  if (prevDisplay === null) return nextRaw;
+  return Math.abs(nextRaw - prevDisplay) >= BATTERY_DISPLAY_DEADBAND
+    ? nextRaw
+    : prevDisplay;
+}
+
+/**
+ * 充电态显示平滑：原始值要连续两轮一致才切换显示，压住插拔/协议抖动；
+ * 首轮没有原始快照直接采用，未上报（null）立即清空。
+ */
+export function smoothChargingDisplay(
+  prevDisplay: boolean | null,
+  prevRaw: boolean | null,
+  nextRaw: boolean | null,
+): boolean | null {
+  if (nextRaw === null) return null;
+  if (prevRaw === null) return nextRaw;
+  return nextRaw === prevRaw ? nextRaw : prevDisplay;
+}
+
+/** 卡片渲染签名用的最小字段集（只含真正影响界面的字段） */
+export interface DeviceListSignatureItem {
+  id: string;
+  status?: "online" | "offline" | null;
+  battery?: number | null;
+  isCharging?: boolean | null;
+  networkMode?: "wifi" | "4g" | null;
+  networkBadge?: { text: string; level: 1 | 2 | 3 | null } | null;
+  statusNotFound?: boolean;
+  lastActiveText?: string;
+  cardTitle?: string;
+  cardSubtitle?: string;
+  cardDesc?: string;
+  statusLabel?: string;
+  statusTone?: "online" | "offline";
+  todayUsage?: DeviceTodayUsage | null;
+}
+
+/**
+ * 设备列表渲染签名：轮询到点后先比签名，完全一致就不 setData，
+ * 避免 60s 一次的无谓重渲染。strength/statusLoading 等中间态不参与。
+ */
+export function buildDeviceListSignature(
+  items: DeviceListSignatureItem[],
+): string {
+  return JSON.stringify(
+    items.map((item) => [
+      item.id,
+      item.status ?? null,
+      item.battery ?? null,
+      item.isCharging ?? null,
+      item.networkMode ?? null,
+      item.networkBadge
+        ? [item.networkBadge.text, item.networkBadge.level]
+        : null,
+      item.statusNotFound ?? false,
+      item.lastActiveText ?? "",
+      item.cardTitle ?? "",
+      item.cardSubtitle ?? "",
+      item.cardDesc ?? "",
+      item.statusLabel ?? "",
+      item.statusTone ?? "",
+      item.todayUsage
+        ? [
+            item.todayUsage.date,
+            item.todayUsage.durationMinutes,
+            item.todayUsage.turnCount,
+          ]
+        : null,
+    ]),
+  );
+}

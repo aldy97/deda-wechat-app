@@ -20,6 +20,8 @@ export interface PageHarness {
   getPageConfig: () => any;
   /** 基于捕获配置创建可驱动实例（含可断言的 setData） */
   createInstance: () => any;
+  /** 已创建的实例（spec 收尾调 onUnload 清理定时器，避免悬挂句柄） */
+  createdInstances: any[];
 }
 
 export function installPageHarness(): PageHarness {
@@ -84,9 +86,11 @@ export function installPageHarness(): PageHarness {
   // 页面栈桩：默认栈内有一层以上（navigateBack 可用），用例可覆盖
   (globalThis as any).getCurrentPages = jest.fn(() => [{}]);
 
+  const createdInstances: any[] = [];
   return {
     wx: wxStub,
     getPageConfig: () => captured,
+    createdInstances,
     createInstance: () => {
       if (!captured) {
         throw new Error("未捕获到 Page 配置,请先 require 页面模块");
@@ -115,6 +119,7 @@ export function installPageHarness(): PageHarness {
         }
         if (typeof cb === "function") cb();
       });
+      createdInstances.push(instance);
       return instance;
     },
   };

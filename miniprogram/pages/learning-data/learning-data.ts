@@ -14,6 +14,7 @@ import {
 import { formatDate } from "../../utils/date";
 import { CANVAS_MODE_COLORS, CANVAS_UI_COLORS } from "../../styles/palette";
 import { MODE_LABELS } from "../../constants/modes";
+import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 import { allocateIntegerPercentages } from "./learning-data.utils";
 import {
   buildPieTarget,
@@ -140,6 +141,14 @@ Page({
   async onShow() {
     // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新
     if (this.networkStarted && !this.data.loadingDevices) {
+      let focusedDeviceId = "";
+      if (this.data.devices.length) {
+        focusedDeviceId = this.consumeReportFocusDeviceId(this.data.devices);
+      }
+      if (focusedDeviceId && focusedDeviceId !== this.data.selectedDeviceId) {
+        await this.selectDevice(focusedDeviceId);
+        return;
+      }
       if (!this.data.selectedDeviceId) {
         // 首载时无设备（或选中设备失效）：重拉设备列表，
         // 否则绑定设备后回到本页会永远停在「先绑定」空态
@@ -164,8 +173,12 @@ Page({
    */
   warmupFromCache() {
     this.cleanExpiredReportCache();
-    const cachedDevices = this.readDeviceListCache();
-    const cachedSelected = cachedDevices[0];
+    const cachedDevices: Device[] = this.readDeviceListCache();
+    // 首帧优先命中卡片交接的设备，避免先闪一下第一台孩子的报告
+    const focusDeviceId = this.readReportFocusDeviceId();
+    const cachedSelected =
+      cachedDevices.find((item) => item.id === focusDeviceId) ||
+      cachedDevices[0];
     if (!cachedSelected) return;
     this.warmedDeviceId = cachedSelected.id;
     this.setData({
@@ -179,6 +192,35 @@ Page({
     this.restoreReportCache(cachedSelected.id);
   },
 
+  /**
+   * 读取卡片交接的设备 id（不消费），供首帧缓存直出使用。
+   */
+  readReportFocusDeviceId(): string {
+    try {
+      return String(wx.getStorageSync(REPORT_FOCUS_DEVICE_KEY) || "");
+    } catch (error) {
+      return "";
+    }
+  },
+
+  /**
+   * 消费卡片交接的设备 id：命中设备列表才返回，并立即清除，保证只生效一次。
+   */
+  consumeReportFocusDeviceId(devices: Device[]): string {
+    const focusDeviceId = this.readReportFocusDeviceId();
+    if (!focusDeviceId) return "";
+
+    try {
+      wx.removeStorageSync(REPORT_FOCUS_DEVICE_KEY);
+    } catch (error) {
+      console.warn("[learning-data] 清除报告设备交接失败", error);
+    }
+
+    return devices.some((item) => item.id === focusDeviceId)
+      ? focusDeviceId
+      : "";
+  },
+
   async initialize() {
     this.networkStarted = true;
     const warmed = !!this.warmedDeviceId;
@@ -190,7 +232,9 @@ Page({
       await ensureAuthToken();
       const res = await getDeviceList();
       const devices = res.data || [];
+      const focusedDeviceId = this.consumeReportFocusDeviceId(devices);
       const selected =
+        devices.find((item) => item.id === focusedDeviceId) ||
         devices.find((item) => item.id === this.data.selectedDeviceId) ||
         devices[0];
       this.writeDeviceListCache(devices);

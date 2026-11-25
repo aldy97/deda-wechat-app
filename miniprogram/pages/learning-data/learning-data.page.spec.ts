@@ -1,5 +1,6 @@
 /** “更懂TA”家长日报页：三类汇报、设备切换、异常状态与反馈。 */
 import { installPageHarness } from "../../tests/page-harness";
+import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 
 const mockApi = {
   ensureAuthToken: jest.fn(),
@@ -843,6 +844,76 @@ describe("learning-data parent report page", () => {
       expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
       expect(page.data.selectedDeviceId).toBe("d1");
       expect(harness.wx.stopPullDownRefresh).toHaveBeenCalled();
+    });
+  });
+
+  describe("设备卡片直达（查看成长报告）：自动选中对应设备", () => {
+    beforeEach(() => {
+      // 交接 key 只在用例内显式注入，避免上个用例的 implementation 泄漏
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    });
+
+    function pendingDevice(deviceId: string) {
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === REPORT_FOCUS_DEVICE_KEY ? deviceId : "",
+      );
+    }
+
+    it("冷启动带交接设备：优先选中该设备并消费 key", async () => {
+      pendingDevice("d2");
+
+      await page.onLoad();
+      await page.onReady();
+
+      expect(page.data.selectedDeviceId).toBe("d2");
+      expect(page.data.selectedDeviceName).toBe("小红");
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d2",
+        page.data.reportDate,
+      );
+      expect(harness.wx.removeStorageSync).toHaveBeenCalledWith(
+        REPORT_FOCUS_DEVICE_KEY,
+      );
+    });
+
+    it("交接设备已解绑：回退第一台并清掉失效 key", async () => {
+      pendingDevice("gone");
+
+      await page.onLoad();
+      await page.onReady();
+
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(harness.wx.removeStorageSync).toHaveBeenCalledWith(
+        REPORT_FOCUS_DEVICE_KEY,
+      );
+    });
+
+    it("页面已加载后收到交接：切到该设备，不重拉设备列表", async () => {
+      await page.onLoad();
+      await page.onReady();
+      expect(page.data.selectedDeviceId).toBe("d1");
+
+      pendingDevice("d2");
+      await page.onShow();
+
+      expect(page.data.selectedDeviceId).toBe("d2");
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+      expect(harness.wx.removeStorageSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("交接只消费一次：之后用户手动切走，onShow 不会把人拉回来", async () => {
+      pendingDevice("d2");
+      await page.onLoad();
+      await page.onReady();
+      expect(page.data.selectedDeviceId).toBe("d2");
+
+      // 用户在报告页手动切回 d1
+      await page.selectDevice("d1");
+      harness.wx.getStorageSync.mockImplementation(() => "");
+      await page.onShow();
+
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(harness.wx.removeStorageSync).toHaveBeenCalledTimes(1);
     });
   });
 });

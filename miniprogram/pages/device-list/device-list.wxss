@@ -279,14 +279,42 @@
   width: 100%;
 }
 
-/* 左上角圆形添加设备入口 */
+/* 自定义导航栏：左侧圆形添加按钮 + 居中标题 */
+.device-nav {
+  background-color: var(--color-bg);
+}
+
+.device-nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.device-nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 50%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 圆形添加设备入口（导航栏左侧） */
 .add-device-fab {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88rpx;
-  height: 88rpx;
-  margin: 0 0 24rpx;
+  width: 64rpx;
+  height: 64rpx;
+  margin: 0;
   border-radius: 50%;
   background-color: var(--color-surface);
   border: 2rpx solid var(--color-border);
