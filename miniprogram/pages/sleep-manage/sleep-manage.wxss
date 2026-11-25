@@ -1,8 +1,62 @@
+page {
+  background-color: var(--color-kid-bg-bottom);
+}
+
 .sleep-manage-page {
   min-height: 100vh;
-  background-color: var(--color-bg);
   padding: 24rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+}
+
+/* 吉祥物与引导气泡 */
+.sleep-hero {
+  display: flex;
+  align-items: flex-start;
+  padding: 8rpx 4rpx 0;
+}
+
+.sleep-mascot {
+  flex-shrink: 0;
+  width: 160rpx;
+  height: 160rpx;
+  margin-top: 12rpx;
+}
+
+.sleep-bubble {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin-top: 28rpx;
+  padding: 28rpx 32rpx;
+  border: 2rpx solid var(--color-kid-bubble);
+  border-radius: 32rpx;
+  background-color: var(--color-kid-bubble);
+  box-shadow: 0 8rpx 24rpx var(--color-kid-shadow);
+}
+
+.sleep-bubble::before {
+  content: "";
+  position: absolute;
+  left: -14rpx;
+  top: 46rpx;
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 4rpx;
+  background-color: var(--color-kid-bubble);
+  transform: rotate(45deg);
+}
+
+.sleep-bubble-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: var(--color-title);
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.sleep-bubble-line {
+  display: block;
 }
 
 /* 顶部总开关卡片 */
@@ -10,6 +64,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 24rpx;
   background-color: var(--color-surface);
   border-radius: 24rpx;
   padding: 32rpx;

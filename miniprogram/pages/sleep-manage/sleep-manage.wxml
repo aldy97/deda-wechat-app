@@ -1,4 +1,20 @@
+<kid-gradient-bg>
 <view class="container sleep-manage-page">
+  <!-- 吉祥物与引导气泡（始终显示） -->
+  <view class="sleep-hero">
+    <image
+      class="sleep-mascot"
+      src="/static/images/kid-info/logo.png"
+      mode="aspectFit"
+    />
+    <view class="sleep-bubble">
+      <view class="sleep-bubble-text">
+        <text class="sleep-bubble-line">请设置宝贝的常规睡眠时间吧～</text>
+        <text class="sleep-bubble-line">DEDA听风原野的小居民会用温柔的声音讲故事，陪伴宝贝慢慢入睡</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 顶部：总开关 -->
   <view class="header-card">
     <view class="header-left">
@@ -212,3 +228,4 @@
     </view>
   </van-popup>
 </view>
+</kid-gradient-bg>

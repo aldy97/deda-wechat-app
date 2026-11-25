@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "哄睡管理",
   "usingComponents": {
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
     "van-switch": "@vant/weapp/switch/index",
     "van-button": "@vant/weapp/button/index",
     "van-icon": "@vant/weapp/icon/index",
