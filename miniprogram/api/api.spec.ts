@@ -1,5 +1,6 @@
 import {
   bindDevice,
+  getDeviceAboutInfo,
   getLearningStatsDaily,
   getLearningStatsModeUsage,
   getSleepConfig,
@@ -19,6 +20,27 @@ describe("learning stats daily request", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequest.mockResolvedValue({ code: 0, message: "success", data: [] });
+  });
+
+  it("loads about info from the device detail endpoint", async () => {
+    const detail = {
+      deviceId: "aabbccddeeff",
+      deviceCode: null,
+      firmwareVersion: "V1.01",
+      networkType: "WiFi",
+      macAddress: "aabbccddeeff",
+      createdAt: "2026-11-25T00:30:00.000Z",
+      id: "internal-uuid",
+    };
+    mockRequest.mockResolvedValue({ code: 0, message: "", data: detail });
+
+    const res = await getDeviceAboutInfo("dev/1");
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/devices/dev%2F1",
+    });
+    expect(res.data).toBe(detail);
   });
 
   it("serializes scope=all for the parent report trend", async () => {

@@ -1,21 +1,48 @@
-import { getDeviceAboutInfo, DeviceAboutInfo } from "../../api/api";
+import {
+  ensureAuthToken,
+  getDeviceAboutInfo,
+  getDeviceStatus,
+} from "../../api/api";
+import {
+  buildDiagnosticSections,
+  buildDiagnosticsText,
+  buildLocalEnv,
+  DiagnosticSection,
+  RawLocalEnv,
+  settle,
+  StatusError,
+} from "./about-device.utils";
+
+/** 读取本地环境信息；任一 API 不可用时由 buildLocalEnv 回退为「未获取」 */
+function readRawLocalEnv(): RawLocalEnv {
+  const raw: RawLocalEnv = {};
+  try {
+    raw.appBaseInfo = wx.getAppBaseInfo();
+  } catch (error) {
+    console.warn("[about-device] getAppBaseInfo failed", error);
+  }
+  try {
+    raw.deviceInfo = wx.getDeviceInfo();
+  } catch (error) {
+    console.warn("[about-device] getDeviceInfo failed", error);
+  }
+  return raw;
+}
 
 /**
- * 关于设备页
- * 展示设备编码、网络、固件等详细信息。
- * 点击设备编码可复制到剪贴板。
+ * 关于设备页（客服诊断视图）
+ * 聚合设备详情、实时状态与本地环境；任一接口失败只影响对应分组。
+ * 可截图，也可一键复制完整诊断文本。
  */
 Page({
   data: {
     deviceId: "",
     loading: true,
-    info: {} as DeviceAboutInfo,
-    /** 复制成功提示显示状态 */
-    showCopyToast: false,
+    refreshing: false,
+    sections: [] as DiagnosticSection[],
+    /** 详情请求失败时与「暂无设备信息」区分文案 */
+    loadFailed: false,
   },
-
-  /** 提示隐藏定时器 */
-  copyToastTimer: null as number | null,
 
   onLoad(options) {
     const deviceId = options?.id || "";
@@ -23,60 +50,103 @@ Page({
   },
 
   onReady() {
-    return this.fetchDeviceAboutInfo(this.data.deviceId);
+    return this.fetchDiagnostics();
   },
 
-  onUnload() {
-    if (this.copyToastTimer) {
-      clearTimeout(this.copyToastTimer);
+  async fetchDiagnostics(options?: { silent?: boolean }) {
+    const { deviceId } = this.data;
+    if (!deviceId) {
+      this.setData({
+        loading: false,
+        refreshing: false,
+        sections: [],
+        loadFailed: false,
+      });
+      return;
     }
-  },
 
-  /**
-   * 获取关于设备信息
-   */
-  async fetchDeviceAboutInfo(deviceId: string) {
-    this.setData({ loading: true });
+    if (!options?.silent) {
+      this.setData({ loading: true });
+    }
+    this.setData({ refreshing: true, loadFailed: false });
+
     try {
-      const res = await getDeviceAboutInfo(deviceId);
-      this.setData({ info: res.data });
+      try {
+        await ensureAuthToken();
+      } catch (error) {
+        // 令牌刷新失败仍继续尝试请求，401 由 request.ts 统一处理
+        console.warn("[about-device] ensureAuthToken failed", error);
+      }
+
+      const [detailResult, statusResult] = await Promise.all([
+        settle(getDeviceAboutInfo(deviceId)),
+        settle(getDeviceStatus(deviceId)),
+      ]);
+
+      const detail = detailResult.ok ? detailResult.value.data : null;
+      if (!detail) {
+        if (detailResult.ok) {
+          // 设备不存在/未绑定：正常空态，不弹错误
+          this.setData({ sections: [], loadFailed: false });
+        } else {
+          wx.showToast({ title: "加载失败", icon: "none" });
+          this.setData({ sections: [], loadFailed: true });
+        }
+        return;
+      }
+
+      const status = statusResult.ok ? statusResult.value.data : null;
+      const statusError: StatusError = statusResult.ok
+        ? null
+        : (statusResult.reason as { statusCode?: number })?.statusCode === 404
+          ? "not-found"
+          : "failed";
+      const env = buildLocalEnv(readRawLocalEnv());
+      const sections = buildDiagnosticSections({
+        detail,
+        status,
+        statusError,
+        env,
+      });
+
+      this.setData({ sections, loadFailed: false });
     } catch (error) {
       wx.showToast({ title: "加载失败", icon: "none" });
+      this.setData({ sections: [], loadFailed: true });
     } finally {
-      this.setData({ loading: false });
+      this.setData({ loading: false, refreshing: false });
     }
   },
 
-  /**
-   * 点击设备编码：复制到剪贴板
-   */
-  onCopyDeviceCode() {
-    const { deviceCode } = this.data.info;
-    if (!deviceCode) return;
+  /** 重新检测：静默刷新设备状态，不整页转圈 */
+  onRefresh() {
+    if (this.data.loading || this.data.refreshing) return;
+    return this.fetchDiagnostics({ silent: true });
+  },
+
+  /** 复制完整诊断文本，方便家长直接粘贴给客服 */
+  onCopyDiagnostics() {
+    const text = buildDiagnosticsText(this.data.sections);
+    if (!text) return;
 
     wx.setClipboardData({
-      data: deviceCode,
-      success: () => {
-        this.showCopySuccessToast();
-      },
+      data: text,
       fail: () => {
         wx.showToast({ title: "复制失败", icon: "none" });
       },
     });
   },
 
-  /**
-   * 显示复制成功提示，3 秒后淡出隐藏
-   */
-  showCopySuccessToast() {
-    if (this.copyToastTimer) {
-      clearTimeout(this.copyToastTimer);
-    }
+  /** 点击可复制行：写入剪贴板（成功提示由微信原生提供） */
+  onCopyRow(event: WechatMiniprogram.TouchEvent) {
+    const value = String(event?.currentTarget?.dataset?.value ?? "");
+    if (!value) return;
 
-    this.setData({ showCopyToast: true });
-
-    this.copyToastTimer = setTimeout(() => {
-      this.setData({ showCopyToast: false });
-    }, 3000);
+    wx.setClipboardData({
+      data: value,
+      fail: () => {
+        wx.showToast({ title: "复制失败", icon: "none" });
+      },
+    });
   },
 });

@@ -32,15 +32,38 @@ export function installPageHarness(): PageHarness {
     setNavigationBarTitle: jest.fn(),
     showToast: jest.fn(),
     showModal: jest.fn(),
+    setClipboardData: jest.fn(),
     createSelectorQuery: jest.fn(),
     setStorageSync: jest.fn(),
     getStorageSync: jest.fn().mockReturnValue(""),
     removeStorageSync: jest.fn(),
     stopPullDownRefresh: jest.fn(),
     // 默认开发版环境（dev 门控的联调行为默认开启，单测可按需覆盖返回值）
-    getAccountInfoSync: jest
-      .fn()
-      .mockReturnValue({ miniProgram: { envVersion: "develop" } }),
+    getAccountInfoSync: jest.fn().mockReturnValue({
+      miniProgram: { envVersion: "develop", version: "1.2.3" },
+    }),
+    getAppBaseInfo: jest.fn().mockReturnValue({
+      version: "8.0.50",
+      SDKVersion: "3.4.0",
+    }),
+    getDeviceInfo: jest.fn().mockReturnValue({
+      brand: "Apple",
+      model: "iPhone 15",
+      system: "iOS 18.2",
+    }),
+    getWindowInfo: jest.fn().mockReturnValue({
+      statusBarHeight: 20,
+      pixelRatio: 2,
+      windowWidth: 375,
+    }),
+    getMenuButtonBoundingClientRect: jest.fn().mockReturnValue({
+      top: 26,
+      height: 32,
+      bottom: 58,
+      left: 281,
+      right: 368,
+      width: 87,
+    }),
   };
   wxStub.createSelectorQuery.mockImplementation(() => {
     const query: any = {
