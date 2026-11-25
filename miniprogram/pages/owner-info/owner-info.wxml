@@ -42,7 +42,7 @@
       <view class="kid-hero">
         <elly-image
           class="kid-mascot"
-          asset-key="diagnostics/remote-probe"
+          asset-key="owner-info/mascot"
           fallback="/static/images/kid-info/logo.png"
           mode="aspectFit"
         />

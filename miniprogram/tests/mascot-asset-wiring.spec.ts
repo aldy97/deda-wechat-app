@@ -5,7 +5,7 @@
  * elly-image + 远端 manifest：按 key 取图，未命中/加载失败回退包内 logo。
  * 本 guard 焊死四件事：
  *   1. wxml 用 <elly-image> 承载吉祥物，并保留 aspectFit 显示模式
- *   2. asset-key 为已登记的 diagnostics/remote-probe
+ *   2. asset-key 使用各自的业务展示位 key（不再借用诊断探针）
  *   3. fallback 指向包内 /static/images/kid-info/logo.png 且文件真实存在
  *   4. 页面 json 注册了 elly-image 组件，且不再直接 <image src=本地 logo>
  *
@@ -22,17 +22,25 @@ const path = require("path");
 
 const MINIPROGRAM_ROOT = path.resolve(__dirname, "..");
 
-const PROBE_KEY = "diagnostics/remote-probe";
 const FALLBACK = "/static/images/kid-info/logo.png";
 
 interface MascotPage {
   name: string;
   mascotClass: string;
+  assetKey: string;
 }
 
 const PAGES: MascotPage[] = [
-  { name: "pages/owner-info/owner-info", mascotClass: "kid-mascot" },
-  { name: "pages/sleep-manage/sleep-manage", mascotClass: "sleep-mascot" },
+  {
+    name: "pages/owner-info/owner-info",
+    mascotClass: "kid-mascot",
+    assetKey: "owner-info/mascot",
+  },
+  {
+    name: "pages/sleep-manage/sleep-manage",
+    mascotClass: "sleep-mascot",
+    assetKey: "sleep-manage/mascot",
+  },
 ];
 
 function read(relative: string): string {
@@ -61,13 +69,13 @@ function findMascotTag(wxml: string, mascotClass: string): string | null {
 describe("吉祥物展示位走 elly-image", () => {
   it.each(PAGES)(
     "$name：wxml 用 elly-image 承载吉祥物，asset-key 与 fallback 正确",
-    ({ name, mascotClass }) => {
+    ({ name, mascotClass, assetKey }) => {
       const wxml = read(`${name}.wxml`);
       const attributes = findMascotTag(wxml, mascotClass);
 
       expect(attributes).not.toBeNull();
       const tag = attributes as string;
-      expect(attr(tag, "asset-key")).toBe(PROBE_KEY);
+      expect(attr(tag, "asset-key")).toBe(assetKey);
       expect(attr(tag, "fallback")).toBe(FALLBACK);
       expect(attr(tag, "mode")).toBe("aspectFit");
     },
