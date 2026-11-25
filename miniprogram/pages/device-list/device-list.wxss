@@ -372,6 +372,32 @@
   overflow: hidden;
 }
 
+/* 卡片底部按钮 */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  background-color: var(--color-brand-light);
+  border-radius: 40rpx;
+}
+
+.action-icon {
+  margin-right: 8rpx;
+}
+
+.action-text {
+  font-size: 26rpx;
+  color: var(--color-primary);
+}
+
 .current-mode-row {
   display: flex;
   align-items: center;

@@ -4,6 +4,7 @@
  */
 import { installPageHarness } from "../../tests/page-harness";
 import { localDateKey } from "./device-list.utils";
+import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 
 // wx typings 不声明 __dirname；读取 wxml 做静态断言时按 app-routing.spec.ts 的做法显式声明
 declare const __dirname: string;
@@ -878,5 +879,49 @@ describe("对话记录入口隐藏（功能暂时下线）", () => {
 
   it("onViewChat 方法保留：app-routing 的可达性判定依赖静态导航目标", () => {
     expect(typeof page.onViewChat).toBe("function");
+  });
+});
+
+describe("查看成长报告入口（设备卡片 → 更懂TA）", () => {
+  let page: any;
+
+  beforeAll(() => {
+    require("./device-list");
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    page = harness.createInstance();
+  });
+
+  it("点击卡片按钮：写入设备交接 key 并 switchTab 到更懂TA", () => {
+    page.onViewReport({ currentTarget: { dataset: { id: "dev-001" } } });
+
+    expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+      REPORT_FOCUS_DEVICE_KEY,
+      "dev-001",
+    );
+    expect(harness.wx.switchTab).toHaveBeenCalledWith({
+      url: "/pages/learning-data/learning-data",
+    });
+  });
+
+  it("缺少 data-id：不写交接、不跳转", () => {
+    page.onViewReport({ currentTarget: { dataset: {} } });
+
+    expect(harness.wx.setStorageSync).not.toHaveBeenCalled();
+    expect(harness.wx.switchTab).not.toHaveBeenCalled();
+  });
+
+  it("wxml 渲染查看成长报告按钮，对话入口仍保持隐藏", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const wxml = fs
+      .readFileSync(path.join(__dirname, "device-list.wxml"), "utf8")
+      .replace(/<!--[\s\S]*?-->/g, "");
+
+    expect(wxml).toContain("查看成长报告");
+    expect(wxml).toContain("onViewReport");
+    expect(wxml).not.toContain("查看对话");
   });
 });

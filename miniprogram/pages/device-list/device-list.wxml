@@ -118,6 +118,14 @@
         </view>
       </view>
       -->
+
+      <!-- 卡片底部：查看成长报告（跳到「更懂TA」tab 并自动选中本设备） -->
+      <view class="card-actions">
+        <view class="action-btn" bind:tap="onViewReport" data-id="{{ item.id }}">
+          <van-icon class="action-icon" name="chart-trending-o" size="32rpx" color="var(--color-primary)" />
+          <text class="action-text">查看成长报告</text>
+        </view>
+      </view>
     </view>
     </block>
   </view>

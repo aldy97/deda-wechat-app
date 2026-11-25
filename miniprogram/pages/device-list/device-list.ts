@@ -12,6 +12,7 @@ import {
   buildStatusTag,
   isTodayUsageFresh,
 } from "./device-list.utils";
+import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -374,6 +375,25 @@ Page({
     const { id } = event.currentTarget.dataset;
     wx.navigateTo({
       url: `/pages/chat-history/chat-history?id=${id}`,
+    });
+  },
+
+  /**
+   * 查看成长报告：把设备 id 交接给「更懂TA」tab 后切换过去。
+   * 该页是 tabBar 页面，只能用 switchTab 且不能带 query，因此走 storage 交接。
+   */
+  onViewReport(event: WechatMiniprogram.TouchEvent) {
+    const id = String(event?.currentTarget?.dataset?.id || "");
+    if (!id) return;
+
+    try {
+      wx.setStorageSync(REPORT_FOCUS_DEVICE_KEY, id);
+    } catch (error) {
+      console.warn("[device-list] 写入报告设备交接失败", error);
+    }
+
+    wx.switchTab({
+      url: "/pages/learning-data/learning-data",
     });
   },
 
