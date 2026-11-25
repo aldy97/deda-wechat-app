@@ -105,13 +105,48 @@
   background-color: var(--color-secondary);
 }
 
-/* 网络徽标：只在「一般/弱」与 4G 时出现，正常信号不占位 */
+/* 网络徽标：在线时常显网络类型 + WiFi 信号格 */
 .network-badge {
   display: flex;
   align-items: center;
   padding: 4rpx 12rpx;
   border-radius: 20rpx;
   font-size: 22rpx;
+}
+
+/* 信号格：三格递升；点亮格用徽标自身色调（currentColor），未点亮格同色系低透明 */
+.signal-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3rpx;
+  margin-right: 6rpx;
+}
+
+.signal-bar {
+  width: 5rpx;
+  border-radius: 2rpx;
+  background-color: currentColor;
+  opacity: 0.25;
+}
+
+.signal-bar.bar-1 {
+  height: 8rpx;
+}
+
+.signal-bar.bar-2 {
+  height: 12rpx;
+}
+
+.signal-bar.bar-3 {
+  height: 16rpx;
+}
+
+.signal-bar.bar-on {
+  opacity: 1;
+}
+
+.network-badge-text {
+  line-height: 1;
 }
 
 .network-neutral {

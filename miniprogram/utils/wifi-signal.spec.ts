@@ -1,12 +1,11 @@
 /**
- * 网络徽标映射：服务端 status 的 networkMode/wifiRssi 三态规则。
+ * 网络徽标映射：服务端 status 的 networkMode/wifiRssi 常显规则（方案 B）。
  *
  * 产品口径（2026-11-24 熊总确认）：
- * - >= -50 dBm 视为「好」，不展示（正常状态不制造噪音）；
- * - -70 ~ -50 展示「信号一般」；
- * - < -70 展示「信号弱」；
- * - 4G 展示「4G」标签，不展示格数（4G 没有 WiFi 信号强度）；
- * - 离线 / 未知 / 切网中一律不展示。
+ * - 在线时永远展示网络类型（WiFi / 4G）与信号强度；
+ * - WiFi 以信号格呈现：>= -50 dBm 3 格（好），-70 ~ -50 2 格（一般），< -70 1 格（弱）；
+ * - 4G 只展示类型标签，不展示格数（4G 没有 WiFi 信号强度）；
+ * - 离线 / 未知 / 切网中 / 脏数据一律不展示：Redis 里可能是一小时前的旧值。
  */
 import { describeNetworkBadge } from "./wifi-signal";
 
@@ -27,71 +26,71 @@ describe("describeNetworkBadge", () => {
     ).toBeNull();
   });
 
-  it("4G 展示 4G 标签，即使携带了脏 RSSI", () => {
+  it("4G 展示 4G 标签、无格数，即使携带了脏 RSSI", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "4g",
         wifiRssi: null,
       }),
-    ).toEqual({ tone: "neutral", text: "4G" });
+    ).toEqual({ tone: "neutral", text: "4G", level: null });
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "4g",
         wifiRssi: -40,
       }),
-    ).toEqual({ tone: "neutral", text: "4G" });
+    ).toEqual({ tone: "neutral", text: "4G", level: null });
   });
 
-  it("-50 边界算「好」，不展示", () => {
+  it("-50 边界算「好」，3 格 neutral", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "wifi",
         wifiRssi: -50,
       }),
-    ).toBeNull();
+    ).toEqual({ tone: "neutral", text: "WiFi", level: 3 });
   });
 
-  it("-30 这类强信号不展示", () => {
+  it("-30 这类强信号同样常显 3 格", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "wifi",
         wifiRssi: -30,
       }),
-    ).toBeNull();
+    ).toEqual({ tone: "neutral", text: "WiFi", level: 3 });
   });
 
-  it("-51 落入「信号一般」", () => {
+  it("-51 落入「一般」，2 格 warning", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "wifi",
         wifiRssi: -51,
       }),
-    ).toEqual({ tone: "warning", text: "信号一般" });
+    ).toEqual({ tone: "warning", text: "WiFi", level: 2 });
   });
 
-  it("-70 边界仍算「信号一般」", () => {
+  it("-70 边界仍算「一般」，2 格 warning", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "wifi",
         wifiRssi: -70,
       }),
-    ).toEqual({ tone: "warning", text: "信号一般" });
+    ).toEqual({ tone: "warning", text: "WiFi", level: 2 });
   });
 
-  it("-71 落入「信号弱」", () => {
+  it("-71 落入「弱」，1 格 danger", () => {
     expect(
       describeNetworkBadge({
         status: "online",
         networkMode: "wifi",
         wifiRssi: -71,
       }),
-    ).toEqual({ tone: "danger", text: "信号弱" });
+    ).toEqual({ tone: "danger", text: "WiFi", level: 1 });
   });
 
   it.each([

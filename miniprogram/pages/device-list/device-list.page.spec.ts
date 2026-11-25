@@ -324,35 +324,48 @@ describe("device-list card display mapping", () => {
       return items[0];
     }
 
-    it("wifi 强信号（-48）：不制造噪音，徽标为 null 但字段透传", async () => {
+    it("wifi 强信号（-48）：常显 3 格徽标，字段透传", async () => {
       mockWifiStatus(-48);
       const item = await enrichOne();
       expect(item.networkMode).toBe("wifi");
       expect(item.wifiRssi).toBe(-48);
-      expect(item.networkBadge).toBeNull();
+      expect(item.networkBadge).toEqual({
+        tone: "neutral",
+        text: "WiFi",
+        level: 3,
+      });
     });
 
-    it("wifi 一般（-65）：展示「信号一般」", async () => {
+    it("wifi 一般（-65）：2 格 warning", async () => {
       mockWifiStatus(-65);
       const item = await enrichOne();
       expect(item.networkBadge).toEqual({
         tone: "warning",
-        text: "信号一般",
+        text: "WiFi",
+        level: 2,
       });
     });
 
-    it("wifi 弱（-75）：展示「信号弱」", async () => {
+    it("wifi 弱（-75）：1 格 danger", async () => {
       mockWifiStatus(-75);
       const item = await enrichOne();
-      expect(item.networkBadge).toEqual({ tone: "danger", text: "信号弱" });
+      expect(item.networkBadge).toEqual({
+        tone: "danger",
+        text: "WiFi",
+        level: 1,
+      });
     });
 
-    it("4G：展示 4G 标签，wifiRssi 为 null", async () => {
+    it("4G：展示 4G 标签、无格数，wifiRssi 为 null", async () => {
       mockWifiStatus(null, { networkMode: "4g" });
       const item = await enrichOne();
       expect(item.networkMode).toBe("4g");
       expect(item.wifiRssi).toBeNull();
-      expect(item.networkBadge).toEqual({ tone: "neutral", text: "4G" });
+      expect(item.networkBadge).toEqual({
+        tone: "neutral",
+        text: "4G",
+        level: null,
+      });
     });
 
     it("离线：不展示徽标，但保留最后已知网络字段", async () => {
@@ -401,7 +414,7 @@ describe("device-list card display mapping", () => {
           status: "online",
           networkMode: "wifi",
           wifiRssi: -75,
-          networkBadge: { tone: "danger", text: "信号弱" },
+          networkBadge: { tone: "danger", text: "WiFi", level: 1 },
         },
       ]);
       // 与既有电量口径一致：非 404 失败按离线处理，不展示可能已过期的信号
@@ -420,7 +433,8 @@ describe("device-list card display mapping", () => {
       await page.loadDeviceList();
       expect(page.data.devices[0].networkBadge).toEqual({
         tone: "danger",
-        text: "信号弱",
+        text: "WiFi",
+        level: 1,
       });
 
       let resolveStatus!: (v: unknown) => void;
@@ -433,7 +447,8 @@ describe("device-list card display mapping", () => {
       await flushMicrotasks();
       expect(page.data.devices[0].networkBadge).toEqual({
         tone: "danger",
-        text: "信号弱",
+        text: "WiFi",
+        level: 1,
       });
 
       resolveStatus({
@@ -451,7 +466,12 @@ describe("device-list card display mapping", () => {
       });
       await pending;
       await flushMicrotasks();
-      expect(page.data.devices[0].networkBadge).toBeNull();
+      // 刷新拿到 -48 强信号后，徽标从 1 格升级为常显 3 格
+      expect(page.data.devices[0].networkBadge).toEqual({
+        tone: "neutral",
+        text: "WiFi",
+        level: 3,
+      });
     });
 
     it("缓存快照包含网络字段（首帧直出不丢字段）", async () => {
@@ -472,7 +492,8 @@ describe("device-list card display mapping", () => {
       expect(written[0].wifiRssi).toBe(-65);
       expect(written[0].networkBadge).toEqual({
         tone: "warning",
-        text: "信号一般",
+        text: "WiFi",
+        level: 2,
       });
     });
   });
