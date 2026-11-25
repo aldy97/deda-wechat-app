@@ -1,125 +1,182 @@
-<view class="container owner-info-page">
-  <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{ loading }}">
-    <van-loading type="spinner" size="48rpx">加载中...</van-loading>
-  </view>
-
-  <!-- 编辑表单 -->
-  <view wx:else>
-    <!-- 绑定成功引导横幅（仅 from=bind 进入时展示） -->
-    <view class="bind-guide-banner" wx:if="{{ fromBind }}">
-      <van-icon name="checked" size="36rpx" color="var(--color-success)" />
-      <view class="bind-guide-text">
-        <text class="bind-guide-title">绑定成功！</text>
-        <text class="bind-guide-subtitle">完善孩子信息，让 Elly 更懂 TA</text>
-      </view>
-    </view>
-
-    <van-cell-group inset class="form-group">
-      <van-field
-        label="名字"
-        placeholder="请输入孩子名字"
-        value="{{ form.name }}"
-        bind:change="onNameChange"
-        maxlength="20"
-        input-align="right"
-      />
-      <van-field
-        label="英文名"
-        placeholder="请输入孩子英文名（AI 称呼用）"
-        value="{{ form.englishName }}"
-        bind:change="onEnglishNameChange"
-        maxlength="50"
-        input-align="right"
-      />
-      <van-cell
-        title="性别"
-        value="{{ form.gender === 'male' ? '小王子' : (form.gender === 'female' ? '小公主' : '请选择') }}"
-        value-class="{{ form.gender ? 'cell-value-dark' : '' }}"
-        is-link
-        bind:click="onOpenGenderPicker"
-      />
-      <van-cell
-        title="生日"
-        value="{{ form.birthday || '请选择生日' }}"
-        value-class="{{ form.birthday ? 'cell-value-dark' : '' }}"
-        is-link
-        bind:click="onOpenDatePicker"
-      />
-    </van-cell-group>
-
-    <!-- 保存按钮 -->
-    <view class="save-btn-wrap">
-      <van-button
-        type="primary"
-        block
-        disabled="{{ saving }}"
-        bind:click="onSave"
-      >
-        保存
-      </van-button>
-      <!-- 绑定引导链路允许跳过 -->
+<kid-gradient-bg>
+  <view class="kid-page" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="kid-nav" style="height: {{ navBarHeight }}px;">
       <view
-        wx:if="{{ fromBind }}"
-        class="skip-bind-guide"
-        bind:tap="onSkipBindGuide"
+        class="kid-back"
+        bind:tap="onBack"
+        hover-class="kid-back-hover"
         aria-role="button"
-        aria-label="稍后再填"
-      >稍后再填</view>
-    </view>
-  </view>
-
-  <!-- 保存中遮罩 -->
-  <view class="save-overlay" wx:if="{{ saving }}">
-    <van-loading type="spinner" size="48rpx">保存中…</van-loading>
-  </view>
-
-  <!-- 日期选择弹窗 -->
-  <van-popup
-    show="{{ showDatePicker }}"
-    position="bottom"
-    bind:close="onCloseDatePicker"
-  >
-    <van-datetime-picker
-      type="date"
-      value="{{ currentDate }}"
-      bind:confirm="onDateConfirm"
-      bind:cancel="onCloseDatePicker"
-      bind:input="onDateChange"
-      min-date="{{ 0 }}"
-      max-date="{{ 1704067200000 }}"
-    />
-  </van-popup>
-
-  <!-- 性别选择弹窗 -->
-  <van-popup
-    show="{{ showGenderPicker }}"
-    position="bottom"
-    round
-    bind:close="onCancelGender"
-  >
-    <view class="gender-picker">
-      <view
-        class="gender-option {{ tempGender === 'male' ? 'active' : '' }}"
-        data-value="male"
-        bind:tap="onGenderOptionTap"
-      >小王子</view>
-      <view
-        class="gender-option {{ tempGender === 'female' ? 'active' : '' }}"
-        data-value="female"
-        bind:tap="onGenderOptionTap"
-      >小公主</view>
-      <view class="gender-actions">
-        <van-button
-          custom-class="gender-btn gender-btn-cancel"
-          bind:click="onCancelGender"
-        >取消</van-button>
-        <van-button
-          type="primary"
-          custom-class="gender-btn"
-          bind:click="onConfirmGender"
-        >确定</van-button>
+        aria-label="返回"
+      >
+        <van-icon name="arrow-left" size="44rpx" color="var(--color-title)" />
       </view>
     </view>
-  </van-popup>
-</view>
+
+    <view wx:if="{{ loading }}" class="kid-state">
+      <van-loading type="spinner" size="48rpx" color="var(--color-kid-accent)">加载中...</van-loading>
+    </view>
+
+    <view wx:elif="{{ loadError }}" class="kid-state kid-state-error">
+      <text class="kid-state-text">孩子信息加载失败，请稍后重试</text>
+      <view
+        class="kid-retry"
+        bind:tap="onRetryLoad"
+        aria-role="button"
+        aria-label="重新加载"
+      >重新加载</view>
+    </view>
+
+    <block wx:else>
+      <view class="kid-paws">
+        <block wx:for="{{ pawItems }}" wx:key="*this">
+          <view wx:if="{{ index > 0 }}" class="kid-paw-line"></view>
+          <view class="kid-paw">
+            <view class="kid-paw-toe kid-paw-toe-1"></view>
+            <view class="kid-paw-toe kid-paw-toe-2"></view>
+            <view class="kid-paw-toe kid-paw-toe-3"></view>
+            <view class="kid-paw-pad"></view>
+          </view>
+        </block>
+      </view>
+
+      <view class="kid-hero">
+        <image
+          class="kid-mascot"
+          src="/static/images/kid-info/logo.png"
+          mode="aspectFit"
+        />
+        <view class="kid-bubble">
+          <view class="kid-bubble-text">
+            <text class="kid-bubble-line">请先录入宝贝的信息吧～</text>
+            <text class="kid-bubble-line">我们会根据孩子的年龄调整对话的语速、用词和内容，请尽量准确填写</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="kid-genders">
+        <view
+          class="kid-gender {{ form.gender === 'male' ? 'kid-gender-active' : '' }}"
+          data-gender="male"
+          bind:tap="onSelectGender"
+          aria-role="button"
+          aria-label="选择小王子"
+        >
+          <view class="kid-gender-art">
+            <image
+              class="kid-gender-img"
+              src="/static/images/kid-info/avatar_boy.webp"
+              mode="aspectFill"
+            />
+          </view>
+          <text class="kid-gender-label">小王子</text>
+        </view>
+
+        <view
+          class="kid-gender {{ form.gender === 'female' ? 'kid-gender-active' : '' }}"
+          data-gender="female"
+          bind:tap="onSelectGender"
+          aria-role="button"
+          aria-label="选择小公主"
+        >
+          <view class="kid-gender-art">
+            <image
+              class="kid-gender-img"
+              src="/static/images/kid-info/avatar_girl.webp"
+              mode="aspectFill"
+            />
+          </view>
+          <text class="kid-gender-label">小公主</text>
+        </view>
+      </view>
+
+      <view class="kid-hint">
+        <view class="kid-hint-icon"><van-icon name="question-o" size="26rpx" color="var(--color-kid-hint)" /></view>
+        <text class="kid-hint-text">孩子性别影响推荐内容，别填错了哦</text>
+      </view>
+
+      <view class="kid-rows">
+        <view class="kid-row">
+          <text class="kid-row-label">昵称</text>
+          <input
+            class="kid-row-input"
+            value="{{ form.name }}"
+            maxlength="20"
+            placeholder="请输入昵称"
+            placeholder-class="kid-placeholder"
+            adjust-position="{{ true }}"
+            cursor-spacing="24"
+            bindinput="onNameChange"
+          />
+        </view>
+
+        <view class="kid-row">
+          <text class="kid-row-label">英文名</text>
+          <input
+            class="kid-row-input"
+            value="{{ form.englishName }}"
+            maxlength="50"
+            placeholder="AI 称呼用（选填）"
+            placeholder-class="kid-placeholder"
+            adjust-position="{{ true }}"
+            cursor-spacing="24"
+            bindinput="onEnglishNameChange"
+          />
+        </view>
+
+        <view
+          class="kid-row"
+          bind:tap="onOpenDatePicker"
+          aria-role="button"
+          aria-label="选择生日"
+        >
+          <text class="kid-row-label">生日</text>
+          <view class="kid-row-value">
+            <text
+              class="kid-row-text {{ form.birthday ? '' : 'kid-row-text-placeholder' }}"
+            >{{ form.birthday || '请选择生日' }}</text>
+            <van-icon name="arrow" size="30rpx" color="var(--color-kid-arrow)" />
+          </view>
+        </view>
+      </view>
+
+      <view class="kid-hint kid-hint-birthday">
+        <view class="kid-hint-icon"><van-icon name="info-o" size="26rpx" color="var(--color-kid-hint)" /></view>
+        <text class="kid-hint-text">信息仅用于DEDA听风原野小居民与孩子的对话，我们将严格保护孩子隐私。</text>
+      </view>
+
+      <view class="kid-cta-wrap">
+        <view
+          class="kid-cta {{ saving ? 'kid-cta-busy' : '' }}"
+          bind:tap="onSave"
+          hover-class="kid-cta-hover"
+          aria-role="button"
+          aria-label="保存孩子信息"
+        >
+          <van-loading
+            wx:if="{{ saving }}"
+            type="spinner"
+            size="40rpx"
+            color="var(--color-surface)"
+          />
+          <view wx:else class="kid-cta-arrow"></view>
+        </view>
+      </view>
+    </block>
+
+    <van-popup
+      show="{{ showDatePicker }}"
+      position="bottom"
+      bind:close="onCloseDatePicker"
+    >
+      <van-datetime-picker
+        type="date"
+        value="{{ currentDate }}"
+        min-date="{{ 0 }}"
+        max-date="{{ maxBirthday }}"
+        bind:confirm="onDateConfirm"
+        bind:cancel="onCloseDatePicker"
+        bind:input="onDateChange"
+      />
+    </van-popup>
+  </view>
+</kid-gradient-bg>

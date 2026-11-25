@@ -65,6 +65,20 @@ page {
   --color-trend-5: var(--color-danger);
   --color-trend-6: var(--color-icon);
 
+  /* 孩子信息页（logo 小象蓝的欢快版本，沿用紫版的分段渐变方式） */
+  --color-kid-bg-top: #8fb4d6;
+  --color-kid-bg-mid: #c8e0f2;
+  --color-kid-bg-bottom: #eaf5fc;
+  --color-kid-accent: #5c8fc2;
+  --color-kid-accent-soft: rgba(92, 143, 194, 0.22);
+  --color-kid-cta-start: #5c8fc2;
+  --color-kid-cta-end: #8fb4d6;
+  --color-kid-hint: #6e8497;
+  --color-kid-arrow: #a6c2d9;
+  --color-kid-paw: rgba(255, 255, 255, 0.55);
+  --color-kid-bubble: rgba(255, 255, 255, 0.86);
+  --color-kid-shadow: rgba(51, 103, 153, 0.1);
+
   /* 不支持 CSS 变量的原生配置由同步脚本读取 */
   --color-nav-bg: var(--color-surface);
   --color-tab-text: var(--color-secondary);

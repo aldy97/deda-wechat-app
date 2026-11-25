@@ -1,0 +1,9 @@
+.kid-gradient-bg {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    var(--color-kid-bg-top) 0%,
+    var(--color-kid-bg-mid) 46%,
+    var(--color-kid-bg-bottom) 100%
+  );
+}
