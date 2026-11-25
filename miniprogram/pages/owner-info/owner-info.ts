@@ -4,9 +4,19 @@ import { formatDate } from "../../utils/date";
 /** 设备列表缓存键（与 device-list 保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
+/** 取不到系统信息时的导航栏兜底尺寸（px） */
+const DEFAULT_STATUS_BAR_HEIGHT = 20;
+const DEFAULT_NAV_BAR_HEIGHT = 44;
+
+/** 未填生日时日期选择器的默认落点 */
+const DEFAULT_BIRTHDAY = new Date("2020-05-20").getTime();
+
+type Gender = "male" | "female";
+
 /**
  * 孩子信息页
- * 展示并编辑当前设备对应的孩子名字、英文名、性别与生日。
+ * 绑定成功后自动引导进入，也可从设备设置页再次进入编辑。
+ * 展示并编辑昵称、英文名、性别与生日。
  */
 Page({
   data: {
@@ -15,8 +25,18 @@ Page({
     fromBind: false,
     /** 页面加载中 */
     loading: true,
+    /** 加载失败 */
+    loadError: false,
     /** 保存中 */
     saving: false,
+    /** 自定义导航栏：状态栏高度（px） */
+    statusBarHeight: DEFAULT_STATUS_BAR_HEIGHT,
+    /** 自定义导航栏：导航栏内容高度（px），与微信胶囊按钮垂直对齐 */
+    navBarHeight: DEFAULT_NAV_BAR_HEIGHT,
+    /** 生日选择器上限：今天 */
+    maxBirthday: Date.now(),
+    /** 装饰性爪印分隔（固定 4 枚） */
+    pawItems: ["paw-1", "paw-2", "paw-3", "paw-4"],
     /** 表单数据 */
     form: {
       name: "",
@@ -27,102 +47,115 @@ Page({
     /** 是否显示日期选择弹窗 */
     showDatePicker: false,
     /** 日期选择器当前值的时间戳 */
-    currentDate: new Date("2020-05-20").getTime(),
-    /** 是否显示性别选择弹窗 */
-    showGenderPicker: false,
-    /** 性别弹窗中的临时选中值（确定后才写回表单） */
-    tempGender: null as "male" | "female" | null,
+    currentDate: DEFAULT_BIRTHDAY,
   },
 
-  onLoad(options) {
+  onLoad(options: Record<string, string>) {
     const deviceId = options?.id || "";
+    this.applyNavBarMetrics();
     this.setData({
       deviceId,
       fromBind: options?.from === "bind",
+      maxBirthday: Date.now(),
+      loading: Boolean(deviceId),
+      loadError: !deviceId,
     });
   },
 
   onReady() {
+    if (!this.data.deviceId) return;
     return this.fetchOwnerInfo(this.data.deviceId);
   },
 
   /**
-   * 获取主人信息
+   * 自定义导航栏尺寸：状态栏高度 + 菜单胶囊按钮的水平中线对齐。
+   * 老基础库或测试环境取不到胶囊信息时退回 20 / 44 默认值。
+   */
+  applyNavBarMetrics() {
+    let statusBarHeight = DEFAULT_STATUS_BAR_HEIGHT;
+    let navBarHeight = DEFAULT_NAV_BAR_HEIGHT;
+
+    try {
+      const info = wx.getWindowInfo();
+      if (typeof info?.statusBarHeight === "number") {
+        statusBarHeight = info.statusBarHeight;
+      }
+
+      const menu = wx.getMenuButtonBoundingClientRect();
+      if (menu && menu.top >= statusBarHeight && menu.height > 0) {
+        navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+      }
+    } catch (error) {
+      // 取不到系统信息时保留默认值，页面仍可正常渲染
+    }
+
+    this.setData({ statusBarHeight, navBarHeight });
+  },
+
+  /**
+   * 获取孩子信息
    */
   async fetchOwnerInfo(deviceId: string) {
-    this.setData({ loading: true });
+    this.setData({ loading: true, loadError: false });
     try {
       const res = await getOwnerInfo(deviceId);
       const info = res.data;
-      const name = info?.name ?? "";
-      const englishName = info?.englishName ?? "";
-      const birthday = info?.birthday ?? "";
-      const gender = info?.gender ?? null;
+      const birthday = info?.birthday || "";
       this.setData({
-        "form.name": name,
-        "form.englishName": englishName,
+        "form.name": info?.name || "",
+        "form.englishName": info?.englishName || "",
         "form.birthday": birthday,
-        "form.gender": gender,
-        currentDate: birthday
-          ? new Date(birthday).getTime()
-          : new Date("2020-05-20").getTime(),
+        "form.gender": info?.gender ?? null,
+        currentDate: birthday ? new Date(birthday).getTime() : DEFAULT_BIRTHDAY,
       });
     } catch (error) {
-      wx.showToast({ title: "加载失败", icon: "none" });
+      this.setData({ loadError: true });
     } finally {
       this.setData({ loading: false });
     }
   },
 
   /**
-   * 名字输入变化
+   * 加载失败后重试
    */
-  onNameChange(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ "form.name": event.detail });
+  onRetryLoad() {
+    return this.fetchOwnerInfo(this.data.deviceId);
+  },
+
+  /**
+   * 昵称输入变化
+   */
+  onNameChange(event: WechatMiniprogram.Input) {
+    this.setData({ "form.name": event.detail.value });
   },
 
   /**
    * 英文名输入变化
    */
-  onEnglishNameChange(event: WechatMiniprogram.TouchEvent) {
-    this.setData({ "form.englishName": event.detail });
+  onEnglishNameChange(event: WechatMiniprogram.Input) {
+    this.setData({ "form.englishName": event.detail.value });
   },
 
   /**
-   * 打开性别选择弹窗
+   * 性别卡片点选；再次点击已选项则取消，允许为空
    */
-  onOpenGenderPicker() {
+  onSelectGender(event: WechatMiniprogram.TouchEvent) {
+    const value = event.currentTarget.dataset.gender as Gender | undefined;
+    if (value !== "male" && value !== "female") return;
     this.setData({
-      showGenderPicker: true,
-      tempGender: this.data.form.gender || null,
+      "form.gender": this.data.form.gender === value ? null : value,
     });
   },
 
   /**
-   * 性别弹窗中点击选项；再次点击已选项则取消（允许为空）
+   * 返回：绑定引导链路等同「稍后再填」，设置链路回设置页
    */
-  onGenderOptionTap(event: WechatMiniprogram.TouchEvent) {
-    const value = event.currentTarget.dataset.value as "male" | "female";
-    this.setData({
-      tempGender: this.data.tempGender === value ? null : value,
-    });
-  },
-
-  /**
-   * 关闭性别选择弹窗（不保存临时选择）
-   */
-  onCancelGender() {
-    this.setData({ showGenderPicker: false });
-  },
-
-  /**
-   * 确认性别选择
-   */
-  onConfirmGender() {
-    this.setData({
-      "form.gender": this.data.tempGender,
-      showGenderPicker: false,
-    });
+  onBack() {
+    if (this.data.fromBind) {
+      wx.switchTab({ url: "/pages/device-list/device-list" });
+      return;
+    }
+    wx.navigateBack();
   },
 
   /**
@@ -131,7 +164,7 @@ Page({
   onOpenDatePicker() {
     const currentDate = this.data.form.birthday
       ? new Date(this.data.form.birthday).getTime()
-      : new Date("2020-05-20").getTime();
+      : DEFAULT_BIRTHDAY;
     this.setData({ showDatePicker: true, currentDate });
   },
 
@@ -147,8 +180,7 @@ Page({
    */
   onDateChange(event: WechatMiniprogram.TouchEvent) {
     const timestamp = event.detail as unknown as number;
-    const date = formatDate(timestamp, "YYYY-MM-DD");
-    this.setData({ "form.birthday": date });
+    this.setData({ "form.birthday": formatDate(timestamp, "YYYY-MM-DD") });
   },
 
   /**
@@ -156,28 +188,29 @@ Page({
    */
   onDateConfirm(event: WechatMiniprogram.TouchEvent) {
     const timestamp = event.detail as unknown as number;
-    const date = formatDate(timestamp, "YYYY-MM-DD");
     this.setData({
-      "form.birthday": date,
+      "form.birthday": formatDate(timestamp, "YYYY-MM-DD"),
       showDatePicker: false,
     });
   },
 
   /**
-   * 保存主人信息
+   * 保存孩子信息
    */
   async onSave() {
-    const name = this.data.form.name || "";
-    if (!name.trim()) {
-      wx.showToast({ title: "请输入名字", icon: "none" });
+    if (this.data.saving) return;
+
+    const name = (this.data.form.name || "").trim();
+    if (!name) {
+      wx.showToast({ title: "请输入昵称", icon: "none" });
       return;
     }
 
     this.setData({ saving: true });
     try {
-      const { name, englishName, birthday, gender } = this.data.form;
+      const { englishName, birthday, gender } = this.data.form;
       await updateOwnerInfo(this.data.deviceId, {
-        name: name || undefined,
+        name,
         englishName: englishName || undefined,
         birthday: birthday || undefined,
         gender: gender || null,
@@ -198,13 +231,6 @@ Page({
       this.setData({ saving: false });
       wx.showToast({ title: "保存失败", icon: "none" });
     }
-  },
-
-  /**
-   * 绑定引导链路「稍后再填」：跳过档案填写，回设备列表
-   */
-  onSkipBindGuide() {
-    wx.switchTab({ url: "/pages/device-list/device-list" });
   },
 
   /**

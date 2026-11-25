@@ -1,12 +1,11 @@
 {
+  "navigationStyle": "custom",
   "navigationBarTitleText": "孩子信息",
   "usingComponents": {
-    "van-field": "@vant/weapp/field/index",
-    "van-cell": "@vant/weapp/cell/index",
-    "van-cell-group": "@vant/weapp/cell-group/index",
-    "van-button": "@vant/weapp/button/index",
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-loading": "@vant/weapp/loading/index",
     "van-popup": "@vant/weapp/popup/index",
-    "van-datetime-picker": "@vant/weapp/datetime-picker/index",
-    "van-loading": "@vant/weapp/loading/index"
+    "van-datetime-picker": "@vant/weapp/datetime-picker/index"
   }
 }
