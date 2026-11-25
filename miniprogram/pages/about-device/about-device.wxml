@@ -12,25 +12,31 @@
 
   <block wx:else>
     <!-- 三个分组：设备身份 / 运行状态 / 版本与环境 -->
-    <van-cell-group
+    <view
       wx:for="{{ sections }}"
       wx:key="key"
-      inset
-      title="{{ item.title }}"
-      class="info-group"
+      class="info-group-wrap"
+      bind:longpress="onLongPressVersion"
+      data-key="{{ item.key }}"
     >
-      <van-cell
-        wx:for="{{ item.rows }}"
-        wx:for-item="row"
-        wx:key="key"
-        title="{{ row.label }}"
-        value="{{ row.value }}"
-        value-class="info-value"
-        is-link="{{ row.copyable }}"
-        bind:click="onCopyRow"
-        data-value="{{ row.copyable ? row.value : '' }}"
-      />
-    </van-cell-group>
+      <van-cell-group
+        inset
+        title="{{ item.title }}"
+        class="info-group"
+      >
+        <van-cell
+          wx:for="{{ item.rows }}"
+          wx:for-item="row"
+          wx:key="key"
+          title="{{ row.label }}"
+          value="{{ row.value }}"
+          value-class="info-value"
+          is-link="{{ row.copyable }}"
+          bind:click="onCopyRow"
+          data-value="{{ row.copyable ? row.value : '' }}"
+        />
+      </van-cell-group>
+    </view>
 
     <view class="diagnostics-footer">
       <view class="diagnostics-actions">

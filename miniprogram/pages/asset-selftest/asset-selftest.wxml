@@ -1,0 +1,40 @@
+<view class="asset-selftest-page">
+  <view wx:if="{{ release }}" class="gate">
+    <text class="gate__text">仅开发/体验版可用</text>
+  </view>
+
+  <block wx:else>
+    <view class="section">
+      <text class="section__title">包内 fallback 图</text>
+      <image
+        class="section__img"
+        src="/static/images/kid-info/logo.png"
+        mode="aspectFit"
+      />
+    </view>
+
+    <view class="section">
+      <text class="section__title">远程素材探针</text>
+      <view class="probe-img">
+        <elly-image
+          asset-key="diagnostics/remote-probe"
+          fallback="/static/images/kid-info/logo.png"
+        />
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section__label">manifest 状态：{{ manifestStatus }}</text>
+      <text class="section__label">manifest 版本：{{ manifestVersion || '未获取' }}</text>
+      <text class="section__label">探针 URL：{{ probeUrl || '未命中' }}</text>
+      <button
+        class="refresh-btn"
+        loading="{{ refreshing }}"
+        disabled="{{ refreshing }}"
+        bind:tap="onForceRefresh"
+      >
+        强制刷新
+      </button>
+    </view>
+  </block>
+</view>

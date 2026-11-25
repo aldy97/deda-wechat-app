@@ -137,6 +137,12 @@ Page({
     });
   },
 
+  /** 长按「版本与环境」分组进入素材自检页（隐藏入口，不增加显眼菜单） */
+  onLongPressVersion(event: WechatMiniprogram.TouchEvent) {
+    if (event?.currentTarget?.dataset?.key !== "version") return;
+    wx.navigateTo({ url: "/pages/asset-selftest/asset-selftest" });
+  },
+
   /** 点击可复制行：写入剪贴板（成功提示由微信原生提供） */
   onCopyRow(event: WechatMiniprogram.TouchEvent) {
     const value = String(event?.currentTarget?.dataset?.value ?? "");

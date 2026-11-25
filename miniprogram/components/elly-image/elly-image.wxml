@@ -1,0 +1,14 @@
+<view class="elly-image">
+  <image
+    wx:if="{{ !errored }}"
+    class="elly-image__img"
+    src="{{ displayedSrc }}"
+    mode="{{ mode }}"
+    lazy-load="{{ lazyLoad }}"
+    webp="{{ useWebp }}"
+    binderror="onImageError"
+  />
+  <view wx:else class="elly-image__placeholder">
+    <text class="elly-image__placeholder-text">图片加载失败</text>
+  </view>
+</view>
