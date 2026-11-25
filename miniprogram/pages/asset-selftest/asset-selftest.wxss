@@ -1,0 +1,56 @@
+.asset-selftest-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background-color: var(--color-bg);
+}
+
+.gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 160rpx 0;
+}
+
+.gate__text {
+  font-size: 28rpx;
+  color: var(--color-secondary);
+}
+
+.section {
+  margin-bottom: 32rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background-color: var(--color-surface);
+}
+
+.section__title {
+  display: block;
+  margin-bottom: 16rpx;
+  font-size: 28rpx;
+  color: var(--color-title);
+}
+
+.section__label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  color: var(--color-body);
+  word-break: break-all;
+}
+
+.section__img {
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.probe-img {
+  width: 320rpx;
+  height: 320rpx;
+}
+
+.refresh-btn {
+  margin-top: 16rpx;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border-radius: 12rpx;
+}

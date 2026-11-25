@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "素材自检",
+  "usingComponents": {
+    "elly-image": "/components/elly-image/elly-image"
+  }
+}

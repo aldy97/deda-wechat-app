@@ -11,10 +11,11 @@
     "palette:icons": "python3 scripts/sync-tab-icons.py",
     "palette:check": "node scripts/check-palette.js",
     "test": "jest",
+    "test:assets:cov": "jest --config jest.assets.config.js --coverage",
     "prepare": "husky",
     "guard:no-js": "files=$(git diff --cached --name-only --diff-filter=AM | grep -E '^(miniprogram/.+\\.js|\\.runtime/.*)$' || true); if [ -n \"$files\" ]; then echo \"$files\" | xargs git restore --staged --; echo '⚠️ 以下 .js 编译产物/运行时文件已自动移出暂存区，不会进入提交（路线二：仓库只存 .ts 源码）'; echo \"$files\"; fi; exit 0",
     "guard:artifacts": "node scripts/check-artifacts.js",
-    "pre-commit": "cd miniprogram && npx tsc --noEmit && cd .. && npm run guard:artifacts && npx jest && node --test repo-tests/*.mjs"
+    "pre-commit": "cd miniprogram && npx tsc --noEmit && cd .. && npm run guard:artifacts && npx jest && npm run test:assets:cov && node --test repo-tests/*.mjs"
   },
   "lint-staged": {
     "*.{ts,js,wxml,wxss,json,md}": [

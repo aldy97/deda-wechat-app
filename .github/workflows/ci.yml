@@ -31,6 +31,9 @@ jobs:
       - name: 完整单元测试
         run: npm test -- --runInBand
 
+      - name: 素材模块覆盖率闸口（100%）
+        run: npm run test:assets:cov
+
       - name: 构建（tsc 编译产物，仅存在于 CI 环境，不进仓库）
         run: npm run build
 

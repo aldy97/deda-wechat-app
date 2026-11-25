@@ -1,0 +1,17 @@
+/**
+ * 展示型 Elly 素材的展示位 key 注册表。
+ *
+ * 远端 manifest 只下发这里登记过的 key；小程序侧按 key 渲染，
+ * 拉取失败 / key 缺失 / 图片失败时统一回退包内 fallback。
+ */
+export const APP_ASSET_KEYS = {
+  /** 远程素材探针：用于验证 manifest 拉取与远程图片渲染链路 */
+  DIAGNOSTICS_REMOTE_PROBE: "diagnostics/remote-probe",
+} as const;
+
+export type AppAssetKey = (typeof APP_ASSET_KEYS)[keyof typeof APP_ASSET_KEYS];
+
+/** 展示位中文标签，供自检页等开发者视图使用 */
+export const APP_ASSET_LABELS: Record<AppAssetKey, string> = {
+  [APP_ASSET_KEYS.DIAGNOSTICS_REMOTE_PROBE]: "远程素材探针",
+};

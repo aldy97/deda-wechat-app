@@ -292,4 +292,22 @@ describe("about-device page", () => {
       expect.objectContaining({ title: "复制失败" }),
     );
   });
+
+  it("长按版本分组进入素材自检页", () => {
+    page.onLongPressVersion({
+      currentTarget: { dataset: { key: "version" } },
+    });
+
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/asset-selftest/asset-selftest",
+    });
+  });
+
+  it("长按非版本分组不跳转", () => {
+    page.onLongPressVersion({
+      currentTarget: { dataset: { key: "identity" } },
+    });
+
+    expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+  });
 });

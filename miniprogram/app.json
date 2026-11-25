@@ -14,7 +14,8 @@
     "pages/mine/mine",
     "pages/child-list/child-list",
     "pages/child-info/child-info",
-    "pages/feedback/feedback"
+    "pages/feedback/feedback",
+    "pages/asset-selftest/asset-selftest"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {
