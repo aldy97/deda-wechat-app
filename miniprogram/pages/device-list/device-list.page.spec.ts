@@ -506,15 +506,6 @@ describe("device-list card display mapping", () => {
       });
     });
 
-    it("点击音量控制 → 携带设备 id 跳转控制页", () => {
-      page.onVolumeControl({
-        currentTarget: { dataset: { id: "dev-001" } },
-      });
-      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
-        url: "/pages/device-control/device-control?id=dev-001",
-      });
-    });
-
     it("空列表：不自动绑定（DEV001 联调逻辑已下线），停留空态", async () => {
       mockApi.ensureAuthToken.mockResolvedValue(undefined);
       mockApi.getDeviceList.mockResolvedValue({

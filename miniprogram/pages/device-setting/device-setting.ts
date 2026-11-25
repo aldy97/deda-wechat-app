@@ -22,6 +22,18 @@ Page({
   },
 
   /**
+   * 音量控制：跳转现有音量控制页
+   */
+  onVolumeSetting() {
+    if (!this.data.deviceId) return;
+    wx.navigateTo({
+      url: `/pages/device-control/device-control?id=${encodeURIComponent(
+        this.data.deviceId,
+      )}`,
+    });
+  },
+
+  /**
    * 关于设备：跳转关于设备页
    */
   onAboutDevice() {

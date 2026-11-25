@@ -35,6 +35,22 @@ describe("device-setting 删除设备交互", () => {
     expect(bare.data.deviceId).toBe("");
   });
 
+  it("设备设置页展示音量控制 item：点击跳转音量控制页", () => {
+    page.onVolumeSetting();
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/device-control/device-control?id=dev-1",
+    });
+  });
+
+  it("缺少 deviceId：点击音量控制不跳转", () => {
+    const bare = harness.createInstance();
+    bare.onLoad(undefined);
+
+    bare.onVolumeSetting();
+
+    expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+  });
+
   it("点删除开弹窗；取消关弹窗且不发请求", async () => {
     page.onDeleteDevice();
     expect(page.data.showDeleteModal).toBe(true);

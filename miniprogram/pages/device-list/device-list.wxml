@@ -103,15 +103,11 @@
         </view>
       </view>
 
-      <!-- 卡片底部：保留对话与设备功能入口，不再进入学习分析 -->
+      <!-- 卡片底部：保留查看对话入口，不再进入学习分析；音量控制已迁到设备设置页 -->
       <view class="card-actions">
         <view class="action-btn" bind:tap="onViewChat" data-id="{{ item.id }}">
           <van-icon class="action-icon" name="chat-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看对话</text>
-        </view>
-        <view class="action-btn" bind:tap="onVolumeControl" data-id="{{ item.id }}">
-          <van-icon class="action-icon" name="volume-o" size="32rpx" color="var(--color-primary)" />
-          <text class="action-text">音量控制</text>
         </view>
       </view>
     </view>

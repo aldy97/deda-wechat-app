@@ -12,6 +12,11 @@
       bind:click="onOwnerInfo"
     />
     <van-cell
+      title="音量控制"
+      is-link
+      bind:click="onVolumeSetting"
+    />
+    <van-cell
       title="说明书"
       is-link
       bind:click="onManual"
