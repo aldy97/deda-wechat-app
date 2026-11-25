@@ -6,11 +6,18 @@ import {
   DeviceTodayUsage,
   ensureAuthToken,
 } from "../../api/api";
-import { describeNetworkBadge, NetworkBadge } from "../../utils/wifi-signal";
+import {
+  describeNetworkBadge,
+  NetworkBadge,
+  smoothNetworkBadge,
+} from "../../utils/wifi-signal";
 import {
   buildCardCopy,
+  buildDeviceListSignature,
   buildStatusTag,
   isTodayUsageFresh,
+  smoothBatteryDisplay,
+  smoothChargingDisplay,
 } from "./device-list.utils";
 import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 
@@ -20,6 +27,16 @@ const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 /** 自定义导航栏兜底尺寸（px）：老基础库或测试环境取不到胶囊信息时使用 */
 const DEFAULT_STATUS_BAR_HEIGHT = 20;
 const DEFAULT_NAV_BAR_HEIGHT = 44;
+
+/** 前台降频轮询间隔：60s（切 tab / 后台由 onHide 停表） */
+const STATUS_POLL_INTERVAL = 60 * 1000;
+
+/** 每台设备上一轮的原始状态（仅内存）：用于电量/充电态/信号格抖动平滑 */
+interface RawStatusSnapshot {
+  battery: number | null;
+  isCharging: boolean | null;
+  wifiRssi: number | null;
+}
 
 /** 设备展示项 = 基础信息 + 状态信息 + 卡片内容 */
 interface DeviceDisplayItem extends Device {
@@ -68,8 +85,21 @@ Page({
   /** 首次加载是否已发起（onShow 每次触发，仅在首次之后才重复拉取） */
   hasInitialLoaded: false,
 
+  /** 60s 前台轮询定时器（0 = 未启动） */
+  pollTimer: 0 as any,
+
+  /** 列表刷新在途：轮询与下拉刷新共用，避免请求叠加 */
+  refreshInFlight: false,
+
+  /** 上一次渲染的签名：轮询到点后数据没变就不 setData */
+  lastSignature: "",
+
+  /** 每台设备上一轮的原始状态（仅内存，不渲染不缓存），用于抖动平滑 */
+  lastRawStatusById: null as Map<string, RawStatusSnapshot> | null,
+
   onLoad() {
     this.applyNavBarMetrics();
+    this.lastRawStatusById = new Map();
   },
 
   /**
@@ -98,14 +128,46 @@ Page({
   },
 
   onReady() {
-    this.loadDeviceList();
+    return this.loadDeviceList().then(() => {
+      this.startStatusPolling();
+    });
   },
 
   onShow() {
-    // 真机首个 onShow 早于 onReady，跳过避免双请求；之后每次回前台静默刷新
+    // 真机首个 onShow 早于 onReady，跳过避免双请求；之后每次回前台静默刷新并重启计时
     if (this.hasInitialLoaded) {
       this.loadDeviceList({ silent: true });
+      this.startStatusPolling();
     }
+  },
+
+  onHide() {
+    this.stopStatusPolling();
+  },
+
+  onUnload() {
+    this.stopStatusPolling();
+  },
+
+  /** 启动 60s 前台降频轮询（页面可见时才跑，先清旧表避免重复计时） */
+  startStatusPolling() {
+    this.stopStatusPolling();
+    this.pollTimer = setInterval(() => {
+      this.pollDevicesOnce();
+    }, STATUS_POLL_INTERVAL);
+  },
+
+  stopStatusPolling() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = 0;
+    }
+  },
+
+  /** 轮询一轮：走静默刷新；已有请求在途时跳过，避免叠加 */
+  pollDevicesOnce() {
+    if (this.refreshInFlight) return;
+    return this.loadDeviceList({ silent: true });
   },
 
   /**
@@ -115,6 +177,9 @@ Page({
    * - silent（回前台/下拉刷新）：不翻 loading、不清空列表，失败保留旧数据
    */
   async loadDeviceList(options?: { silent?: boolean }) {
+    if (this.refreshInFlight) return;
+    this.refreshInFlight = true;
+
     const silent = !!options?.silent;
     this.hasInitialLoaded = true;
 
@@ -132,8 +197,12 @@ Page({
         devices,
         silent ? this.data.devices : undefined,
       );
-      this.setData({ devices: displayItems, loading: false });
+      const signature = buildDeviceListSignature(displayItems);
       this.writeDeviceListCache(displayItems);
+      if (signature !== this.lastSignature) {
+        this.lastSignature = signature;
+        this.setData({ devices: displayItems, loading: false });
+      }
     } catch (error) {
       if (silent || hasRendered || restored) {
         // 静默刷新失败：保留旧数据，不打扰用户
@@ -147,6 +216,8 @@ Page({
         icon: "none",
       });
       this.setData({ devices: [], loading: false });
+    } finally {
+      this.refreshInFlight = false;
     }
   },
 
@@ -222,9 +293,14 @@ Page({
     const previousById = new Map(
       (previous || []).map((item) => [item.id, item]),
     );
+    if (!this.lastRawStatusById) {
+      this.lastRawStatusById = new Map();
+    }
+    const rawStatusById = this.lastRawStatusById;
     return Promise.all(
       devices.map(async (device) => {
         const prev = previousById.get(device.id);
+        const prevRaw = rawStatusById.get(device.id);
         const item: DeviceDisplayItem = {
           ...device,
           todayUsage: device.todayUsage ?? null,
@@ -260,19 +336,33 @@ Page({
             item.wifiRssi = null;
             item.networkBadge = null;
             item.lastActiveAt = null;
+            rawStatusById.delete(item.id);
           } else {
+            const nextRaw: RawStatusSnapshot = {
+              battery: status.battery ?? null,
+              isCharging: status.isCharging ?? null,
+              wifiRssi: status.wifiRssi ?? null,
+            };
             item.status = status.status;
-            item.battery = status.battery;
-            item.isCharging = status.isCharging;
+            item.battery = smoothBatteryDisplay(
+              prev?.battery ?? null,
+              nextRaw.battery,
+            );
+            item.isCharging = smoothChargingDisplay(
+              prev?.isCharging ?? null,
+              prevRaw?.isCharging ?? null,
+              nextRaw.isCharging,
+            );
             item.networkMode = status.networkMode ?? null;
-            item.wifiRssi = status.wifiRssi ?? null;
-            item.networkBadge = describeNetworkBadge({
+            item.wifiRssi = nextRaw.wifiRssi;
+            item.networkBadge = smoothNetworkBadge(prev?.networkBadge ?? null, {
               status: item.status,
               networkMode: item.networkMode,
               wifiRssi: item.wifiRssi,
             });
             item.lastActiveAt = status.lastActiveAt;
             item.lastActiveText = this.formatLastActive(status.lastActiveAt);
+            rawStatusById.set(item.id, nextRaw);
           }
         } catch (error) {
           item.status = item.status || "offline";

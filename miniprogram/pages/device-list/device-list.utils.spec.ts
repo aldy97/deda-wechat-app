@@ -1,9 +1,12 @@
 import {
   buildCardCopy,
+  buildDeviceListSignature,
   buildStatusTag,
   formatDurationMinutes,
   isTodayUsageFresh,
   localDateKey,
+  smoothBatteryDisplay,
+  smoothChargingDisplay,
 } from "./device-list.utils";
 
 const usage = (turnCount: number, durationMinutes: number) => ({
@@ -110,5 +113,117 @@ describe("buildStatusTag", () => {
 
   it("状态未知且非加载中：按离线兜底", () => {
     expect(buildStatusTag({})).toEqual({ label: "离线", tone: "offline" });
+  });
+});
+
+describe("buildDeviceListSignature（60s 轮询的渲染去重判据）", () => {
+  const base = () => [
+    {
+      id: "d1",
+      status: "online" as const,
+      battery: 65,
+      isCharging: false,
+      networkMode: "wifi" as const,
+      networkBadge: {
+        tone: "warning" as const,
+        text: "WiFi",
+        level: 2 as const,
+      },
+      statusNotFound: false,
+      lastActiveText: "最近活跃 1 分钟前",
+      cardTitle: "今天聊了 12 分钟",
+      cardSubtitle: "3 轮对话",
+      cardDesc: "一起读了绘本",
+      statusLabel: "在线",
+      statusTone: "online" as const,
+      todayUsage: {
+        date: "2026-11-25",
+        durationMinutes: 12,
+        turnCount: 3,
+      },
+    },
+  ];
+
+  it("同一快照签名稳定", () => {
+    expect(buildDeviceListSignature(base())).toBe(
+      buildDeviceListSignature(base()),
+    );
+  });
+
+  it("空列表签名稳定", () => {
+    expect(buildDeviceListSignature([])).toBe(buildDeviceListSignature([]));
+  });
+
+  it.each([
+    ["电量", { battery: 60 }],
+    ["状态", { status: "offline" as const }],
+    [
+      "徽标格数",
+      {
+        networkBadge: {
+          tone: "danger" as const,
+          text: "WiFi",
+          level: 1 as const,
+        },
+      },
+    ],
+    ["卡片标题", { cardTitle: "今天还没聊" }],
+    ["最近活跃", { lastActiveText: "最近活跃 2 分钟前" }],
+    [
+      "今日对话轮数",
+      { todayUsage: { date: "2026-11-25", durationMinutes: 12, turnCount: 4 } },
+    ],
+  ])("%s 变化即视为需要重渲染", (_label, patch) => {
+    const next = base();
+    Object.assign(next[0], patch);
+    expect(buildDeviceListSignature(next)).not.toBe(
+      buildDeviceListSignature(base()),
+    );
+  });
+
+  it("非展示字段（statusLoading）不参与签名", () => {
+    const prev = base() as any[];
+    const next = base() as any[];
+    next[0].statusLoading = true;
+    next[0].wifiRssi = -45;
+    expect(buildDeviceListSignature(next)).toBe(buildDeviceListSignature(prev));
+  });
+});
+
+describe("smoothBatteryDisplay（电量显示 deadband）", () => {
+  it("首轮直接用原始值", () => {
+    expect(smoothBatteryDisplay(null, 65)).toBe(65);
+  });
+
+  it("变化小于 2 个百分点：沿用旧显示", () => {
+    expect(smoothBatteryDisplay(65, 66)).toBe(65);
+    expect(smoothBatteryDisplay(65, 64)).toBe(65);
+  });
+
+  it("变化达到 2 个百分点：接受新值", () => {
+    expect(smoothBatteryDisplay(65, 63)).toBe(63);
+    expect(smoothBatteryDisplay(65, 67)).toBe(67);
+  });
+
+  it("未上报（null）立即清空显示", () => {
+    expect(smoothBatteryDisplay(65, null)).toBeNull();
+  });
+});
+
+describe("smoothChargingDisplay（插拔抖动需连续两轮确认）", () => {
+  it("首轮没有原始快照：直接用原始值", () => {
+    expect(smoothChargingDisplay(null, null, true)).toBe(true);
+  });
+
+  it("原始值刚变化：沿用旧显示", () => {
+    expect(smoothChargingDisplay(false, false, true)).toBe(false);
+  });
+
+  it("连续两轮原始值一致：接受新显示", () => {
+    expect(smoothChargingDisplay(false, true, true)).toBe(true);
+  });
+
+  it("未上报（null）立即清空显示", () => {
+    expect(smoothChargingDisplay(true, true, null)).toBeNull();
   });
 });

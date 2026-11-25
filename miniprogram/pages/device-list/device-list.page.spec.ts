@@ -19,6 +19,13 @@ jest.mock("../../api/api", () => mockApi);
 
 const harness = installPageHarness();
 
+// onReady 会起 60s 轮询定时器：每个用例结束后统一触发 onUnload 清表，避免悬挂句柄拖住 jest
+afterEach(() => {
+  harness.createdInstances.splice(0).forEach((instance) => {
+    instance.onUnload?.();
+  });
+});
+
 async function flushMicrotasks(times = 10) {
   for (let i = 0; i < times; i += 1) {
     await Promise.resolve();
@@ -923,5 +930,205 @@ describe("查看成长报告入口（设备卡片 → 更懂TA）", () => {
     expect(wxml).toContain("查看成长报告");
     expect(wxml).toContain("onViewReport");
     expect(wxml).not.toContain("查看对话");
+  });
+});
+
+describe("我的设备 60s 前台降频轮询", () => {
+  let page: any;
+
+  const listDevice = { id: "dev-001", name: "样机", todayUsage: null };
+  const baseStatus = {
+    deviceId: "dev-001",
+    status: "online",
+    battery: 65,
+    isCharging: false,
+    networkMode: "wifi",
+    wifiRssi: -60,
+    lastActiveAt: "2026-11-20T00:00:00.000Z",
+  };
+
+  beforeAll(() => {
+    require("./device-list");
+  });
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    page = harness.createInstance();
+    mockApi.ensureAuthToken.mockResolvedValue("token");
+    mockApi.getDeviceList.mockResolvedValue({ data: [listDevice] });
+    mockApi.getDeviceStatus.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: baseStatus,
+    });
+  });
+
+  afterEach(() => {
+    page.onUnload();
+    jest.useRealTimers();
+  });
+
+  async function boot() {
+    await page.onLoad();
+    await page.onReady();
+    await flushMicrotasks();
+  }
+
+  it("onReady 起表：未到 60s 不刷，到点静默刷新一次", async () => {
+    await boot();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(59_999);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(1);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+  });
+
+  it("上一轮仍在途：跳过本轮，不叠加请求", async () => {
+    await boot();
+    mockApi.getDeviceList.mockReturnValueOnce(new Promise(() => {}));
+
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+  });
+
+  it("onHide 停表：之后不再自动刷新", async () => {
+    await boot();
+    page.onHide();
+
+    jest.advanceTimersByTime(180_000);
+    await flushMicrotasks();
+
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+  });
+
+  it("冷启动首个 onShow（onReady 之前）：不发请求、不起表", async () => {
+    page.onShow();
+    await flushMicrotasks();
+
+    expect(mockApi.getDeviceList).not.toHaveBeenCalled();
+    expect(page.pollTimer).toBeFalsy();
+
+    await page.onReady();
+    await flushMicrotasks();
+
+    expect(page.pollTimer).toBeTruthy();
+  });
+
+  it("重复 onHide / onUnload 幂等：没有定时器也不报错", () => {
+    expect(() => {
+      page.onHide();
+      page.onUnload();
+    }).not.toThrow();
+  });
+
+  it("重复 onHide / onUnload 幂等：没有定时器也不报错", () => {
+    expect(() => {
+      page.onHide();
+      page.onUnload();
+    }).not.toThrow();
+  });
+
+  it("onShow 立即刷一次并重新计时", async () => {
+    await boot();
+    page.onHide();
+    jest.advanceTimersByTime(30_000);
+
+    page.onShow();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(3);
+  });
+
+  it("下拉刷新不重置 60s 计时：到点仍会轮询", async () => {
+    await boot();
+    jest.advanceTimersByTime(30_000);
+
+    await page.onPullDownRefresh();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+
+    jest.advanceTimersByTime(30_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(3);
+  });
+
+  it("数据没变：轮询到点也不 setData", async () => {
+    await boot();
+    const setDataCalls = page.setData.mock.calls.length;
+
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+
+    expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
+    expect(page.setData.mock.calls.length).toBe(setDataCalls);
+  });
+
+  it("信号在阈值附近抖动：信号格不跳变", async () => {
+    await boot();
+    expect(page.data.devices[0].networkBadge.level).toBe(2);
+
+    mockApi.getDeviceStatus.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { ...baseStatus, wifiRssi: -48 },
+    });
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+
+    expect(page.data.devices[0].networkBadge.level).toBe(2);
+  });
+
+  it("电量 ±1% 抖动：沿用旧显示；掉 2% 才更新", async () => {
+    await boot();
+    expect(page.data.devices[0].battery).toBe(65);
+
+    mockApi.getDeviceStatus.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { ...baseStatus, battery: 66 },
+    });
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(page.data.devices[0].battery).toBe(65);
+
+    mockApi.getDeviceStatus.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { ...baseStatus, battery: 63 },
+    });
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(page.data.devices[0].battery).toBe(63);
+  });
+
+  it("充电态需连续两轮确认：插拔抖动不改显示", async () => {
+    await boot();
+    expect(page.data.devices[0].isCharging).toBe(false);
+
+    mockApi.getDeviceStatus.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { ...baseStatus, isCharging: true },
+    });
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(page.data.devices[0].isCharging).toBe(false);
+
+    jest.advanceTimersByTime(60_000);
+    await flushMicrotasks();
+    expect(page.data.devices[0].isCharging).toBe(true);
   });
 });
