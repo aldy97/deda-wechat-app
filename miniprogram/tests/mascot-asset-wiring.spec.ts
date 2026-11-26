@@ -39,7 +39,7 @@ const PAGES: MascotPage[] = [
   {
     name: "pages/sleep-manage/sleep-manage",
     mascotClass: "sleep-mascot",
-    assetKey: "sleep-manage/mascot",
+    assetKey: "owner-info/mascot",
   },
 ];
 
@@ -96,6 +96,16 @@ describe("吉祥物展示位走 elly-image", () => {
       expect(rawImage.test(wxml)).toBe(false);
     },
   );
+
+  it("两页页头吉祥物共用同一个展示位 key", () => {
+    const keys = PAGES.map(({ name, mascotClass }) => {
+      const attributes = findMascotTag(read(`${name}.wxml`), mascotClass);
+      return attributes ? attr(attributes, "asset-key") : null;
+    });
+    expect(keys).toHaveLength(2);
+    expect(new Set(keys).size).toBe(1);
+    expect(keys[0]).toBe("owner-info/mascot");
+  });
 
   it("fallback 包内图真实存在", () => {
     const relative = FALLBACK.replace(/^\/+/, "");
