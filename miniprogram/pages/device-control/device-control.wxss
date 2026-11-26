@@ -8,7 +8,7 @@
   padding: 120rpx 0;
 }
 
-/* 自绘音量步进器：交互上只允许以 10 为步长，音量未知时按钮禁用 */
+/* 自绘音量步进器：交互上只允许以 10 为步长，音量未知或离线时按钮禁用 */
 .volume-stepper {
   display: flex;
   align-items: center;
@@ -43,32 +43,6 @@
   color: var(--color-heading);
 }
 
-.mode-card {
-  padding: 28rpx;
-  margin-top: 24rpx;
-}
-
-.mode-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-}
-
-.mode-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 500;
-}
-
-.coming-soon-tag {
-  font-size: 22rpx;
-  color: var(--color-secondary);
-  background-color: var(--color-neutral-soft);
-  padding: 4rpx 12rpx;
-  border-radius: 16rpx;
-}
-
 /* 离线 / 设备不存在提示 */
 .status-hint {
   margin: 16rpx 32rpx 0;
@@ -81,10 +55,4 @@
 
 .actions {
   margin-top: 48rpx;
-}
-
-.current-mode-text {
-  color: var(--color-success);
-  font-weight: 600;
-  font-size: 28rpx;
 }

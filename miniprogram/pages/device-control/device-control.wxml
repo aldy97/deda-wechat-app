@@ -9,12 +9,8 @@
   <!-- 控制面板 -->
   <view wx:else>
     <van-cell-group inset class="card">
-      <van-cell title="当前对话模式" wx:if="{{ currentModeDisplay }}">
-        <text class="current-mode-text" slot="right-icon">{{ currentModeDisplay }}</text>
-      </van-cell>
-
       <!-- 音量：契约 3.6 中唯一真实下发的控制项。自绘步进器，只允许以 10 为步长；
-           设备未上报音量时显示 -- 且两侧按钮禁用，不用猜测值下发 -->
+           设备未上报音量时显示 --；离线或音量未知时两侧按钮禁用 -->
       <van-cell title="音量">
         <view class="volume-stepper" slot="right-icon">
           <view
@@ -34,26 +30,6 @@
     <view class="status-hint" wx:if="{{ statusHint }}">
       <text class="status-hint-text">{{ statusHint }}</text>
     </view>
-
-    <!-- 设备电源 / 工作模式：协议暂未支持，UI 暂时隐藏（2026-11-20）
-    <van-cell-group inset class="card">
-      <van-cell title="设备电源" label="协议暂未支持，敬请期待">
-        <van-switch checked="{{ false }}" disabled slot="right-icon" />
-      </van-cell>
-    </van-cell-group>
-
-    <view class="card mode-card">
-      <view class="mode-title-row">
-        <text class="mode-title">工作模式</text>
-        <text class="coming-soon-tag">敬请期待</text>
-      </view>
-      <van-radio-group value="" disabled>
-        <van-radio name="study" disabled>学习模式</van-radio>
-        <van-radio name="play" disabled>娱乐模式</van-radio>
-        <van-radio name="rest" disabled>休息模式</van-radio>
-      </van-radio-group>
-    </view>
-    -->
 
     <view class="actions">
       <van-button type="primary" block bind:click="onRefresh">

@@ -4,16 +4,15 @@
  * 契约 3.6：POST /devices/:id/control 中仅 action=volume 真实下发。
  * 覆盖：onLoad 参数兜底、音量未知初值（不读本机缓存）、status 四态
  * （online/offline/404/异常 fail-open）、10 步长吸附（非整十先归整）、
- * 边界与未知态禁用、失败回滚、last-wins 串行补发、离线防御。
- * formatModeDisplay 的 3 条分支锁定保留。
+ * 边界与未知态禁用、失败回滚、last-wins 串行补发、离线防御；
+ * 以及 10s 前台轮询（上线自动解锁、轮询失败不回退、生命周期停表）。
+ * 2026-11-26 起页面不再展示对话模式，模式相关用例已移除。
  */
 import { installPageHarness } from "../../tests/page-harness";
 
 const mockApi = {
   controlDeviceVolume: jest.fn(),
   getDeviceStatus: jest.fn(),
-  getDeviceCurrentConfig: jest.fn(),
-  ensureAuthToken: jest.fn(),
 };
 jest.mock("../../api/api", () => mockApi);
 
@@ -39,39 +38,12 @@ const CONTROL_OK = {
 function mockStatusResolve(data: Record<string, unknown>) {
   mockApi.getDeviceStatus.mockResolvedValue({ code: 0, message: "", data });
 }
-function mockConfigResolve() {
-  mockApi.ensureAuthToken.mockResolvedValue(undefined);
-  mockApi.getDeviceCurrentConfig.mockResolvedValue({
-    code: 0,
-    message: "",
-    data: null,
-  });
-}
 
-describe("device-control mode display", () => {
-  let page: any;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    page = harness.createInstance();
-  });
-
-  function format(config: Record<string, unknown>): string {
-    return page.formatModeDisplay({ deviceId: "dev-001", ...config });
+async function flushMicrotasks(times = 10) {
+  for (let i = 0; i < times; i += 1) {
+    await Promise.resolve();
   }
-
-  it("free_chat 模式展示模式名", () => {
-    expect(format({ mode: "free_chat" })).toBe("自由对话");
-  });
-
-  it("历史教材模式 key 回退为原始 key（教材功能已删除）", () => {
-    expect(format({ mode: "textbook_learning" })).toBe("textbook_learning");
-  });
-
-  it("未知 mode 回退为原始 key", () => {
-    expect(format({ mode: "some_future_mode" })).toBe("some_future_mode");
-  });
-});
+}
 
 describe("device-control 音量控制交互", () => {
   let page: any;
@@ -80,9 +52,12 @@ describe("device-control 音量控制交互", () => {
     jest.clearAllMocks();
     // clearAllMocks 不清除 mockImplementation，显式复位 storage 桩防串扰
     harness.wx.getStorageSync.mockImplementation(() => "");
-    mockConfigResolve();
     mockStatusResolve(ONLINE_STATUS);
     page = harness.createInstance();
+  });
+
+  afterEach(() => {
+    page.onUnload();
   });
 
   /**
@@ -209,21 +184,12 @@ describe("device-control 音量控制交互", () => {
       expect(page.data.volumeUnknown).toBe(true);
     });
 
-    it("点击刷新状态：重新拉取 status 与当前配置", async () => {
+    it("点击刷新状态：重新拉取 status", async () => {
       await loadPage(80);
 
       await page.onRefresh();
 
       expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
-      expect(mockApi.getDeviceCurrentConfig).toHaveBeenCalledWith("dev-1");
-    });
-
-    it("当前配置拉取失败：不阻塞音量控制", async () => {
-      mockApi.getDeviceCurrentConfig.mockRejectedValue(new Error("boom"));
-      await loadPage(80);
-
-      expect(page.data.controlDisabled).toBe(false);
-      expect(page.data.volume).toBe(80);
     });
   });
 
@@ -390,5 +356,153 @@ describe("device-control 音量控制交互", () => {
       );
       expect(page.data.lastCommittedVolume).toBe(100);
     });
+  });
+});
+
+describe("device-control 10s 前台状态轮询", () => {
+  let page: any;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    harness.wx.getStorageSync.mockImplementation(() => "");
+    mockStatusResolve(ONLINE_STATUS);
+    mockApi.controlDeviceVolume.mockResolvedValue(CONTROL_OK);
+    page = harness.createInstance();
+  });
+
+  afterEach(() => {
+    page.onUnload();
+    jest.useRealTimers();
+  });
+
+  async function boot(status: Record<string, unknown> = ONLINE_STATUS) {
+    mockStatusResolve(status);
+    page.onLoad({ id: "dev-1" });
+    await page.onReady();
+    await flushMicrotasks();
+  }
+
+  it("onReady 起表：10s 内不请求，到点静默刷新一次", async () => {
+    await boot();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(9_999);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(1);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it("首个 onShow 早于 onReady：不重复发请求", async () => {
+    page.onLoad({ id: "dev-1" });
+    page.onShow();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).not.toHaveBeenCalled();
+
+    await page.onReady();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it("离线时轮询到设备上线：自动解锁步进器", async () => {
+    await boot({ ...ONLINE_STATUS, status: "offline" });
+    expect(page.data.controlDisabled).toBe(true);
+
+    mockStatusResolve({ ...ONLINE_STATUS, status: "online", volume: 80 });
+    jest.advanceTimersByTime(10_000);
+    await flushMicrotasks();
+
+    expect(page.data.deviceOnline).toBe(true);
+    expect(page.data.controlDisabled).toBe(false);
+    expect(page.data.statusHint).toBe("");
+  });
+
+  it("轮询网络异常：保留已展示音量与在线态，不回退成未知", async () => {
+    await boot();
+    mockApi.getDeviceStatus.mockRejectedValueOnce(new Error("Network error"));
+
+    jest.advanceTimersByTime(10_000);
+    await flushMicrotasks();
+
+    expect(page.data.volume).toBe(80);
+    expect(page.data.controlDisabled).toBe(false);
+    expect(page.data.statusHint).toBe("");
+  });
+
+  it("轮询 404：切到设备不存在态并禁用", async () => {
+    await boot();
+    mockApi.getDeviceStatus.mockRejectedValueOnce(
+      Object.assign(new Error("HTTP 404"), { statusCode: 404 }),
+    );
+
+    jest.advanceTimersByTime(10_000);
+    await flushMicrotasks();
+
+    expect(page.data.statusNotFound).toBe(true);
+    expect(page.data.controlDisabled).toBe(true);
+    expect(page.data.volume).toBeNull();
+    expect(page.data.statusHint).toBe("设备不存在或已解绑");
+  });
+
+  it("status 请求在途时手动刷新：跳过叠加", async () => {
+    let resolveStatus: (v: unknown) => void = () => {};
+    mockApi.getDeviceStatus.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveStatus = resolve)),
+    );
+
+    page.onLoad({ id: "dev-1" });
+    const ready = page.onReady();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    await page.onRefresh();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    resolveStatus({ code: 0, message: "", data: ONLINE_STATUS });
+    await ready;
+    await flushMicrotasks();
+  });
+
+  it("onHide / onShow / onUnload：停表、回前台立即刷新并重新起表", async () => {
+    await boot();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    page.onHide();
+    jest.advanceTimersByTime(20_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(1);
+
+    page.onShow();
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(2);
+
+    jest.advanceTimersByTime(10_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(3);
+
+    page.onUnload();
+    jest.advanceTimersByTime(20_000);
+    await flushMicrotasks();
+    expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(3);
+  });
+
+  it("提交成功后的静默窗口：旧状态不覆盖乐观音量", async () => {
+    await boot(); // 80
+    jest.advanceTimersByTime(5_000);
+    await page.onVolumePlus(); // 90，静默窗口到 t+6s
+
+    mockStatusResolve({ ...ONLINE_STATUS, volume: 80 });
+    jest.advanceTimersByTime(5_000); // t=10s 轮询，仍在静默窗口内
+    await flushMicrotasks();
+    expect(page.data.volume).toBe(90);
+    expect(page.data.lastCommittedVolume).toBe(90);
+
+    jest.advanceTimersByTime(10_000); // t=20s，窗口已过，以设备真值为准
+    await flushMicrotasks();
+    expect(page.data.volume).toBe(80);
+    expect(page.data.lastCommittedVolume).toBe(80);
   });
 });
