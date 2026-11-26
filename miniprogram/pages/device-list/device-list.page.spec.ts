@@ -570,6 +570,15 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("来信反馈 banner", () => {
+    it("点击 banner → 跳转反馈页", () => {
+      page.onFeedbackHeroTap();
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/feedback/feedback",
+      });
+    });
+  });
+
   describe("SWR 缓存首帧直出与静默刷新", () => {
     beforeEach(() => {
       // getStorageSync 的 mockImplementation 不被 clearAllMocks 清除，按用例隔离

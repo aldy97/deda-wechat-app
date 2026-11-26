@@ -10,6 +10,65 @@
   padding: 120rpx 0;
 }
 
+/* 来信反馈 banner：代码版式 + 插画槽位，配色只取色板变量 */
+.feedback-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 20rpx 24rpx 28rpx;
+  margin-bottom: 32rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(
+    135deg,
+    var(--color-mode-5-soft) 0%,
+    var(--color-surface) 68%
+  );
+}
+
+.feedback-hero__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.feedback-hero__title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-heading);
+}
+
+.feedback-hero__subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--color-mode-5);
+}
+
+.feedback-hero__desc-group {
+  margin-top: 10rpx;
+}
+
+.feedback-hero__desc {
+  display: block;
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: var(--color-body);
+}
+
+.feedback-hero__art {
+  flex-shrink: 0;
+  display: block;
+  width: 168rpx;
+  height: 168rpx;
+  margin-left: 16rpx;
+}
+
+.feedback-hero-hover {
+  opacity: 0.92;
+}
+
 /* 设备卡片 */
 .device-card {
   position: relative;
