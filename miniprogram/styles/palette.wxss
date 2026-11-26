@@ -79,6 +79,12 @@ page {
   --color-kid-bubble: rgba(255, 255, 255, 0.86);
   --color-kid-shadow: rgba(51, 103, 153, 0.1);
 
+  /* 哄睡入口：带困意的深夜蓝（首页哄睡管理 banner 专用） */
+  --color-sleep-deep: #33415f;
+  --color-sleep-deep-end: #222c45;
+  --color-sleep-title: #f4f7fc;
+  --color-sleep-subtitle: #c4cde1;
+
   /* 不支持 CSS 变量的原生配置由同步脚本读取 */
   --color-nav-bg: var(--color-surface);
   --color-tab-text: var(--color-secondary);
