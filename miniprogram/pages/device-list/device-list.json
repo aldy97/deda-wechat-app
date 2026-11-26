@@ -3,6 +3,7 @@
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "usingComponents": {
+    "device-switch-dropdown": "/components/device-switch-dropdown/device-switch-dropdown",
     "van-card": "@vant/weapp/card/index",
     "van-button": "@vant/weapp/button/index",
     "van-loading": "@vant/weapp/loading/index",

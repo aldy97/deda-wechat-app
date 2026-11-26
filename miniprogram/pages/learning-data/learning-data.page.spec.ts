@@ -2,6 +2,8 @@
 import { installPageHarness } from "../../tests/page-harness";
 import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
 
+declare const __dirname: string;
+
 const mockApi = {
   ensureAuthToken: jest.fn(),
   getDeviceList: jest.fn(),
@@ -335,34 +337,91 @@ describe("learning-data parent report page", () => {
     expect(page.data.loadingUsage).toBe(false);
   });
 
-  it("opens and closes the child dropdown at the switch control", async () => {
+  it("首载把当前孩子写入共享选择", async () => {
     await page.onLoad();
     await page.onReady();
 
-    page.onDeviceSwitch();
-    expect(page.data.deviceDropdownVisible).toBe(true);
-
-    page.onCloseDeviceDropdown();
-    expect(page.data.deviceDropdownVisible).toBe(false);
+    expect(page.data.selectedDeviceId).toBe("d1");
+    expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+      "selected_device_id",
+      "d1",
+    );
   });
 
-  it("selects a child from the dropdown and closes it before reloading", async () => {
+  it("缓存首帧：按共享选择直出对应孩子", () => {
+    harness.wx.getStorageSync.mockImplementation((key: string) => {
+      if (key === "device_list_cache") return devices;
+      if (key === "selected_device_id") return "d2";
+      return "";
+    });
+    try {
+      page.warmupFromCache();
+
+      expect(page.data.selectedDeviceId).toBe("d2");
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明" },
+        { id: "d2", name: "小红" },
+      ]);
+    } finally {
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    }
+  });
+
+  it("设备切换走共享 dropdown 组件，页面不再维护展开态", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const wxml = fs.readFileSync(
+      path.join(__dirname, "learning-data.wxml"),
+      "utf8",
+    );
+    const json = JSON.parse(
+      fs.readFileSync(path.join(__dirname, "learning-data.json"), "utf8"),
+    );
+
+    expect(wxml).toContain("<device-switch-dropdown");
+    expect(wxml).toContain('bind:change="onDeviceChange"');
+    expect(wxml).not.toContain("device-dropdown");
+    expect(json.usingComponents["device-switch-dropdown"]).toBe(
+      "/components/device-switch-dropdown/device-switch-dropdown",
+    );
+    expect(page.onDeviceSwitch).toBeUndefined();
+    expect(page.onCloseDeviceDropdown).toBeUndefined();
+    expect(page.onSelectDeviceOption).toBeUndefined();
+    expect(page.data.deviceDropdownVisible).toBeUndefined();
+  });
+
+  it("从 dropdown 选择孩子：落 storage 并重载该孩子报告", async () => {
     await page.onLoad();
     await page.onReady();
-    page.onDeviceSwitch();
     jest.clearAllMocks();
 
-    await page.onSelectDeviceOption({
-      currentTarget: { dataset: { id: "d2" } },
-    });
+    await page.onDeviceChange({ detail: { deviceId: "d2" } });
 
-    expect(page.data.deviceDropdownVisible).toBe(false);
     expect(page.data.selectedDeviceId).toBe("d2");
+    expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+      "selected_device_id",
+      "d2",
+    );
     expect(mockApi.getLearningStatsModeUsage).toHaveBeenCalledWith("d2", 7);
     expect(mockApi.getParentReport).toHaveBeenCalledWith(
       "d2",
       page.data.reportDate,
     );
+  });
+
+  it("冷启动沿用上次选中的孩子（跨页共享选择）", async () => {
+    harness.wx.getStorageSync.mockImplementation((key: string) =>
+      key === "selected_device_id" ? "d2" : "",
+    );
+    try {
+      await page.onLoad();
+      await page.onReady();
+
+      expect(page.data.selectedDeviceId).toBe("d2");
+      expect(page.data.selectedDeviceName).toBe("小红");
+    } finally {
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    }
   });
 
   it("keeps the current charts visible while the next child is loading", async () => {

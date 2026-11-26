@@ -1,45 +1,15 @@
 <view class="container learning-data-page" bind:tap="onDismissUsageTooltip">
-  <view
-    wx:if="{{ deviceDropdownVisible }}"
-    class="device-dropdown-mask"
-    bind:tap="onCloseDeviceDropdown"
-    aria-hidden="true"
-  ></view>
   <view class="report-heading">
     <view class="heading-copy">
       <text class="heading-title">成长报告</text>
     </view>
-    <view class="device-switch-wrap {{ deviceDropdownVisible ? 'device-switch-wrap-open' : '' }}">
-      <button
-        class="device-switch {{ devices.length > 1 ? 'device-switch-active' : '' }}"
-        bind:tap="onDeviceSwitch"
-        aria-label="切换孩子设备"
-        aria-haspopup="menu"
-        aria-expanded="{{ deviceDropdownVisible }}"
-      >
-        <text class="device-switch-name">{{ loadingDevices ? '加载设备中' : selectedDeviceName }}</text>
-        <view
-          wx:if="{{ devices.length > 1 }}"
-          class="device-switch-arrow {{ deviceDropdownVisible ? 'device-switch-arrow-open' : '' }}"
-          aria-hidden="true"
-        ></view>
-      </button>
-      <view wx:if="{{ deviceDropdownVisible }}" class="device-dropdown" aria-role="menu">
-        <view
-          wx:for="{{ devices }}"
-          wx:key="id"
-          class="device-dropdown-item {{ item.id === selectedDeviceId ? 'device-dropdown-item-selected' : '' }}"
-          data-id="{{ item.id }}"
-          hover-class="device-dropdown-item-hover"
-          bind:tap="onSelectDeviceOption"
-          aria-role="menuitem"
-          aria-label="切换到{{ item.childProfile.name || item.childProfile.englishName || item.name }}"
-        >
-          <text class="device-dropdown-name">{{ item.childProfile.name || item.childProfile.englishName || item.name }}</text>
-          <text wx:if="{{ item.id === selectedDeviceId }}" class="device-dropdown-check" aria-hidden="true">✓</text>
-        </view>
-      </view>
-    </view>
+    <device-switch-dropdown
+      devices="{{ deviceOptions }}"
+      selected-id="{{ selectedDeviceId }}"
+      selected-name="{{ selectedDeviceName }}"
+      loading="{{ loadingDevices }}"
+      bind:change="onDeviceChange"
+    />
   </view>
 
   <block wx:if="{{ loadingDevices }}">

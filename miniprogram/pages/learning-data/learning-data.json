@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "更懂TA",
   "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "device-switch-dropdown": "/components/device-switch-dropdown/device-switch-dropdown"
+  }
 }

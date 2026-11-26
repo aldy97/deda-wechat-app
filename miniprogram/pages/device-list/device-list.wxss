@@ -29,12 +29,12 @@
   );
 }
 
-/* 哄睡管理入口：深夜蓝底，右侧插画位暂留空，尺寸与 banner 等比 */
+/* 哄睡管理入口：与来信 banner 同款浅色渐变（深夜蓝近黑，已废弃） */
 .sleep-manage-hero {
   background: linear-gradient(
     135deg,
-    var(--color-sleep-deep) 0%,
-    var(--color-sleep-deep-end) 100%
+    var(--color-mode-5-soft) 0%,
+    var(--color-surface) 68%
   );
 }
 
@@ -48,7 +48,7 @@
   font-size: 36rpx;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--color-sleep-title);
+  color: var(--color-heading);
 }
 
 .sleep-manage-hero__subtitle {
@@ -56,7 +56,7 @@
   margin-top: 8rpx;
   font-size: 22rpx;
   line-height: 1.4;
-  color: var(--color-sleep-subtitle);
+  color: var(--color-mode-5);
 }
 
 /* 右侧插画：与 banner 插画同尺寸，换成远程展示位后版式不变 */
@@ -385,7 +385,7 @@
   width: 100%;
 }
 
-/* 自定义导航栏：左侧圆形添加按钮 + 居中标题 */
+/* 自定义导航栏：左侧孩子设备下拉 + 圆形添加按钮 */
 .device-nav {
   background-color: var(--color-bg);
 }
@@ -394,20 +394,14 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 16rpx;
   padding: 0 24rpx;
 }
 
-.device-nav-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 50%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 34rpx;
-  font-weight: 600;
-  color: var(--color-text);
+.device-nav-switch {
+  display: block;
+  flex-shrink: 0;
+  max-width: 300rpx;
 }
 
 /* 圆形添加设备入口（导航栏左侧） */

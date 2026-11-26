@@ -11,7 +11,7 @@
  *   3. 位置：设备卡片（含空态）之后、「听风原野信箱」之前
  *   4. 可点击且带悬停态 / 无障碍标签，路由目标是新页 sleep-config
  *   5. 右侧插画用 <elly-image>，asset-key / fallback / mode / lazy-load 正确且尺寸与 banner 一致
- *   6. 深夜蓝底色来自色板变量，不在业务样式里直写色值
+ *   6. 底色与来信 banner 同款浅色渐变（浅紫 → 白），前景深色，且只用色板变量
  *   7. 展示位 key 已登记并带中文标签
  */
 export {};
@@ -110,7 +110,7 @@ describe("设备列表哄睡管理入口位", () => {
   });
 
   it("排在设备卡片（含空态）之后、来信 banner 之前", () => {
-    const cardIndex = wxml.indexOf('wx:for="{{ devices }}"');
+    const cardIndex = wxml.indexOf('class="device-card card"');
     const emptyIndex = wxml.indexOf("empty-device-card");
     const bannerIndex = wxml.search(/class="[^"]*\bfeedback-hero\b/);
 
@@ -186,25 +186,26 @@ describe("设备列表哄睡管理入口位", () => {
     );
   });
 
-  it("深夜蓝底色来自色板变量，标题与副标题用配套前景色", () => {
+  it("入口卡与来信 banner 同款浅色渐变，前景转深色", () => {
     const tokens = [
-      "--color-sleep-deep",
-      "--color-sleep-deep-end",
-      "--color-sleep-title",
-      "--color-sleep-subtitle",
+      "--color-mode-5-soft",
+      "--color-surface",
+      "--color-heading",
+      "--color-mode-5",
     ];
 
     for (const token of tokens) {
       expect(palette).toContain(`${token}:`);
     }
-    expect(declaration(rule(".sleep-manage-hero"), "background")).toContain(
-      "var(--color-sleep-deep)",
-    );
+    const background = declaration(rule(".sleep-manage-hero"), "background");
+    expect(background).toContain("var(--color-mode-5-soft)");
+    expect(background).toContain("var(--color-surface)");
+    expect(background).not.toContain("var(--color-sleep-deep)");
     expect(declaration(rule(".sleep-manage-hero__title"), "color")).toBe(
-      "var(--color-sleep-title)",
+      "var(--color-heading)",
     );
     expect(declaration(rule(".sleep-manage-hero__subtitle"), "color")).toBe(
-      "var(--color-sleep-subtitle)",
+      "var(--color-mode-5)",
     );
   });
 });
