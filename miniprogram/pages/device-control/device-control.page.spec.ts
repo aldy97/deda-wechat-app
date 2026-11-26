@@ -489,6 +489,27 @@ describe("device-control 10s 前台状态轮询", () => {
     expect(mockApi.getDeviceStatus).toHaveBeenCalledTimes(3);
   });
 
+  it("下发请求在途时轮询：不让旧状态覆盖乐观音量", async () => {
+    await boot(); // 80
+    let resolveControl: (v: unknown) => void = () => {};
+    mockApi.controlDeviceVolume.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveControl = resolve)),
+    );
+
+    const submitting = page.onVolumePlus(); // 90，请求挂起中
+    await flushMicrotasks();
+    expect(page.data.submitting).toBe(true);
+
+    mockStatusResolve({ ...ONLINE_STATUS, volume: 80 });
+    jest.advanceTimersByTime(10_000);
+    await flushMicrotasks();
+    expect(page.data.volume).toBe(90);
+
+    resolveControl(CONTROL_OK);
+    await submitting;
+    expect(page.data.lastCommittedVolume).toBe(90);
+  });
+
   it("提交成功后的静默窗口：旧状态不覆盖乐观音量", async () => {
     await boot(); // 80
     jest.advanceTimersByTime(5_000);
