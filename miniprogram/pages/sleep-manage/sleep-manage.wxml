@@ -4,7 +4,7 @@
   <view class="sleep-hero">
     <elly-image
       class="sleep-mascot"
-      asset-key="sleep-manage/mascot"
+      asset-key="owner-info/mascot"
       fallback="/static/images/kid-info/logo.png"
       mode="aspectFit"
     />
