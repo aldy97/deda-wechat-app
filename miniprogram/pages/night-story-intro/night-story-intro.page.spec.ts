@@ -111,16 +111,28 @@ describe("night-story-intro page 装配", () => {
     expect(wxml).toContain("{{ item.body }}");
   });
 
-  it("内容区用哄睡入口卡的蓝色渐变铺满首屏", () => {
+  it("hero 以下内容区改为纯黑底并铺满首屏", () => {
     const wxss: string = read("night-story-intro.wxss");
+    const pageRule = rule(wxss, ".night-story-page");
+    const palette: string = read("../../styles/palette.wxss");
 
-    expect(wxss).toContain("min-height: 100vh");
-    expect(wxss).toContain("var(--color-sleep-card-start)");
-    expect(wxss).toContain("var(--color-sleep-card-end)");
-    expect(wxss).toMatch(/linear-gradient\(\s*180deg/);
+    expect(pageRule).toContain("min-height: 100vh");
+    expect(pageRule).toContain("background: var(--color-night-story-bg)");
+    expect(pageRule).not.toContain("linear-gradient");
+    expect(palette).toMatch(/--color-night-story-bg:\s*#0{6}\s*;/);
   });
 
-  it("深蓝底上的文字改用色板里的浅色，且不出现直接色值", () => {
+  it("页面级背景同为黑色，下拉回弹不露浅色底", () => {
+    const wxss: string = read("night-story-intro.wxss");
+    const pageRule = /\npage\s*\{([^}]*)\}/.exec(wxss);
+
+    expect(pageRule).not.toBeNull();
+    expect((pageRule as RegExpExecArray)[1]).toContain(
+      "background-color: var(--color-night-story-bg)",
+    );
+  });
+
+  it("黑底上的文字改用色板里的浅色，且不出现直接色值", () => {
     const wxss: string = read("night-story-intro.wxss");
 
     expect(wxss).toContain("var(--color-sleep-title)");
