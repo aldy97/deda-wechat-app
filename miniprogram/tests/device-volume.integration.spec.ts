@@ -3,6 +3,7 @@
  * 契约以 deda-server MINI_PROGRAM_API.md 为准：
  * - 3.4 GET /devices/:id/status 回读设备真实 volume（可能为 null）
  * - 3.6 POST /devices/:id/control 仅 action=volume 真实下发；设备不存在 404
+ * 2026-11-26 起页面不再展示对话模式，onReady 只拉 status，不再请求当前配置。
  */
 import { installIntegrationHarness } from "./integration-harness";
 import { API_BASE_URL } from "../config/api.config";
@@ -21,16 +22,37 @@ const ONLINE_STATUS = {
 };
 
 describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
-  let page: any;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    // 页面 onReady 会拉 status + 当前配置，统一给成功信封
+    // 页面 onReady 只拉 status，统一给成功信封
     harness.mockHttpSuccess(ONLINE_STATUS);
-    page = harness.createInstance();
+  });
+
+  afterEach(() => {
+    // onReady 会起 10s 轮询；用例结束统一停表，避免悬挂定时器
+    for (const instance of harness.createdInstances) {
+      instance.onUnload?.();
+    }
+  });
+
+  function createPage() {
+    return harness.createInstance();
+  }
+
+  it("onReady 只拉 status：不再请求设备当前配置", async () => {
+    const page = createPage();
+    page.onLoad({ id: "dev-1" });
+    await page.onReady();
+
+    expect(harness.wx.request).toHaveBeenCalledTimes(1);
+    expect(harness.lastRequest()).toMatchObject({
+      method: "GET",
+      url: `${API_BASE_URL}/devices/dev-1/status`,
+    });
   });
 
   it("status 回读的音量作为初值：80 时步进器可用", async () => {
+    const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
 
@@ -41,6 +63,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
   });
 
   it("点击加号：POST /devices/{id}/control，body 恰好 {action:'volume',volume}", async () => {
+    const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
 
@@ -55,6 +78,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
   });
 
   it("下发时设备 404 → toast「设备不存在或已解绑」并回滚音量", async () => {
+    const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
     const before = page.data.volume;
@@ -69,6 +93,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
   });
 
   it("401 → 全局清 token 并 reLaunch 到登录页", async () => {
+    const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
 
@@ -83,7 +108,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
 
   it("status 为 offline：步进器置灰并提示，点击不下发", async () => {
     harness.mockHttpSuccess({ ...ONLINE_STATUS, status: "offline" });
-    const offlinePage = harness.createInstance();
+    const offlinePage = createPage();
     offlinePage.onLoad({ id: "dev-1" });
     await offlinePage.onReady();
 
@@ -99,6 +124,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
 
   it("status 音量字段缺失：按钮禁用，点击不下发", async () => {
     harness.mockHttpSuccess({ ...ONLINE_STATUS, volume: null });
+    const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
 

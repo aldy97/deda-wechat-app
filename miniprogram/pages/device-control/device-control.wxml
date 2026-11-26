@@ -1,59 +1,47 @@
 <view class="container device-control-page">
-  <text class="page-title">音量控制</text>
-
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{ loading }}">
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
   </view>
 
-  <!-- 控制面板 -->
-  <view wx:else>
-    <van-cell-group inset class="card">
-      <van-cell title="当前对话模式" wx:if="{{ currentModeDisplay }}">
-        <text class="current-mode-text" slot="right-icon">{{ currentModeDisplay }}</text>
-      </van-cell>
-
-      <!-- 音量：契约 3.6 中唯一真实下发的控制项。自绘步进器，只允许以 10 为步长；
-           设备未上报音量时显示 -- 且两侧按钮禁用，不用猜测值下发 -->
-      <van-cell title="音量">
-        <view class="volume-stepper" slot="right-icon">
-          <view
-            class="volume-step-btn {{ minusDisabled ? 'volume-step-btn--disabled' : '' }}"
-            bind:tap="onVolumeMinus"
-          >−</view>
-          <text class="volume-value">{{ volumeUnknown ? '--' : volume }}</text>
-          <view
-            class="volume-step-btn {{ plusDisabled ? 'volume-step-btn--disabled' : '' }}"
-            bind:tap="onVolumePlus"
-          >+</view>
-        </view>
-      </van-cell>
-    </van-cell-group>
-
-    <!-- 离线 / 设备不存在提示 -->
-    <view class="status-hint" wx:if="{{ statusHint }}">
-      <text class="status-hint-text">{{ statusHint }}</text>
-    </view>
-
-    <!-- 设备电源 / 工作模式：协议暂未支持，UI 暂时隐藏（2026-11-20）
-    <van-cell-group inset class="card">
-      <van-cell title="设备电源" label="协议暂未支持，敬请期待">
-        <van-switch checked="{{ false }}" disabled slot="right-icon" />
-      </van-cell>
-    </van-cell-group>
-
-    <view class="card mode-card">
-      <view class="mode-title-row">
-        <text class="mode-title">工作模式</text>
-        <text class="coming-soon-tag">敬请期待</text>
+  <!-- 居中主控：顶部导航已展示「音量控制」，此处不再重复页面标题 -->
+  <view wx:else class="content">
+    <view class="volume-card">
+      <view class="volume-status">
+        <view class="status-dot status-dot--{{ deviceStatusTone }}"></view>
+        <text class="status-text">{{ deviceStatusText }}</text>
       </view>
-      <van-radio-group value="" disabled>
-        <van-radio name="study" disabled>学习模式</van-radio>
-        <van-radio name="play" disabled>娱乐模式</van-radio>
-        <van-radio name="rest" disabled>休息模式</van-radio>
-      </van-radio-group>
+
+      <text class="volume-label">音量</text>
+
+      <!-- 音量：契约 3.6 中唯一真实下发的控制项。只允许以 10 为步长；
+           设备未上报音量时显示 --；离线或音量未知时两侧按钮禁用 -->
+      <view class="volume-stepper">
+        <view
+          class="volume-step-btn {{ minusDisabled ? 'volume-step-btn--disabled' : '' }}"
+          bind:tap="onVolumeMinus"
+        >−</view>
+        <view class="volume-display">
+          <text class="volume-value">{{ volumeUnknown ? '--' : volume }}</text>
+          <text class="volume-unit" wx:if="{{ !volumeUnknown }}">%</text>
+        </view>
+        <view
+          class="volume-step-btn {{ plusDisabled ? 'volume-step-btn--disabled' : '' }}"
+          bind:tap="onVolumePlus"
+        >+</view>
+      </view>
+
+      <!-- 10 格刻度：每格 10%，直观展示当前档位 -->
+      <view class="volume-meter">
+        <view
+          wx:for="{{ volumeDots }}"
+          wx:key="id"
+          class="meter-dot {{ item.on ? 'meter-dot--on' : '' }}"
+        ></view>
+      </view>
+
+      <text class="volume-caption" wx:if="{{ statusHint }}">{{ statusHint }}</text>
     </view>
-    -->
 
     <view class="actions">
       <van-button type="primary" block bind:click="onRefresh">
