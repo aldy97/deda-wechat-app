@@ -129,5 +129,30 @@
     </view>
     </block>
   </view>
+
+  <!-- 来信反馈 banner：文案与版式由代码出，插画走远端展示位 device-list/feedback-hero；排在设备卡片之后 -->
+  <view
+    class="feedback-hero"
+    bind:tap="onFeedbackHeroTap"
+    hover-class="feedback-hero-hover"
+    aria-role="button"
+    aria-label="听风原野信箱：来信反馈产品问题或提出奇思妙想"
+  >
+    <view class="feedback-hero__copy">
+      <text class="feedback-hero__title">听风原野信箱</text>
+      <text class="feedback-hero__subtitle">欢迎来信反馈产品问题或提出奇思妙想</text>
+      <view class="feedback-hero__desc-group">
+        <text class="feedback-hero__desc">我们会第一时间帮您解决问题，</text>
+        <text class="feedback-hero__desc">如果您的想法被采纳将会获赠最新推出的启智卡哟～</text>
+      </view>
+    </view>
+    <elly-image
+      class="feedback-hero__art"
+      asset-key="device-list/feedback-hero"
+      fallback="/static/images/kid-info/logo.png"
+      mode="aspectFit"
+      lazy-load="{{ false }}"
+    />
+  </view>
   </view>
 </view>

@@ -456,6 +456,15 @@ Page({
   },
 
   /**
+   * 来信反馈 banner：跳转反馈页
+   */
+  onFeedbackHeroTap() {
+    wx.navigateTo({
+      url: "/pages/feedback/feedback",
+    });
+  },
+
+  /**
    * 查看对话：跳转对话记录页
    *
    * 2026-11-25 起卡片入口已隐藏（对话记录功能暂时下线）；方法保留，
