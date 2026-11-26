@@ -1,0 +1,65 @@
+/* 功能版：顶部 hero 图 + 内容区沿用「哄睡管理」入口卡的蓝色渐变，
+   文字取色板里的浅色；顶部仍是系统白色导航栏（页面 json 不覆盖导航样式）。 */
+.night-story-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    var(--color-sleep-card-start) 0%,
+    var(--color-sleep-card-end) 100%
+  );
+}
+
+.night-story-hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--color-sleep-card-start) 0%,
+    var(--color-sleep-card-end) 100%
+  );
+}
+
+.night-story-hero__bg {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+}
+
+.night-story-body {
+  padding: 32rpx;
+  padding-bottom: 64rpx;
+}
+
+.night-story-hero-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+  color: var(--color-sleep-title);
+  text-align: center;
+}
+
+.night-story-paragraph {
+  display: block;
+  font-size: 30rpx;
+  line-height: 1.8;
+  margin-bottom: 20rpx;
+  color: var(--color-sleep-subtitle);
+}
+
+.night-story-section {
+  margin-top: 24rpx;
+}
+
+.night-story-section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  color: var(--color-sleep-title);
+  text-align: center;
+}

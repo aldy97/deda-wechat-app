@@ -13,6 +13,10 @@ import {
 } from "../../utils/push-subscription";
 import { installComponentHarness } from "../../tests/component-harness";
 
+declare const __dirname: string;
+const fs = require("fs");
+const path = require("path");
+
 jest.mock("../../api/api", () => ({
   getSleepConfig: jest.fn(),
   updateSleepConfig: jest.fn(),
@@ -324,8 +328,21 @@ describe("sleep-config-form 组件", () => {
     });
   });
 
-  describe("「如何进入哄睡模式」展开", () => {
-    it("点击标题在展开与收起之间切换", () => {
+  describe("「如何进入哄睡模式」卡片（暂停展示）", () => {
+    it("wxml 已整块注释，渲染层不再出现卡片", () => {
+      const wxml: string = fs.readFileSync(
+        path.join(__dirname, "sleep-config-form.wxml"),
+        "utf8",
+      );
+      const visible = wxml.replace(/<!--[\s\S]*?-->/g, "");
+
+      expect(visible).not.toContain('class="guide-card"');
+      expect(visible).not.toContain("如何进入哄睡模式");
+      // 代码仍保留在注释里，恢复时无需重写
+      expect(wxml).toContain('class="guide-card"');
+    });
+
+    it("展开状态与方法保留，恢复卡片后即可直接用", () => {
       const instance = harness.createInstance();
 
       instance.onToggleGuide();

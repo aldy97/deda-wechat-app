@@ -42,8 +42,13 @@
     </view>
   </view>
 
-  <!-- 科学原理 banner：纯展示，不做点击事件 -->
-  <view class="science-banner">
+  <!-- 科学原理 banner：点击进入晚安故事模式介绍页 -->
+  <view
+    class="science-banner"
+    bind:tap="onOpenScience"
+    aria-role="button"
+    aria-label="了解更多哄睡的科学原理"
+  >
     <text class="science-banner__title">了解更多哄睡的科学原理</text>
     <view class="science-banner__badge">
       <text class="science-banner__badge-text">GO</text>
