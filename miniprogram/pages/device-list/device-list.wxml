@@ -130,13 +130,19 @@
     </block>
   </view>
 
-  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，右侧插画位暂留空，不设点击与路由 -->
+  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly，不设点击与路由 -->
   <view class="hero-card sleep-manage-hero">
     <view class="sleep-manage-hero__copy">
       <text class="sleep-manage-hero__title">哄睡管理</text>
       <text class="sleep-manage-hero__subtitle">设定睡眠时间与故事，到点陪宝贝入睡</text>
     </view>
-    <view class="sleep-manage-hero__art"></view>
+    <elly-image
+      class="sleep-manage-hero__art"
+      asset-key="device-list/sleepy-elly"
+      fallback="/static/images/kid-info/logo.png"
+      mode="aspectFit"
+      lazy-load="{{ false }}"
+    />
   </view>
 
   <!-- 来信反馈 banner：文案与版式由代码出，插画走远端展示位 device-list/feedback-hero；排在设备卡片之后 -->

@@ -2,15 +2,16 @@
  * 设备列表「哄睡管理」入口位 guard（静态层）。
  *
  * 与「听风原野信箱」共用 .hero-card 版式容器（flex 布局 / 内边距 / 圆角 / 卡片间距），
- * 两个主类只声明各自底色；本节暂无插画、无点击、无路由，右侧留与 banner 等高的空位。
+ * 两个主类只声明各自底色；本节无点击、无路由，右侧插画走展示位 device-list/sleepy-elly。
  *
- * 本 guard 焊死六件事：
+ * 本 guard 焊死七件事：
  *   1. 容器共用 .hero-card，布局属性不重复写在主类里
  *   2. 标题「哄睡管理」与副标题文案存在且非空
  *   3. 位置：设备卡片（含空态）之后、「听风原野信箱」之前
  *   4. 不设点击 / 路由 / 悬停态
- *   5. 右侧无图片，占位与 banner 插画同尺寸（保证两张卡等高）
+ *   5. 右侧插画用 <elly-image>，asset-key / fallback / mode / lazy-load 正确且尺寸与 banner 一致
  *   6. 深夜蓝底色来自色板变量，不在业务样式里直写色值
+ *   7. 展示位 key 已登记并带中文标签
  */
 export {};
 
@@ -22,6 +23,12 @@ const path = require("path");
 
 const MINIPROGRAM_ROOT = path.resolve(__dirname, "..");
 const PAGE = "pages/device-list/device-list";
+
+const ASSET_KEY = "device-list/sleepy-elly";
+const ASSET_KEY_CONST = "DEVICE_LIST_SLEEPY_ELLY";
+const FALLBACK = "/static/images/kid-info/logo.png";
+const SINGLE_IMAGE_LIMIT = 200 * 1024;
+const ART_CLASS = "sleep-manage-hero__art";
 
 const wxml: string = read(`${PAGE}.wxml`);
 const wxss: string = read(`${PAGE}.wxss`);
@@ -46,6 +53,25 @@ function rule(selector: string): string {
 function declaration(body: string, property: string): string {
   const match = new RegExp(`(?:^|\\s)${property}:\\s*([^;]+);`).exec(body);
   return match ? match[1].trim() : "";
+}
+
+function attr(tagAttributes: string, name: string): string | null {
+  const match = new RegExp(`${name}\\s*=\\s*["']([^"']*)["']`).exec(
+    tagAttributes,
+  );
+  return match ? match[1] : null;
+}
+
+/** 取出带指定 class 的 <elly-image> 标签属性串。 */
+function findImageTag(source: string, className: string): string | null {
+  const re = /<elly-image\b([^>]*)>/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(source)) !== null) {
+    const attributes = match[1] || "";
+    const classes = (attr(attributes, "class") || "").split(/\s+/);
+    if (classes.includes(className)) return attributes;
+  }
+  return null;
 }
 
 describe("设备列表哄睡管理入口位", () => {
@@ -92,12 +118,32 @@ describe("设备列表哄睡管理入口位", () => {
     expect(sectionStart).toBeLessThan(bannerIndex);
   });
 
-  it("右侧暂不放图片：section 内不出现 image / elly-image", () => {
-    const section = wxml.slice(sectionStart, sectionEnd);
+  it("右侧插画用 elly-image 承载，asset-key / fallback / mode / lazy-load 正确", () => {
+    const attributes = findImageTag(wxml, ART_CLASS);
 
-    expect(section).not.toContain("<image");
-    expect(section).not.toContain("<elly-image");
-    expect(section).toContain('<view class="sleep-manage-hero__art"></view>');
+    expect(attributes).not.toBeNull();
+    const tag = attributes as string;
+    expect(attr(tag, "asset-key")).toBe(ASSET_KEY);
+    expect(attr(tag, "fallback")).toBe(FALLBACK);
+    expect(attr(tag, "mode")).toBe("aspectFit");
+    expect(attr(tag, "lazy-load")).toBe("{{ false }}");
+    expect(wxml.slice(sectionStart, sectionEnd)).not.toContain("<image");
+  });
+
+  it("展示位 key 在 constants/app-asset-keys.ts 登记并带中文标签", () => {
+    const source = read("constants/app-asset-keys.ts");
+
+    expect(source).toContain(ASSET_KEY_CONST);
+    expect(source).toContain(`"${ASSET_KEY}"`);
+    expect(source).toContain(`[APP_ASSET_KEYS.${ASSET_KEY_CONST}]:`);
+  });
+
+  it("fallback 包内图真实存在且在单图预算内", () => {
+    const relative = FALLBACK.replace(/^\/+/, "");
+    const absolute = path.join(MINIPROGRAM_ROOT, relative);
+
+    expect(fs.existsSync(absolute)).toBe(true);
+    expect(fs.statSync(absolute).size).toBeLessThanOrEqual(SINGLE_IMAGE_LIMIT);
   });
 
   it("共用容器承载布局，两个主类只声明底色", () => {
@@ -122,10 +168,11 @@ describe("设备列表哄睡管理入口位", () => {
     }
   });
 
-  it("右侧占位与 banner 插画同尺寸，保证两张卡等高", () => {
+  it("右侧插画与 banner 插画同尺寸，保证两张卡等高", () => {
     const bannerArt = rule(".feedback-hero__art");
     const sleepArt = rule(".sleep-manage-hero__art");
 
+    expect(declaration(sleepArt, "display")).toBe("block");
     expect(declaration(sleepArt, "width")).not.toBe("");
     expect(declaration(sleepArt, "width")).toBe(
       declaration(bannerArt, "width"),

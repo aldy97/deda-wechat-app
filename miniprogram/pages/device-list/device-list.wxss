@@ -59,9 +59,10 @@
   color: var(--color-sleep-subtitle);
 }
 
-/* 右侧插画位：只撑尺寸不画内容，后续换成 elly-image 时不改版式 */
+/* 右侧插画：与 banner 插画同尺寸，换成远程展示位后版式不变 */
 .sleep-manage-hero__art {
   flex-shrink: 0;
+  display: block;
   width: 168rpx;
   height: 168rpx;
   margin-left: 16rpx;
