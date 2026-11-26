@@ -1,0 +1,47 @@
+.agreement-page {
+  min-height: 100vh;
+  padding: 32rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background-color: var(--color-surface);
+}
+
+.agreement-header {
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid var(--color-divider);
+}
+
+.agreement-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-title);
+}
+
+.agreement-updated {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: var(--color-secondary);
+}
+
+.agreement-section {
+  margin-top: 40rpx;
+}
+
+.agreement-section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--color-heading);
+}
+
+.agreement-paragraph {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: var(--color-body);
+  word-break: break-word;
+}

@@ -16,4 +16,12 @@ Page({
   onFeedbackTap() {
     wx.navigateTo({ url: "/pages/feedback/feedback" });
   },
+
+  onPrivacyTap() {
+    wx.navigateTo({ url: "/pages/agreement/agreement?doc=privacy" });
+  },
+
+  onAgreementTap() {
+    wx.navigateTo({ url: "/pages/agreement/agreement?doc=terms" });
+  },
 });

@@ -1,0 +1,14 @@
+<view class="container agreement-page">
+  <view class="agreement-header">
+    <text class="agreement-title">{{ doc.title }}</text>
+    <text class="agreement-updated">生效日期：{{ doc.updatedAt }}</text>
+  </view>
+  <view
+    class="agreement-section"
+    wx:for="{{ doc.sections }}"
+    wx:key="title"
+  >
+    <text class="agreement-section-title">{{ item.title }}</text>
+    <text class="agreement-paragraph" user-select>{{ item.body }}</text>
+  </view>
+</view>
