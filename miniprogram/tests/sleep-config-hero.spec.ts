@@ -7,7 +7,7 @@
  *   3. 科学原理 banner 文案与 GO 徽标存在，且不设点击 / 路由
  *   4. 顺序：hero → 科学原理 banner → 共享表单
  *   5. 展示位 key 已登记并带中文标签
- *   6. hero 兜底渐变与遮罩只用色板变量，且标签条目的口径与产品决定一致
+ *   6. hero 顶到状态栏（高度叠加导航栏），渐变与遮罩只用色板变量
  */
 export {};
 
@@ -96,13 +96,27 @@ describe("哄睡配置页 hero 与科学原理 banner", () => {
   });
 
   it("科学原理 banner 文案与 GO 徽标存在，且不设点击 / 路由", () => {
+    const bannerStart = wxml.indexOf('class="science-banner"');
+    const bannerEnd = wxml.indexOf('class="sleep-config-body"');
+    const banner = wxml.slice(bannerStart, bannerEnd);
+
     expect(wxml).toMatch(
       /<text class="science-banner__title">了解更多哄睡的科学原理<\/text>/,
     );
     expect(wxml).toContain("science-banner__badge-text");
     expect(wxml).toContain("GO");
-    expect(wxml).not.toContain("bind:tap");
-    expect(wxml).not.toContain("<navigator");
+    expect(banner).not.toContain("bind:tap");
+    expect(banner).not.toContain("<navigator");
+  });
+
+  it("背景图顶到状态栏：hero 高度叠加状态栏与导航栏，返回键对齐胶囊", () => {
+    expect(wxml).toContain(
+      "height: calc(440rpx + {{ statusBarHeight + navBarHeight }}px)",
+    );
+    expect(wxml).toContain('class="sleep-config-nav"');
+    expect(wxml).toContain("padding-top: {{ statusBarHeight }}px");
+    expect(wxml).toContain('bind:tap="onBack"');
+    expect(wxml).toContain('aria-label="返回"');
   });
 
   it("顺序：hero → 科学原理 banner → 共享表单", () => {

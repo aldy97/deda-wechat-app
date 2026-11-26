@@ -20,6 +20,33 @@ page {
   );
 }
 
+/* 自定义导航：无系统导航栏，只保留与胶囊对齐的返回键 */
+.sleep-config-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding-left: 24rpx;
+}
+
+.sleep-config-back {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: var(--color-sleep-pill-bg);
+  border: 2rpx solid var(--color-sleep-pill-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sleep-config-back-hover {
+  opacity: 0.8;
+}
+
 .sleep-config-hero__bg {
   position: absolute;
   left: 0;
