@@ -20,6 +20,8 @@ Page({
     statusBarHeight: DEFAULT_STATUS_BAR_HEIGHT,
     /** 自定义导航栏：导航栏内容高度（px），与微信胶囊按钮垂直对齐 */
     navBarHeight: DEFAULT_NAV_BAR_HEIGHT,
+    /** hero 高度（rpx）：按背景图原始宽高比计算，未加载时用设计稿兜底值 */
+    heroHeight: 440,
   },
 
   onLoad(options) {
@@ -27,6 +29,21 @@ Page({
     this.setData({ deviceId, ...readNavBarMetrics() });
     if (!deviceId) {
       wx.showToast({ title: "缺少设备信息", icon: "none" });
+    }
+  },
+
+  /**
+   * 背景图加载完成：按图片原始比例换算 hero 高度（750rpx = 屏幕宽度），
+   * 首帧兜底 440rpx，避免图片未就绪时版式跳动。
+   */
+  onHeroImageLoad(event: WechatMiniprogram.CustomEvent) {
+    const detail = event?.detail;
+    const width = detail?.width;
+    const height = detail?.height;
+    if (!width || !height) return;
+    const heroHeight = Math.round((750 * height) / width);
+    if (heroHeight > 0 && heroHeight !== this.data.heroHeight) {
+      this.setData({ heroHeight });
     }
   },
 

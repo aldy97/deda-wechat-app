@@ -7,7 +7,7 @@
  *   3. 科学原理 banner 文案与 GO 徽标存在，且不设点击 / 路由
  *   4. 顺序：hero → 科学原理 banner → 共享表单
  *   5. 展示位 key 已登记并带中文标签
- *   6. hero 顶到状态栏（高度叠加导航栏），渐变与遮罩只用色板变量
+ *   6. hero 顶到状态栏（高度按背景图原始比例），渐变与遮罩只用色板变量
  */
 export {};
 
@@ -109,10 +109,9 @@ describe("哄睡配置页 hero 与科学原理 banner", () => {
     expect(banner).not.toContain("<navigator");
   });
 
-  it("背景图顶到状态栏：hero 高度叠加状态栏与导航栏，返回键对齐胶囊", () => {
-    expect(wxml).toContain(
-      "height: calc(440rpx + {{ statusBarHeight + navBarHeight }}px)",
-    );
+  it("背景图顶到状态栏：hero 高度按图片比例，返回键对齐胶囊", () => {
+    expect(wxml).toContain('style="height: {{ heroHeight }}rpx;"');
+    expect(wxml).toContain('bind:load="onHeroImageLoad"');
     expect(wxml).toContain('class="sleep-config-nav"');
     expect(wxml).toContain("padding-top: {{ statusBarHeight }}px");
     expect(wxml).toContain('bind:tap="onBack"');

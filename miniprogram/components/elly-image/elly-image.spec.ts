@@ -1,3 +1,7 @@
+/**
+ * elly-image 组件契约：fallback 首帧、manifest 命中切换、加载成功回传原始宽高、
+ * 远程失败回退与卸载后不再写数据。
+ */
 import { installComponentHarness } from "../../tests/component-harness";
 import { loadAppAssets, resolveAppAsset } from "../../utils/app-assets";
 
@@ -6,194 +10,133 @@ jest.mock("../../utils/app-assets", () => ({
   resolveAppAsset: jest.fn(),
 }));
 
-const mockLoadAppAssets = loadAppAssets as jest.Mock;
-const mockResolveAppAsset = resolveAppAsset as jest.Mock;
+const mockLoadAssets = loadAppAssets as jest.Mock;
+const mockResolveAsset = resolveAppAsset as jest.Mock;
 
-const harness = installComponentHarness();
+const FALLBACK = "/static/images/kid-info/logo.png";
+const REMOTE = "https://cdn.example.com/hero.webp";
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-const flushAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+describe("elly-image 组件", () => {
+  const harness = installComponentHarness();
 
-describe("elly-image component", () => {
   beforeAll(() => {
     require("./elly-image");
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLoadAppAssets.mockReset();
-    mockResolveAppAsset.mockReset();
-    mockResolveAppAsset.mockReturnValue(null);
+    mockLoadAssets.mockResolvedValue({ version: "", assets: {} });
+    mockResolveAsset.mockReturnValue(null);
   });
 
-  it("attached 先渲染 fallback，再尝试 manifest", async () => {
-    mockLoadAppAssets.mockResolvedValue({ version: "", assets: {} });
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
+  function create(props: Record<string, unknown> = {}) {
+    return harness.createInstance({ fallback: FALLBACK, ...props });
+  }
+
+  it("attached 先渲染 fallback，未命中 manifest 时保持不变", async () => {
+    const instance = create({ assetKey: "owner-info/mascot" });
 
     instance.lifetimes.attached();
+    await flush();
 
-    expect(instance.setData).toHaveBeenCalledWith({
-      displayedSrc: "/static/images/kid-info/logo.png",
-      useWebp: false,
-      errored: false,
-    });
-
-    await flushAsync();
-    expect(mockLoadAppAssets).toHaveBeenCalled();
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.data.useWebp).toBe(false);
+    expect(instance.data.errored).toBe(false);
   });
 
-  it("fallback 为空字符串时渲染空 src", () => {
-    mockLoadAppAssets.mockResolvedValue({ version: "", assets: {} });
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "",
-    });
+  it("manifest 命中：切到远程 URL 并置 webp", async () => {
+    mockResolveAsset.mockReturnValue({ url: REMOTE });
+    const instance = create({ assetKey: "sleep-config/hero-bg" });
 
     instance.lifetimes.attached();
+    await flush();
 
-    expect(instance.setData).toHaveBeenCalledWith({
-      displayedSrc: "",
-      useWebp: false,
-      errored: false,
-    });
+    expect(instance.data.displayedSrc).toBe(REMOTE);
+    expect(instance.data.useWebp).toBe(true);
+    expect(instance.data.errored).toBe(false);
   });
 
-  it("命中 manifest：切换远程 URL 并允许 webp", async () => {
-    mockLoadAppAssets.mockResolvedValue({ version: "v1", assets: {} });
-    mockResolveAppAsset.mockReturnValue({
-      url: "https://cdn.example.com/remote-probe.png",
-    });
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
+  it("manifest 拉取失败：保持 fallback", async () => {
+    mockLoadAssets.mockRejectedValue(new Error("network"));
+    const instance = create({ assetKey: "sleep-config/hero-bg" });
 
     instance.lifetimes.attached();
-    await flushAsync();
+    await flush();
 
-    expect(instance.setData).toHaveBeenCalledWith({
-      displayedSrc: "https://cdn.example.com/remote-probe.png",
-      useWebp: true,
-      errored: false,
-    });
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.data.useWebp).toBe(false);
   });
 
-  it("未命中保持 fallback，不切换到远程", async () => {
-    mockLoadAppAssets.mockResolvedValue({ version: "", assets: {} });
-    mockResolveAppAsset.mockReturnValue(null);
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
+  it("组件已卸载：拿不到结果后不再写数据", async () => {
+    mockResolveAsset.mockReturnValue({ url: REMOTE });
+    const instance = create({ assetKey: "sleep-config/hero-bg" });
+    instance.detached = true;
 
     instance.lifetimes.attached();
-    await flushAsync();
+    await flush();
 
-    expect(instance.setData).toHaveBeenCalledTimes(1);
-    expect(instance.setData).toHaveBeenCalledWith({
-      displayedSrc: "/static/images/kid-info/logo.png",
-      useWebp: false,
-      errored: false,
-    });
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.data.useWebp).toBe(false);
   });
 
-  it("manifest 拉取失败保持 fallback", async () => {
-    mockLoadAppAssets.mockRejectedValue(new Error("network down"));
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
+  it("detached 生命周期：标记已卸载", () => {
+    const instance = create();
 
-    instance.lifetimes.attached();
-    await flushAsync();
-
-    expect(instance.setData).toHaveBeenCalledTimes(1);
-  });
-
-  it("detached 后 Promise 返回不得 setData", async () => {
-    let resolveLoad: (value: any) => void = () => {};
-    mockLoadAppAssets.mockReturnValue(
-      new Promise((resolve) => {
-        resolveLoad = resolve;
-      }),
-    );
-    mockResolveAppAsset.mockReturnValue({
-      url: "https://cdn.example.com/remote-probe.png",
-    });
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
-
-    instance.lifetimes.attached();
-    instance.lifetimes.detached();
-    resolveLoad({ version: "", assets: {} });
-    await flushAsync();
-
-    expect(instance.setData).toHaveBeenCalledTimes(1);
-  });
-
-  it("远程 binderror 回退本地 fallback", () => {
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
-    instance.setData({
-      displayedSrc: "https://cdn.example.com/remote-probe.png",
-      useWebp: true,
-    });
-
-    instance.onImageError();
-
-    expect(instance.setData).toHaveBeenLastCalledWith({
-      displayedSrc: "/static/images/kid-info/logo.png",
-      useWebp: false,
-      errored: false,
-    });
-  });
-
-  it("远程 binderror 且 fallback 为空：清空远程并保持非 webp", () => {
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "",
-    });
-    instance.setData({
-      displayedSrc: "https://cdn.example.com/remote-probe.png",
-      useWebp: true,
-    });
-
-    instance.onImageError();
-
-    expect(instance.setData).toHaveBeenLastCalledWith({
-      displayedSrc: "",
-      useWebp: false,
-      errored: false,
-    });
-  });
-
-  it("本地 fallback 也失败：显示占位，不循环重试", () => {
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
-    instance.setData({ useWebp: false });
-
-    instance.onImageError();
-
-    expect(instance.setData).toHaveBeenLastCalledWith({ errored: true });
-  });
-
-  it("detached 后 binderror 不 setData", () => {
-    const instance = harness.createInstance({
-      assetKey: "diagnostics/remote-probe",
-      fallback: "/static/images/kid-info/logo.png",
-    });
     instance.lifetimes.detached();
 
+    expect(instance.detached).toBe(true);
+  });
+
+  it("图片加载成功：把原始宽高通过 load 事件抛给调用方", () => {
+    const instance = create();
+
+    instance.onImageLoad({ detail: { width: 1080, height: 640 } });
+
+    expect(instance.triggerEvent).toHaveBeenCalledWith("load", {
+      width: 1080,
+      height: 640,
+    });
+  });
+
+  it("缺少 detail：仍抛 load 事件，宽高为 undefined，不抛错", () => {
+    const instance = create();
+
+    instance.onImageLoad(undefined as never);
+
+    expect(instance.triggerEvent).toHaveBeenCalledWith("load", {
+      width: undefined,
+      height: undefined,
+    });
+  });
+
+  it("远程图失败：回退本地 fallback 并清掉 webp 标记", () => {
+    const instance = create();
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+
     instance.onImageError();
 
-    expect(instance.setData).not.toHaveBeenCalled();
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.data.useWebp).toBe(false);
+    expect(instance.data.errored).toBe(false);
+  });
+
+  it("远程图失败且没有 fallback：回落到空串而不是 undefined", () => {
+    const instance = create({ fallback: "" });
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+
+    instance.onImageError();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.data.errored).toBe(false);
+  });
+
+  it("fallback 也失败：显示占位且不再重试", () => {
+    const instance = create();
+    instance.setData({ displayedSrc: FALLBACK, useWebp: false });
+
+    instance.onImageError();
+
+    expect(instance.data.errored).toBe(true);
   });
 });

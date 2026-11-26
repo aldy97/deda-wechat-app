@@ -1,10 +1,7 @@
 <kid-gradient-bg>
 <view class="sleep-config-page">
   <!-- 顶部 hero：背景图顶到状态栏，上面只叠返回键、白色标题与能力标签（纯展示，不可点） -->
-  <view
-    class="sleep-config-hero"
-    style="height: calc(440rpx + {{ statusBarHeight + navBarHeight }}px);"
-  >
+  <view class="sleep-config-hero" style="height: {{ heroHeight }}rpx;">
     <!-- empty-fallback 是仓库级 fallback 闸口的显式豁免：本页用渐变兜底，不留包内占位图 -->
     <elly-image
       class="sleep-config-hero__bg"
@@ -13,6 +10,7 @@
       empty-fallback="{{ true }}"
       mode="aspectFill"
       lazy-load="{{ false }}"
+      bind:load="onHeroImageLoad"
     />
     <view class="sleep-config-hero__mask"></view>
 

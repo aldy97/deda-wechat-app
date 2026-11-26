@@ -37,6 +37,22 @@ describe("sleep-config 页面装配", () => {
     ]);
     expect(page.data.statusBarHeight).toBe(20);
     expect(page.data.navBarHeight).toBe(44);
+    expect(page.data.heroHeight).toBe(440);
+  });
+
+  it("背景图加载完成：按原始宽高比换算 hero 高度", () => {
+    page.onHeroImageLoad({ detail: { width: 1080, height: 640 } });
+
+    // 750 * 640 / 1080 = 444.4 → 444
+    expect(page.data.heroHeight).toBe(444);
+  });
+
+  it("背景图尺寸缺失或为 0：保留兜底高度", () => {
+    page.onHeroImageLoad(undefined as never);
+    page.onHeroImageLoad({ detail: { width: 0, height: 640 } });
+    page.onHeroImageLoad({ detail: { width: 1080, height: 0 } });
+
+    expect(page.data.heroHeight).toBe(440);
   });
 
   it("onLoad 写入 deviceId 并按胶囊按钮计算导航栏尺寸", () => {
