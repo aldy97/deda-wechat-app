@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "晚安故事模式"
+  "navigationBarTitleText": "晚安故事模式",
+  "usingComponents": {
+    "elly-image": "/components/elly-image/elly-image"
+  }
 }

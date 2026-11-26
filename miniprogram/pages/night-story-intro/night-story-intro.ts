@@ -2,10 +2,13 @@
  * 晚安故事模式介绍页（功能版）。
  *
  * 入口：哄睡管理页「了解更多哄睡的科学原理」banner。
- * 当前只承载文案，样式待设计稿确认后补齐。
+ * 顶部背景图走远端展示位 night-story-intro/hero-bg，未命中时透出渐变兜底；
+ * 当前只承载文案，其余样式待设计稿确认后补齐。
  */
 Page({
   data: {
+    /** hero 高度（rpx）：按背景图原始宽高比计算，未加载时用兜底值 */
+    heroHeight: 440,
     /** 花字标题 */
     heroTitle: "听风原野的晚安时间",
     /** 开篇段落：定时提醒 + 冒险故事展开成晚安故事 */
@@ -16,17 +19,32 @@ Page({
     /** 分节说明：标题 + 正文 */
     sections: [
       {
-        title: "【固定的仪式】",
+        title: "固定的仪式",
         body: "研究发现，每晚固定的睡前程序能帮助幼儿更快入睡，并有效减少夜醒，而且坚持得越久，效果越明显。所以Elly的晚安时间每天都在同一时刻、按同样的步骤进行：提醒洗漱，讲晚安故事，说同一句晚安。重复本身，就是孩子的安全感。",
       },
       {
-        title: "【可以抱着的陪伴】",
+        title: "可以抱着的陪伴",
         body: "很多孩子入睡时需要一个能抱着的安抚物，它能帮孩子在离开父母怀抱后安心地自我平复。Elly是一只软软的毛绒小象，没有屏幕、不发光，孩子可以放心地抱着她入睡，避免睡前接触电子屏幕。",
       },
       {
-        title: "【属于孩子自己的晚安故事】",
+        title: "属于孩子自己的晚安故事",
         body: "晚安故事讲的不是陌生的童话，而是孩子今天和Elly的真实经历：“今天你陪我过了小河，你真的很勇敢” 心理学研究表明，针对孩子具体行为的肯定，比笼统的“你真棒”更能帮孩子建立自信。每一晚，孩子都在听自己今天做到的事，带着一点点骄傲入睡。",
       },
     ],
+  },
+
+  /**
+   * 背景图加载完成：按图片原始比例换算 hero 高度（750rpx = 屏幕宽度），
+   * 首帧兜底 440rpx，避免图片未就绪时版式跳动。
+   */
+  onHeroImageLoad(event: WechatMiniprogram.CustomEvent) {
+    const detail = event?.detail;
+    const width = detail?.width;
+    const height = detail?.height;
+    if (!width || !height) return;
+    const heroHeight = Math.round((750 * height) / width);
+    if (heroHeight > 0 && heroHeight !== this.data.heroHeight) {
+      this.setData({ heroHeight });
+    }
   },
 });
