@@ -85,6 +85,16 @@ page {
   --color-sleep-title: #f4f7fc;
   --color-sleep-subtitle: #c4cde1;
 
+  /* 哄睡配置页：hero 标签/遮罩与「了解更多哄睡的科学原理」banner */
+  --color-sleep-pill-bg: rgba(255, 255, 255, 0.16);
+  --color-sleep-pill-border: rgba(255, 255, 255, 0.45);
+  --color-sleep-hero-mask-none: rgba(24, 20, 54, 0);
+  --color-sleep-hero-mask-strong: rgba(24, 20, 54, 0.55);
+  --color-sleep-science-start: #ff9ec7;
+  --color-sleep-science-end: #ffd6ea;
+  --color-sleep-science-badge: #ffd24d;
+  --color-sleep-science-badge-text: #8a5b00;
+
   /* 不支持 CSS 变量的原生配置由同步脚本读取 */
   --color-nav-bg: var(--color-surface);
   --color-tab-text: var(--color-secondary);

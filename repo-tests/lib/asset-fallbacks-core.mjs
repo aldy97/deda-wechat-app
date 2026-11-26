@@ -8,14 +8,20 @@ export const FALLBACK_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
 
 /**
  * 校验 <elly-image> 的 fallback 属性。
- * 规则：必填、禁止动态绑定、必须 /static/ 前缀、扩展名限 png/jpg/jpeg、文件存在、≤200KB。
+ * 规则：必填（显式声明 empty-fallback 时可留空，由页面渐变兜底）、禁止动态绑定、
+ * 必须 /static/ 前缀、扩展名限 png/jpg/jpeg、文件存在、≤200KB。
  */
 export function validateFallbacks(usages, fileSystem) {
   const errors = [];
   for (const usage of usages) {
     const where = usage.file;
     const fallback = usage.fallback;
+    if (usage.allowEmpty && fallback) {
+      errors.push(`${where}: empty-fallback 与 fallback 不能同时存在`);
+      continue;
+    }
     if (!fallback) {
+      if (usage.allowEmpty) continue;
       errors.push(`${where}: <elly-image> 缺少 fallback`);
       continue;
     }

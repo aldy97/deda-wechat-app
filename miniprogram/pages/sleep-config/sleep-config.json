@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "哄睡配置",
+  "usingComponents": {
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "elly-image": "/components/elly-image/elly-image",
+    "sleep-config-form": "/components/sleep-config-form/sleep-config-form"
+  }
+}

@@ -10,6 +10,7 @@
     "pages/about-device/about-device",
     "pages/owner-info/owner-info",
     "pages/sleep-manage/sleep-manage",
+    "pages/sleep-config/sleep-config",
     "pages/user-manual/user-manual",
     "pages/mine/mine",
     "pages/child-list/child-list",

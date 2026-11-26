@@ -57,11 +57,11 @@ Page({
   },
 
   /**
-   * 跳转哄睡管理页
+   * 跳转哄睡配置页
    */
   onGoSleepManage() {
     wx.navigateTo({
-      url: `/pages/sleep-manage/sleep-manage?id=${this.data.deviceId}`,
+      url: `/pages/sleep-config/sleep-config?id=${this.data.deviceId}`,
     });
   },
 });

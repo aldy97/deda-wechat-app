@@ -465,6 +465,22 @@ Page({
   },
 
   /**
+   * 哄睡管理入口：进入哄睡配置页（绑定后的日常修改）。
+   * 入口在页面级，配置却按设备维度存，因此取列表第一台设备；
+   * 没有设备时只提示，不跳转。
+   */
+  onSleepManageTap() {
+    const device = this.data.devices[0];
+    if (!device) {
+      wx.showToast({ title: "请先绑定设备", icon: "none" });
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/sleep-config/sleep-config?id=${encodeURIComponent(device.id)}`,
+    });
+  },
+
+  /**
    * 查看对话：跳转对话记录页
    *
    * 2026-11-25 起卡片入口已隐藏（对话记录功能暂时下线）；方法保留，

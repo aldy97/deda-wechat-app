@@ -18,6 +18,9 @@ export function installComponentHarness(): ComponentHarness {
     navigateBack: jest.fn(),
     setNavigationBarTitle: jest.fn(),
     showToast: jest.fn(),
+    setStorageSync: jest.fn(),
+    getStorageSync: jest.fn().mockReturnValue(""),
+    removeStorageSync: jest.fn(),
   };
   (globalThis as any).wx = wxStub;
 

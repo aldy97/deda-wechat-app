@@ -49,6 +49,23 @@ describe('validateFallbacks', () => {
     assert.match(errors[0], /缺少 fallback/);
   });
 
+  it('显式声明 empty-fallback 且 fallback 为空 → 通过（走页面渐变兜底）', () => {
+    const errors = validateFallbacks(
+      [usageOf({ fallback: '', allowEmpty: true })],
+      fakeFs(VALID_FILES),
+    );
+    assert.deepEqual(errors, []);
+  });
+
+  it('empty-fallback 但 fallback 仍有值 → 报错（语义冲突）', () => {
+    const errors = validateFallbacks(
+      [usageOf({ allowEmpty: true })],
+      fakeFs(VALID_FILES),
+    );
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /empty-fallback 与 fallback 不能同时存在/);
+  });
+
   it('动态绑定 {{}} → 报错', () => {
     const errors = validateFallbacks(
       [usageOf({ fallback: '/static/{{name}}.png' })],
