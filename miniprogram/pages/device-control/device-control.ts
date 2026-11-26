@@ -8,6 +8,7 @@ import {
   snapVolumeUp,
   VOLUME_MAX,
   VOLUME_MIN,
+  VOLUME_STEP,
 } from "../../utils/volume";
 
 /** 状态接口报错对象上可能携带的 HTTP 状态码（request.ts 注入） */
@@ -64,6 +65,12 @@ Page({
     plusDisabled: true,
     /** 步进器下方的状态提示文案 */
     statusHint: "",
+    /** 设备状态展示文案：在线 / 离线 / 不可用 */
+    deviceStatusText: "设备在线",
+    /** 设备状态色：online / offline / error */
+    deviceStatusTone: "online",
+    /** 音量刻度：10 格，每格代表 10%；on 表示点亮 */
+    volumeDots: [] as Array<{ id: number; on: boolean }>,
   },
 
   /** 10s 前台轮询定时器（0 = 未启动） */
@@ -221,27 +228,45 @@ Page({
         statusHint = "未获取到设备音量，请点击「刷新状态」重试";
       }
     }
+    const deviceStatusText = state.notFound
+      ? "设备不可用"
+      : state.online
+        ? "设备在线"
+        : "设备离线";
+    const deviceStatusTone = state.notFound
+      ? "error"
+      : state.online
+        ? "online"
+        : "offline";
     this.setData({
       statusLoaded: state.loaded,
       statusNotFound: state.notFound,
       deviceOnline: state.online,
       controlDisabled,
       statusHint,
+      deviceStatusText,
+      deviceStatusTone,
     });
     this.applyVolume(state.volume);
   },
 
   /**
-   * 落地音量 → 显示值与两个按钮的禁用态（乐观更新 / 失败回滚共用）
+   * 落地音量 → 显示值、刻度与两个按钮的禁用态（乐观更新 / 失败回滚共用）
    */
   applyVolume(volume: number | null) {
     const unknown = volume === null;
     const blocked = this.data.controlDisabled || unknown;
+    const activeDots =
+      volume === null ? 0 : Math.round(volume / VOLUME_STEP);
     this.setData({
       volume,
       volumeUnknown: unknown,
       minusDisabled: blocked || (volume !== null && volume <= VOLUME_MIN),
       plusDisabled: blocked || (volume !== null && volume >= VOLUME_MAX),
+      volumeDots: Array.from(
+        { length: VOLUME_MAX / VOLUME_STEP },
+        (_, index) => ({ id: index, on: index < activeDots }),
+      ),
     });
   },
 

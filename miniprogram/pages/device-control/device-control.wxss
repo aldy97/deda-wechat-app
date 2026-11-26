@@ -1,31 +1,95 @@
 .device-control-page {
-  padding-bottom: 48rpx;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 32rpx 48rpx;
 }
 
 .loading-wrap {
+  flex: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 120rpx 0;
 }
 
-/* 自绘音量步进器：交互上只允许以 10 为步长，音量未知或离线时按钮禁用 */
+/* 主控区域：整页纵向居中，避免内容都挤在顶部 */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 音量主卡片：状态、档位、刻度全部居中 */
+.volume-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 56rpx 40rpx 44rpx;
+  border-radius: 32rpx;
+  background-color: var(--color-surface);
+  box-shadow: 0 16rpx 48rpx var(--color-shadow);
+  text-align: center;
+}
+
+.volume-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28rpx;
+}
+
+.status-dot {
+  width: 14rpx;
+  height: 14rpx;
+  margin-right: 10rpx;
+  border-radius: 50%;
+  background-color: var(--color-disabled);
+}
+
+.status-dot--online {
+  background-color: var(--color-success);
+}
+
+.status-dot--offline {
+  background-color: var(--color-warning);
+}
+
+.status-dot--error {
+  background-color: var(--color-danger);
+}
+
+.status-text {
+  font-size: 24rpx;
+  color: var(--color-secondary);
+}
+
+.volume-label {
+  display: block;
+  font-size: 28rpx;
+  letter-spacing: 6rpx;
+  color: var(--color-secondary);
+}
+
 .volume-stepper {
   display: flex;
   align-items: center;
+  justify-content: center;
+  margin: 24rpx 0 32rpx;
 }
 
 .volume-step-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56rpx;
-  height: 56rpx;
+  width: 96rpx;
+  height: 96rpx;
   border: 2rpx solid var(--color-border);
   border-radius: 50%;
   background-color: var(--color-surface);
   color: var(--color-primary);
-  font-size: 34rpx;
+  font-size: 48rpx;
   line-height: 1;
+  box-sizing: border-box;
 }
 
 .volume-step-btn--disabled {
@@ -34,25 +98,54 @@
   color: var(--color-disabled);
 }
 
+.volume-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  min-width: 240rpx;
+  margin: 0 24rpx;
+}
+
 .volume-value {
-  min-width: 76rpx;
-  margin: 0 20rpx;
-  text-align: center;
-  font-size: 30rpx;
-  font-weight: 500;
+  font-size: 104rpx;
+  font-weight: 600;
+  line-height: 1;
   color: var(--color-heading);
 }
 
-/* 离线 / 设备不存在提示 */
-.status-hint {
-  margin: 16rpx 32rpx 0;
+.volume-unit {
+  margin-left: 8rpx;
+  font-size: 32rpx;
+  color: var(--color-secondary);
 }
 
-.status-hint-text {
+/* 10 格音量刻度：每格 10% */
+.volume-meter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28rpx;
+}
+
+.meter-dot {
+  width: 28rpx;
+  height: 8rpx;
+  margin: 0 4rpx;
+  border-radius: 4rpx;
+  background-color: var(--color-neutral-soft);
+}
+
+.meter-dot--on {
+  background-color: var(--color-primary);
+}
+
+.volume-caption {
+  display: block;
   font-size: 24rpx;
-  color: var(--color-warning);
+  line-height: 1.6;
+  color: var(--color-secondary);
 }
 
 .actions {
-  margin-top: 48rpx;
+  margin-top: 56rpx;
 }

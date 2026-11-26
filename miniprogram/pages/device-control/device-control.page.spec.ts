@@ -119,6 +119,11 @@ describe("device-control 音量控制交互", () => {
       expect(page.data.plusDisabled).toBe(false);
       expect(page.data.statusHint).toBe("");
       expect(page.data.lastCommittedVolume).toBe(80);
+      expect(page.data.deviceStatusText).toBe("设备在线");
+      expect(page.data.deviceStatusTone).toBe("online");
+      expect(
+        page.data.volumeDots.filter((dot: { on: boolean }) => dot.on),
+      ).toHaveLength(8);
     });
 
     it("online 但设备未上报音量：两侧按钮禁用并提示刷新", async () => {
@@ -144,6 +149,8 @@ describe("device-control 音量控制交互", () => {
       expect(page.data.minusDisabled).toBe(true);
       expect(page.data.plusDisabled).toBe(true);
       expect(page.data.statusHint).toBe("设备离线，无法调节音量");
+      expect(page.data.deviceStatusText).toBe("设备离线");
+      expect(page.data.deviceStatusTone).toBe("offline");
     });
 
     it("status 404：步进器置灰并提示「设备不存在或已解绑」", async () => {
@@ -158,6 +165,8 @@ describe("device-control 音量控制交互", () => {
       expect(page.data.minusDisabled).toBe(true);
       expect(page.data.plusDisabled).toBe(true);
       expect(page.data.statusHint).toBe("设备不存在或已解绑");
+      expect(page.data.deviceStatusText).toBe("设备不可用");
+      expect(page.data.deviceStatusTone).toBe("error");
     });
 
     it("status 网络异常：在线判定 fail-open，但音量未知仍禁用按钮", async () => {
@@ -182,6 +191,9 @@ describe("device-control 音量控制交互", () => {
 
       expect(page.data.volume).toBeNull();
       expect(page.data.volumeUnknown).toBe(true);
+      expect(
+        page.data.volumeDots.filter((dot: { on: boolean }) => dot.on),
+      ).toHaveLength(0);
     });
 
     it("点击刷新状态：重新拉取 status", async () => {
