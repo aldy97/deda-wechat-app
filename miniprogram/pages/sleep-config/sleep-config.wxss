@@ -7,12 +7,12 @@ page {
   box-sizing: border-box;
 }
 
-/* 顶部 hero：背景图由 elly-image 承载，未命中时透出渐变兜底 */
+/* 顶部 hero：背景图由 elly-image 承载，未命中时透出渐变兜底。
+   不做圆角裁切，避免图片被 radius 裁出浅色缝；溢出部分由 overflow 收口。 */
 .sleep-config-hero {
   position: relative;
   height: 440rpx;
   overflow: hidden;
-  border-radius: 0 0 32rpx 32rpx;
   background: linear-gradient(
     160deg,
     var(--color-sleep-deep) 0%,
@@ -47,12 +47,13 @@ page {
   opacity: 0.8;
 }
 
+/* 背景图向四边各溢出 1px：亚像素舍入不会在边缘露出底色 */
 .sleep-config-hero__bg {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
 }
 
 /* 底部压暗，保证白色标题与标签在任意背景图上都可读 */

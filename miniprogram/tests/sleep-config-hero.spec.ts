@@ -149,11 +149,15 @@ describe("哄睡配置页 hero 与科学原理 banner", () => {
     expect(wxss).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
   });
 
-  it("背景图容器绝对铺满 hero，避免占位撑高版式", () => {
+  it("背景图容器向四边溢出 1px 铺满 hero，避免边缘露底色", () => {
     const bg = rule(".sleep-config-hero__bg");
+    const hero = rule(".sleep-config-hero");
 
     expect(declaration(bg, "position")).toBe("absolute");
-    expect(declaration(bg, "width")).toBe("100%");
-    expect(declaration(bg, "height")).toBe("100%");
+    expect(declaration(bg, "left")).toBe("-1px");
+    expect(declaration(bg, "top")).toBe("-1px");
+    expect(declaration(bg, "width")).toBe("calc(100% + 2px)");
+    expect(declaration(bg, "height")).toBe("calc(100% + 2px)");
+    expect(hero).not.toContain("border-radius:");
   });
 });
