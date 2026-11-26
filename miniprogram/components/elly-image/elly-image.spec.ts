@@ -121,13 +121,28 @@ describe("elly-image 组件", () => {
     expect(instance.data.errored).toBe(false);
   });
 
-  it("远程图失败且没有 fallback：回落到空串而不是 undefined", () => {
+  it("远程图失败且没有 fallback：回落到空串而不是 undefined", async () => {
     const instance = create({ fallback: "" });
+
+    instance.lifetimes.attached();
+    await flush();
+    expect(instance.data.displayedSrc).toBe("");
+
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+    instance.onImageError();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.data.errored).toBe(false);
+  });
+
+  it("组件已卸载：图片失败时不再写数据", () => {
+    const instance = create();
+    instance.detached = true;
     instance.setData({ displayedSrc: REMOTE, useWebp: true });
 
     instance.onImageError();
 
-    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.data.displayedSrc).toBe(REMOTE);
     expect(instance.data.errored).toBe(false);
   });
 
