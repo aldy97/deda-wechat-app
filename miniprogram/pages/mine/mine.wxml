@@ -35,12 +35,12 @@
       <text class="menu-text">用户反馈</text>
       <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
     </view>
-    <view class="menu-item">
+    <view class="menu-item" bind:tap="onPrivacyTap" hover-class="none" aria-role="button" aria-label="隐私政策">
       <van-icon class="menu-icon" name="lock" size="44rpx" color="var(--color-title)" />
       <text class="menu-text">隐私政策</text>
       <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
     </view>
-    <view class="menu-item">
+    <view class="menu-item" bind:tap="onAgreementTap" hover-class="none" aria-role="button" aria-label="用户协议">
       <van-icon class="menu-icon" name="records-o" size="44rpx" color="var(--color-title)" />
       <text class="menu-text">用户协议</text>
       <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />

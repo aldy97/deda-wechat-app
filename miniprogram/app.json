@@ -16,7 +16,8 @@
     "pages/child-list/child-list",
     "pages/child-info/child-info",
     "pages/feedback/feedback",
-    "pages/asset-selftest/asset-selftest"
+    "pages/asset-selftest/asset-selftest",
+    "pages/agreement/agreement"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {

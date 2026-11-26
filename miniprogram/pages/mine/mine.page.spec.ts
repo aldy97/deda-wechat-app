@@ -28,4 +28,24 @@ describe("mine page navigation", () => {
       url: "/pages/feedback/feedback",
     });
   });
+
+  it("opens the privacy policy from the privacy entry", () => {
+    const page = harness.createInstance();
+
+    page.onPrivacyTap();
+
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/agreement/agreement?doc=privacy",
+    });
+  });
+
+  it("opens the user agreement from the agreement entry", () => {
+    const page = harness.createInstance();
+
+    page.onAgreementTap();
+
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/agreement/agreement?doc=terms",
+    });
+  });
 });
