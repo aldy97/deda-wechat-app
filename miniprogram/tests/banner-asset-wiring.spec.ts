@@ -114,7 +114,8 @@ describe("设备列表来信反馈 banner：代码版式 + 插画槽位", () => 
   );
 
   it("banner 排在设备卡片（含空态）之后", () => {
-    const bannerIndex = wxml.indexOf('class="feedback-hero"');
+    // banner 与哄睡入口共用 .hero-card 版式类，class 不再是单值，按包含匹配定位
+    const bannerIndex = wxml.search(/class="[^"]*\bfeedback-hero\b/);
     const cardIndex = wxml.indexOf('wx:for="{{ devices }}"');
     const emptyIndex = wxml.indexOf("empty-device-card");
 

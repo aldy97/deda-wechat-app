@@ -10,19 +10,62 @@
   padding: 120rpx 0;
 }
 
-/* 来信反馈 banner：代码版式 + 插画槽位，配色只取色板变量 */
-.feedback-hero {
+/* 首页运营位通用容器：来信 banner 与哄睡入口共用布局，主类只声明底色 */
+.hero-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 20rpx 24rpx 28rpx;
   margin-bottom: 32rpx;
   border-radius: 24rpx;
+}
+
+/* 来信反馈 banner：代码版式 + 插画槽位，配色只取色板变量 */
+.feedback-hero {
   background: linear-gradient(
     135deg,
     var(--color-mode-5-soft) 0%,
     var(--color-surface) 68%
   );
+}
+
+/* 哄睡管理入口：深夜蓝底，右侧插画位暂留空，尺寸与 banner 等比 */
+.sleep-manage-hero {
+  background: linear-gradient(
+    135deg,
+    var(--color-sleep-deep) 0%,
+    var(--color-sleep-deep-end) 100%
+  );
+}
+
+.sleep-manage-hero__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.sleep-manage-hero__title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-sleep-title);
+}
+
+.sleep-manage-hero__subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--color-sleep-subtitle);
+}
+
+/* 右侧插画：与 banner 插画同尺寸，换成远程展示位后版式不变 */
+.sleep-manage-hero__art {
+  flex-shrink: 0;
+  display: block;
+  width: 168rpx;
+  height: 168rpx;
+  margin-left: 16rpx;
 }
 
 .feedback-hero__copy {
