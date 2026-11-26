@@ -80,5 +80,16 @@ Component({
       // 本地 fallback 也失败 → 显示占位，不再重试
       this.setData({ errored: true });
     },
+
+    /**
+     * 图片加载成功：把原始宽高抛给调用方，供按图片自身比例定高的版式使用。
+     */
+    onImageLoad(event: WechatMiniprogram.CustomEvent) {
+      const detail = event?.detail || {};
+      this.triggerEvent("load", {
+        width: detail.width,
+        height: detail.height,
+      });
+    },
   },
 });

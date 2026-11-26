@@ -1,0 +1,9 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "elly-image": "/components/elly-image/elly-image",
+    "sleep-config-form": "/components/sleep-config-form/sleep-config-form",
+    "van-icon": "@vant/weapp/icon/index"
+  }
+}

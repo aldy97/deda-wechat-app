@@ -38,7 +38,7 @@
       </view>
     </view>
 
-    <!-- 哄睡管理入口：点击进入哄睡管理页 -->
+    <!-- 哄睡管理入口：点击进入哄睡配置页 -->
     <view class="sleep-card" bind:tap="onGoSleepManage">
       <view class="section-heading">
         <text class="section-title">哄睡管理入口</text>

@@ -579,6 +579,42 @@ describe("device-list card display mapping", () => {
     });
   });
 
+  describe("哄睡管理入口", () => {
+    it("有设备：带第一台设备 id 进入哄睡配置页", () => {
+      page.data.devices = [{ id: "dev-001", name: "样机" }];
+
+      page.onSleepManageTap();
+
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: "/pages/sleep-config/sleep-config?id=dev-001",
+      });
+    });
+
+    it("设备 id 含特殊字符：按 URL 编码透传", () => {
+      page.data.devices = [{ id: "dev 002/甲", name: "样机" }];
+
+      page.onSleepManageTap();
+
+      expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+        url: `/pages/sleep-config/sleep-config?id=${encodeURIComponent(
+          "dev 002/甲",
+        )}`,
+      });
+    });
+
+    it("无设备：只提示，不跳转", () => {
+      page.data.devices = [];
+
+      page.onSleepManageTap();
+
+      expect(harness.wx.showToast).toHaveBeenCalledWith({
+        title: "请先绑定设备",
+        icon: "none",
+      });
+      expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+    });
+  });
+
   describe("SWR 缓存首帧直出与静默刷新", () => {
     beforeEach(() => {
       // getStorageSync 的 mockImplementation 不被 clearAllMocks 清除，按用例隔离

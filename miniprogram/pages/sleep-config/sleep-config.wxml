@@ -1,0 +1,57 @@
+<kid-gradient-bg>
+<view class="sleep-config-page">
+  <!-- 顶部 hero：背景图顶到状态栏，上面只叠返回键、白色标题与能力标签（纯展示，不可点） -->
+  <view class="sleep-config-hero" style="height: {{ heroHeight }}rpx;">
+    <!-- empty-fallback 是仓库级 fallback 闸口的显式豁免：本页用渐变兜底，不留包内占位图 -->
+    <elly-image
+      class="sleep-config-hero__bg"
+      asset-key="sleep-config/hero-bg"
+      fallback=""
+      empty-fallback="{{ true }}"
+      mode="aspectFill"
+      lazy-load="{{ false }}"
+      bind:load="onHeroImageLoad"
+    />
+    <view class="sleep-config-hero__mask"></view>
+
+    <!-- 自定义导航：无系统导航栏，只保留返回键 -->
+    <view
+      class="sleep-config-nav"
+      style="padding-top: {{ statusBarHeight }}px; height: {{ statusBarHeight + navBarHeight }}px;"
+    >
+      <view
+        class="sleep-config-back"
+        bind:tap="onBack"
+        hover-class="sleep-config-back-hover"
+        aria-role="button"
+        aria-label="返回"
+      >
+        <van-icon name="arrow-left" size="34rpx" color="var(--color-surface)" />
+      </view>
+    </view>
+
+    <view class="sleep-config-hero__copy">
+      <text class="sleep-config-hero__title">哄睡管理</text>
+      <view class="sleep-config-hero__tags">
+        <text
+          wx:for="{{ heroTags }}"
+          wx:key="*this"
+          class="sleep-config-hero__tag"
+        >{{ item }}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 科学原理 banner：纯展示，不做点击事件 -->
+  <view class="science-banner">
+    <text class="science-banner__title">了解更多哄睡的科学原理</text>
+    <view class="science-banner__badge">
+      <text class="science-banner__badge-text">GO</text>
+    </view>
+  </view>
+
+  <view class="sleep-config-body">
+    <sleep-config-form device-id="{{ deviceId }}" />
+  </view>
+</view>
+</kid-gradient-bg>

@@ -130,8 +130,14 @@
     </block>
   </view>
 
-  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly，不设点击与路由 -->
-  <view class="hero-card sleep-manage-hero">
+  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly；点击进入哄睡配置页 -->
+  <view
+    class="hero-card sleep-manage-hero"
+    bind:tap="onSleepManageTap"
+    hover-class="sleep-manage-hero-hover"
+    aria-role="button"
+    aria-label="哄睡管理：设置睡眠时间、时长与内容"
+  >
     <view class="sleep-manage-hero__copy">
       <text class="sleep-manage-hero__title">哄睡管理</text>
       <text class="sleep-manage-hero__subtitle">设定睡眠时间与故事，到点陪宝贝入睡</text>

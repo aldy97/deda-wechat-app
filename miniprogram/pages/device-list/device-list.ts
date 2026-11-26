@@ -20,13 +20,14 @@ import {
   smoothChargingDisplay,
 } from "./device-list.utils";
 import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
+import {
+  DEFAULT_NAV_BAR_HEIGHT,
+  DEFAULT_STATUS_BAR_HEIGHT,
+  readNavBarMetrics,
+} from "../../utils/nav-bar";
 
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
-
-/** 自定义导航栏兜底尺寸（px）：老基础库或测试环境取不到胶囊信息时使用 */
-const DEFAULT_STATUS_BAR_HEIGHT = 20;
-const DEFAULT_NAV_BAR_HEIGHT = 44;
 
 /** 前台降频轮询间隔：60s（切 tab / 后台由 onHide 停表） */
 const STATUS_POLL_INTERVAL = 60 * 1000;
@@ -107,24 +108,7 @@ Page({
    * 老基础库或测试环境取不到胶囊信息时退回 20 / 44 默认值。
    */
   applyNavBarMetrics() {
-    let statusBarHeight = DEFAULT_STATUS_BAR_HEIGHT;
-    let navBarHeight = DEFAULT_NAV_BAR_HEIGHT;
-
-    try {
-      const info = wx.getWindowInfo();
-      if (typeof info?.statusBarHeight === "number") {
-        statusBarHeight = info.statusBarHeight;
-      }
-
-      const menu = wx.getMenuButtonBoundingClientRect();
-      if (menu && menu.top >= statusBarHeight && menu.height > 0) {
-        navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-      }
-    } catch (error) {
-      // 取不到胶囊信息时保留默认值，页面仍可正常渲染
-    }
-
-    this.setData({ statusBarHeight, navBarHeight });
+    this.setData(readNavBarMetrics());
   },
 
   onReady() {
@@ -461,6 +445,22 @@ Page({
   onFeedbackHeroTap() {
     wx.navigateTo({
       url: "/pages/feedback/feedback",
+    });
+  },
+
+  /**
+   * 哄睡管理入口：进入哄睡配置页（绑定后的日常修改）。
+   * 入口在页面级，配置却按设备维度存，因此取列表第一台设备；
+   * 没有设备时只提示，不跳转。
+   */
+  onSleepManageTap() {
+    const device = this.data.devices[0];
+    if (!device) {
+      wx.showToast({ title: "请先绑定设备", icon: "none" });
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/sleep-config/sleep-config?id=${encodeURIComponent(device.id)}`,
     });
   },
 

@@ -2,13 +2,14 @@
  * 设备列表「哄睡管理」入口位 guard（静态层）。
  *
  * 与「听风原野信箱」共用 .hero-card 版式容器（flex 布局 / 内边距 / 圆角 / 卡片间距），
- * 两个主类只声明各自底色；本节无点击、无路由，右侧插画走展示位 device-list/sleepy-elly。
+ * 两个主类只声明各自底色；本节点击后进入哄睡配置页（sleep-config），
+ * 右侧插画走展示位 device-list/sleepy-elly。
  *
  * 本 guard 焊死七件事：
  *   1. 容器共用 .hero-card，布局属性不重复写在主类里
  *   2. 标题「哄睡管理」与副标题文案存在且非空
  *   3. 位置：设备卡片（含空态）之后、「听风原野信箱」之前
- *   4. 不设点击 / 路由 / 悬停态
+ *   4. 可点击且带悬停态 / 无障碍标签，路由目标是新页 sleep-config
  *   5. 右侧插画用 <elly-image>，asset-key / fallback / mode / lazy-load 正确且尺寸与 banner 一致
  *   6. 深夜蓝底色来自色板变量，不在业务样式里直写色值
  *   7. 展示位 key 已登记并带中文标签
@@ -34,7 +35,7 @@ const wxml: string = read(`${PAGE}.wxml`);
 const wxss: string = read(`${PAGE}.wxss`);
 const palette: string = read("styles/palette.wxss");
 
-const SECTION_OPEN = '<view class="hero-card sleep-manage-hero">';
+const SECTION_OPEN = 'class="hero-card sleep-manage-hero"';
 const BANNER_COMMENT = "<!-- 来信反馈 banner";
 
 function read(relative: string): string {
@@ -95,14 +96,17 @@ describe("设备列表哄睡管理入口位", () => {
     );
   });
 
-  it("不设点击、路由与悬停态", () => {
+  it("可点击进入哄睡配置页，并带悬停与无障碍属性", () => {
     const section = wxml.slice(sectionStart, sectionEnd);
+    const pageTs: string = read(`${PAGE}.ts`);
 
-    expect(section).not.toMatch(/\bbind:(tap|click)=/);
-    expect(section).not.toContain("catch:");
+    expect(section).toContain('bind:tap="onSleepManageTap"');
+    expect(section).toContain('hover-class="sleep-manage-hero-hover"');
+    expect(section).toContain('aria-role="button"');
+    expect(section).toContain("aria-label=");
     expect(section).not.toContain("<navigator");
-    expect(section).not.toContain("hover-class");
-    expect(section).not.toContain('aria-role="button"');
+    expect(pageTs).toContain("onSleepManageTap");
+    expect(pageTs).toContain("/pages/sleep-config/sleep-config");
   });
 
   it("排在设备卡片（含空态）之后、来信 banner 之前", () => {

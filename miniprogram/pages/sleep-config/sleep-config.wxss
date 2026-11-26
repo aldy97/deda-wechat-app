@@ -1,0 +1,145 @@
+page {
+  background-color: var(--color-kid-bg-bottom);
+}
+
+.sleep-config-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 顶部 hero：背景图由 elly-image 承载，未命中时透出渐变兜底。
+   不做圆角裁切，避免图片被 radius 裁出浅色缝；溢出部分由 overflow 收口。 */
+.sleep-config-hero {
+  position: relative;
+  height: 440rpx;
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    var(--color-sleep-deep) 0%,
+    var(--color-sleep-deep-end) 100%
+  );
+}
+
+/* 自定义导航：无系统导航栏，只保留与胶囊对齐的返回键 */
+.sleep-config-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding-left: 24rpx;
+}
+
+.sleep-config-back {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: var(--color-sleep-pill-bg);
+  border: 2rpx solid var(--color-sleep-pill-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sleep-config-back-hover {
+  opacity: 0.8;
+}
+
+/* 背景图向四边各溢出 1px：亚像素舍入不会在边缘露出底色 */
+.sleep-config-hero__bg {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+}
+
+/* 底部压暗，保证白色标题与标签在任意背景图上都可读 */
+.sleep-config-hero__mask {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    var(--color-sleep-hero-mask-none) 35%,
+    var(--color-sleep-hero-mask-strong) 100%
+  );
+}
+
+.sleep-config-hero__copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 32rpx 28rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.sleep-config-hero__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--color-surface);
+  margin-bottom: 24rpx;
+}
+
+.sleep-config-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.sleep-config-hero__tag {
+  font-size: 22rpx;
+  color: var(--color-surface);
+  background-color: var(--color-sleep-pill-bg);
+  border: 2rpx solid var(--color-sleep-pill-border);
+  border-radius: 999rpx;
+  padding: 10rpx 22rpx;
+}
+
+/* 科学原理 banner：纯展示，不做点击事件 */
+.science-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24rpx 24rpx 0;
+  padding: 22rpx 28rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(
+    90deg,
+    var(--color-sleep-science-start) 0%,
+    var(--color-sleep-science-end) 100%
+  );
+  box-shadow: 0 4rpx 16rpx var(--color-shadow);
+}
+
+.science-banner__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--color-surface);
+}
+
+.science-banner__badge {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background-color: var(--color-sleep-science-badge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.science-banner__badge-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--color-sleep-science-badge-text);
+}
+
+.sleep-config-body {
+  padding: 0 24rpx calc(32rpx + env(safe-area-inset-bottom));
+}

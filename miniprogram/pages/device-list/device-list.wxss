@@ -68,6 +68,10 @@
   margin-left: 16rpx;
 }
 
+.sleep-manage-hero-hover {
+  opacity: 0.9;
+}
+
 .feedback-hero__copy {
   flex: 1;
   min-width: 0;

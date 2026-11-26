@@ -62,6 +62,8 @@ function collectUsages() {
         file: path.relative(REPO_ROOT, file),
         assetKey,
         fallback,
+        // 显式声明 empty-fallback 的用法允许 fallback 留空，由页面渐变兜底
+        allowEmpty: getAttr(attrs, 'empty-fallback') !== null,
       });
     }
   }
