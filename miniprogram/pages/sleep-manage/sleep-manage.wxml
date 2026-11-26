@@ -1,19 +1,8 @@
 <kid-gradient-bg>
 <view class="container sleep-manage-page">
-  <!-- 吉祥物与引导气泡（始终显示） -->
-  <view class="sleep-hero">
-    <elly-image
-      class="sleep-mascot"
-      asset-key="owner-info/mascot"
-      fallback="/static/images/kid-info/logo.png"
-      mode="aspectFit"
-    />
-    <view class="sleep-bubble">
-      <view class="sleep-bubble-text">
-        <text class="sleep-bubble-line">请设置宝贝的常规睡眠时间吧～</text>
-        <text class="sleep-bubble-line">DEDA听风原野的小居民会用温柔的声音讲故事，陪伴宝贝慢慢入睡</text>
-      </view>
-    </view>
+  <!-- 页头「Elly + 对话气泡」：仅在绑定引导流程展示，日常设置不提示 -->
+  <view class="sleep-hero" wx:if="{{ fromBind }}">
+    <elly-bubble lines="{{ bubbleLines }}" />
   </view>
 
   <!-- 顶部：总开关 -->

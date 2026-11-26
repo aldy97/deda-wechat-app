@@ -120,6 +120,14 @@ describe("sleep-manage 配置与交互", () => {
 
       expect(page.data.fromBind).toBe(false);
     });
+
+    it("页头气泡文案两条，与孩子信息页共用 elly-bubble 组件", () => {
+      const page = harness.createInstance();
+
+      expect(page.data.bubbleLines).toHaveLength(2);
+      expect(page.data.bubbleLines[0]).toContain("请设置宝贝的常规睡眠时间吧");
+      expect(page.data.bubbleLines[1]).toContain("陪伴宝贝慢慢入睡");
+    });
   });
 
   describe("加载哄睡配置", () => {

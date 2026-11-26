@@ -54,56 +54,9 @@ page {
   font-size: 28rpx;
 }
 
-/* 吉祥物与气泡 */
+/* 页头「Elly + 对话气泡」容器：视觉实现收在 components/elly-bubble */
 .kid-hero {
-  display: flex;
-  align-items: flex-start;
   padding: 12rpx 40rpx 0;
-}
-
-.kid-mascot {
-  display: block;
-  flex-shrink: 0;
-  width: 160rpx;
-  height: 160rpx;
-  margin-top: 12rpx;
-}
-
-.kid-bubble {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  margin-top: 28rpx;
-  padding: 28rpx 32rpx;
-  border: 2rpx solid var(--color-kid-bubble);
-  border-radius: 32rpx;
-  background-color: var(--color-kid-bubble);
-  box-shadow: 0 8rpx 24rpx var(--color-kid-shadow);
-}
-
-.kid-bubble::before {
-  content: "";
-  position: absolute;
-  left: -14rpx;
-  top: 46rpx;
-  width: 26rpx;
-  height: 26rpx;
-  border-radius: 4rpx;
-  background-color: var(--color-kid-bubble);
-  transform: rotate(45deg);
-}
-
-.kid-bubble-text {
-  position: relative;
-  z-index: 1;
-  display: block;
-  color: var(--color-title);
-  font-size: 26rpx;
-  line-height: 1.6;
-}
-
-.kid-bubble-line {
-  display: block;
 }
 
 /* 爪印分隔 */

@@ -1,0 +1,40 @@
+/*
+ * 页头「Elly + 对话气泡」：孩子信息页与哄睡设置页共用的唯一实现。
+ *
+ * 底色 --color-kid-bubble 是半透明白，只能合成一次：
+ * 不要再加同色 border，也不要拿旋转方块当小尾巴——与气泡重叠的区域会被
+ * 二次合成，等效 α 从 0.86 跳到 0.98，肉眼就是一块明显更白的方块/亮边。
+ */
+.elly-bubble {
+  display: flex;
+  align-items: flex-start;
+}
+
+.elly-bubble__mascot {
+  display: block;
+  flex-shrink: 0;
+  width: 160rpx;
+  height: 160rpx;
+  margin-top: 12rpx;
+}
+
+.elly-bubble__box {
+  flex: 1;
+  min-width: 0;
+  margin-top: 28rpx;
+  padding: 28rpx 32rpx;
+  border-radius: 32rpx;
+  background-color: var(--color-kid-bubble);
+  box-shadow: 0 8rpx 24rpx var(--color-kid-shadow);
+}
+
+.elly-bubble__text {
+  display: block;
+  color: var(--color-title);
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.elly-bubble__line {
+  display: block;
+}

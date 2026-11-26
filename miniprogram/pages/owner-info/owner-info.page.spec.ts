@@ -312,6 +312,14 @@ describe("owner-info page", () => {
     expect(page.data.fromBind).toBe(true);
   });
 
+  it("页头气泡文案两条，绑定引导与日常进入共用同一份数据", () => {
+    const page = createLoadedPage({ id: "dev-001" });
+
+    expect(page.data.bubbleLines).toHaveLength(2);
+    expect(page.data.bubbleLines[0]).toContain("请先录入宝贝的信息吧");
+    expect(page.data.bubbleLines[1]).toContain("语速、用词和内容");
+  });
+
   it("档案为空时表单回到空值，日期选择器落在默认日期", async () => {
     mockApi.getOwnerInfo.mockResolvedValueOnce({
       code: 0,

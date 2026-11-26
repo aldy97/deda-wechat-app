@@ -1,0 +1,13 @@
+<view class="elly-bubble">
+  <elly-image
+    class="elly-bubble__mascot"
+    asset-key="owner-info/mascot"
+    fallback="/static/images/kid-info/logo.png"
+    mode="aspectFit"
+  />
+  <view wx:if="{{ lines.length }}" class="elly-bubble__box">
+    <view class="elly-bubble__text">
+      <text wx:for="{{ lines }}" wx:key="*this" class="elly-bubble__line">{{ item }}</text>
+    </view>
+  </view>
+</view>

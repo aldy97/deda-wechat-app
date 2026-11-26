@@ -39,19 +39,9 @@
         </block>
       </view>
 
-      <view class="kid-hero">
-        <elly-image
-          class="kid-mascot"
-          asset-key="owner-info/mascot"
-          fallback="/static/images/kid-info/logo.png"
-          mode="aspectFit"
-        />
-        <view class="kid-bubble">
-          <view class="kid-bubble-text">
-            <text class="kid-bubble-line">请先录入宝贝的信息吧～</text>
-            <text class="kid-bubble-line">我们会根据孩子的年龄调整对话的语速、用词和内容，请尽量准确填写</text>
-          </view>
-        </view>
+      <!-- 页头「Elly + 对话气泡」：仅在绑定引导流程展示，日常设置不提示 -->
+      <view class="kid-hero" wx:if="{{ fromBind }}">
+        <elly-bubble lines="{{ bubbleLines }}" />
       </view>
 
       <view class="kid-genders">
