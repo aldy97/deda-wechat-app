@@ -1,13 +1,13 @@
 /**
  * 吉祥物展示位远程化 guard（集成测试层）。
  *
- * 哄睡管理（sleep-manage）与孩子信息（owner-info）页头的吉祥物统一走
- * elly-image + 远端 manifest：按 key 取图，未命中/加载失败回退包内 logo。
- * 本 guard 焊死四件事：
- *   1. wxml 用 <elly-image> 承载吉祥物，并保留 aspectFit 显示模式
- *   2. asset-key 使用各自的业务展示位 key（不再借用诊断探针）
+ * 孩子信息（owner-info）与哄睡设置（sleep-manage）页头的吉祥物统一由
+ * elly-bubble 组件承载，组件内用 elly-image + 远端 manifest：按 key 取图，
+ * 未命中/加载失败回退包内 logo。本 guard 焊死四件事：
+ *   1. 组件 wxml 用 <elly-image> 承载吉祥物，并保留 aspectFit 显示模式
+ *   2. asset-key 走两页共用的业务展示位 key（OWNER_INFO_MASCOT）
  *   3. fallback 指向包内 /static/images/kid-info/logo.png 且文件真实存在
- *   4. 页面 json 注册了 elly-image 组件，且不再直接 <image src=本地 logo>
+ *   4. 组件 json 注册 elly-image；两页不再直接引用 elly-image
  *
  * 事故预防：远程化一旦被回退成裸 <image>，表现上与预期完全一致（同一张图），
  * 只有这条断言会在 CI 里变红。
@@ -21,27 +21,14 @@ const fs = require("fs");
 const path = require("path");
 
 const MINIPROGRAM_ROOT = path.resolve(__dirname, "..");
+const COMPONENT = "components/elly-bubble/elly-bubble";
+const PAGES = [
+  "pages/owner-info/owner-info",
+  "pages/sleep-manage/sleep-manage",
+];
 
 const FALLBACK = "/static/images/kid-info/logo.png";
-
-interface MascotPage {
-  name: string;
-  mascotClass: string;
-  assetKey: string;
-}
-
-const PAGES: MascotPage[] = [
-  {
-    name: "pages/owner-info/owner-info",
-    mascotClass: "kid-mascot",
-    assetKey: "owner-info/mascot",
-  },
-  {
-    name: "pages/sleep-manage/sleep-manage",
-    mascotClass: "sleep-mascot",
-    assetKey: "owner-info/mascot",
-  },
-];
+const ASSET_KEY = "owner-info/mascot";
 
 function read(relative: string): string {
   return fs.readFileSync(path.join(MINIPROGRAM_ROOT, relative), "utf8");
@@ -54,58 +41,45 @@ function attr(tagAttributes: string, name: string): string | null {
   return match ? match[1] : null;
 }
 
-/** 取出页面里带指定 mascot class 的 <elly-image> 标签属性串。 */
-function findMascotTag(wxml: string, mascotClass: string): string | null {
+/** 取出组件模板里 <elly-image> 标签的属性串。 */
+function findMascotTag(wxml: string): string | null {
   const re = /<elly-image\b([^>]*)>/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(wxml)) !== null) {
-    const attributes = match[1] || "";
-    const classes = (attr(attributes, "class") || "").split(/\s+/);
-    if (classes.includes(mascotClass)) return attributes;
-  }
-  return null;
+  const match = re.exec(wxml);
+  return match ? match[1] || "" : null;
 }
 
 describe("吉祥物展示位走 elly-image", () => {
-  it.each(PAGES)(
-    "$name：wxml 用 elly-image 承载吉祥物，asset-key 与 fallback 正确",
-    ({ name, mascotClass, assetKey }) => {
-      const wxml = read(`${name}.wxml`);
-      const attributes = findMascotTag(wxml, mascotClass);
+  it("elly-bubble 组件用 elly-image 承载吉祥物，展示位与兜底图为静态字面量", () => {
+    const attributes = findMascotTag(read(`${COMPONENT}.wxml`));
 
-      expect(attributes).not.toBeNull();
-      const tag = attributes as string;
-      expect(attr(tag, "asset-key")).toBe(assetKey);
-      expect(attr(tag, "fallback")).toBe(FALLBACK);
-      expect(attr(tag, "mode")).toBe("aspectFit");
-    },
-  );
+    expect(attributes).not.toBeNull();
+    const tag = attributes as string;
+    expect(attr(tag, "asset-key")).toBe(ASSET_KEY);
+    expect(attr(tag, "fallback")).toBe(FALLBACK);
+    expect(attr(tag, "mode")).toBe("aspectFit");
+  });
 
-  it.each(PAGES)("$name：页面 json 注册了 elly-image 组件", ({ name }) => {
-    const config = JSON.parse(read(`${name}.json`));
+  it("展示位 key 已在常量表登记，两页共用同一个", () => {
+    expect(read("constants/app-asset-keys.ts")).toContain(
+      `OWNER_INFO_MASCOT: "${ASSET_KEY}"`,
+    );
+  });
+
+  it("组件 json 注册了 elly-image", () => {
+    const config = JSON.parse(read(`${COMPONENT}.json`));
     expect(config.usingComponents["elly-image"]).toContain(
       "components/elly-image/elly-image",
     );
   });
 
   it.each(PAGES)(
-    "$name：不再直接 <image> 渲染本地吉祥物图（远程化被回退会在此变红）",
-    ({ name }) => {
+    "%s：不再直接 <image> 或 <elly-image> 渲染本地吉祥物",
+    (name) => {
       const wxml = read(`${name}.wxml`);
-      const rawImage = new RegExp(`<image\\b[^>]*${FALLBACK}`);
-      expect(rawImage.test(wxml)).toBe(false);
+      expect(wxml).not.toContain("<elly-image");
+      expect(new RegExp(`<image\\b[^>]*${FALLBACK}`).test(wxml)).toBe(false);
     },
   );
-
-  it("两页页头吉祥物共用同一个展示位 key", () => {
-    const keys = PAGES.map(({ name, mascotClass }) => {
-      const attributes = findMascotTag(read(`${name}.wxml`), mascotClass);
-      return attributes ? attr(attributes, "asset-key") : null;
-    });
-    expect(keys).toHaveLength(2);
-    expect(new Set(keys).size).toBe(1);
-    expect(keys[0]).toBe("owner-info/mascot");
-  });
 
   it("fallback 包内图真实存在", () => {
     const relative = FALLBACK.replace(/^\/+/, "");
