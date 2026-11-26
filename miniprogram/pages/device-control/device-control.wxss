@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 0 32rpx 48rpx;
+  padding: 32rpx 32rpx 48rpx;
 }
 
 .loading-wrap {
@@ -12,12 +12,12 @@
   justify-content: center;
 }
 
-/* 主控区域：整页纵向居中，避免内容都挤在顶部 */
+/* 主控区域：卡片贴近导航栏顶部，不再整页纵向居中 */
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* 音量主卡片：状态、档位、刻度全部居中 */

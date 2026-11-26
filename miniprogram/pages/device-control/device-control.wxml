@@ -40,9 +40,7 @@
         ></view>
       </view>
 
-      <text class="volume-caption">
-        {{ statusHint || '每档 10%，调节后设备会在下一次心跳回读确认' }}
-      </text>
+      <text class="volume-caption" wx:if="{{ statusHint }}">{{ statusHint }}</text>
     </view>
 
     <view class="actions">
