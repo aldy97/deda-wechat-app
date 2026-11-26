@@ -1,13 +1,13 @@
-/* 功能版：顶部 hero 图 + 内容区沿用「哄睡管理」入口卡的蓝色渐变，
+/* 功能版：顶部 hero 图 + hero 以下内容区纯黑底，
    文字取色板里的浅色；顶部仍是系统白色导航栏（页面 json 不覆盖导航样式）。 */
+page {
+  background-color: var(--color-night-story-bg);
+}
+
 .night-story-page {
   min-height: 100vh;
   box-sizing: border-box;
-  background: linear-gradient(
-    180deg,
-    var(--color-sleep-card-start) 0%,
-    var(--color-sleep-card-end) 100%
-  );
+  background: var(--color-night-story-bg);
 }
 
 .night-story-hero {
