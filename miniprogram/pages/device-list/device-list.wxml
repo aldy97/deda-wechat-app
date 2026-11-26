@@ -1,7 +1,16 @@
 <view class="device-list-page">
-  <!-- 自定义导航栏：左侧添加设备圆形按钮，标题与按钮同排居中 -->
+  <!-- 自定义导航栏：左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
   <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
     <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
+      <device-switch-dropdown
+        wx:if="{{ devices.length > 1 }}"
+        class="device-nav-switch"
+        devices="{{ deviceOptions }}"
+        selected-id="{{ selectedDeviceId }}"
+        selected-name="{{ selectedDeviceName }}"
+        variant="nav"
+        bind:change="onDeviceChange"
+      />
       <view
         class="add-device-fab"
         bind:tap="onAddDevice"
@@ -11,7 +20,6 @@
       >
         <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
       </view>
-      <text class="device-nav-title">我的设备</text>
     </view>
   </view>
 
@@ -21,7 +29,7 @@
     <van-loading type="spinner" size="48rpx">加载中...</van-loading>
   </view>
 
-  <!-- 设备列表：空列表给空态引导，有设备时列表底部常驻「添加设备」 -->
+  <!-- 设备列表：空列表给空态引导，只展示当前选中的孩子 -->
   <view wx:else>
     <!-- 空态：无绑定设备 -->
     <view wx:if="{{ devices.length === 0 }}" class="card empty-device-card">
@@ -30,47 +38,45 @@
       <van-button type="primary" block bind:click="onAddDevice">去绑定</van-button>
     </view>
 
-    <block wx:else>
     <view
+      wx:elif="{{ selectedDevice }}"
       class="device-card card"
-      wx:for="{{ devices }}"
-      wx:key="id"
-      data-id="{{ item.id }}"
+      data-id="{{ selectedDevice.id }}"
     >
       <!-- 卡片顶部：状态/电量居左，孩子姓名居中，设置居右 -->
       <view class="card-top">
         <view class="status-battery-row">
           <!-- 状态标签：由 buildStatusTag 派生；加载中显示「连接中」，404 给「设备不存在」兜底 -->
-          <view class="status-tag status-{{ item.statusTone }}">
+          <view class="status-tag status-{{ selectedDevice.statusTone }}">
             <text class="status-dot"></text>
-            <text>{{ item.statusLabel }}</text>
+            <text>{{ selectedDevice.statusLabel }}</text>
           </view>
 
           <!-- 网络徽标：在线时常显网络类型（WiFi/4G）+ WiFi 信号格；离线/未知不渲染 -->
           <view
-            wx:if="{{ !item.statusNotFound && item.networkBadge }}"
-            class="network-badge network-{{ item.networkBadge.tone }}"
+            wx:if="{{ !selectedDevice.statusNotFound && selectedDevice.networkBadge }}"
+            class="network-badge network-{{ selectedDevice.networkBadge.tone }}"
           >
-            <view wx:if="{{ item.networkBadge.level !== null }}" class="signal-bars">
-              <view class="signal-bar bar-1 {{ item.networkBadge.level >= 1 ? 'bar-on' : '' }}"></view>
-              <view class="signal-bar bar-2 {{ item.networkBadge.level >= 2 ? 'bar-on' : '' }}"></view>
-              <view class="signal-bar bar-3 {{ item.networkBadge.level >= 3 ? 'bar-on' : '' }}"></view>
+            <view wx:if="{{ selectedDevice.networkBadge.level !== null }}" class="signal-bars">
+              <view class="signal-bar bar-1 {{ selectedDevice.networkBadge.level >= 1 ? 'bar-on' : '' }}"></view>
+              <view class="signal-bar bar-2 {{ selectedDevice.networkBadge.level >= 2 ? 'bar-on' : '' }}"></view>
+              <view class="signal-bar bar-3 {{ selectedDevice.networkBadge.level >= 3 ? 'bar-on' : '' }}"></view>
             </view>
-            <text class="network-badge-text">{{ item.networkBadge.text }}</text>
+            <text class="network-badge-text">{{ selectedDevice.networkBadge.text }}</text>
           </view>
 
           <!-- 电量加载中 -->
-          <view class="battery-loading" wx:if="{{ item.statusLoading }}">
+          <view class="battery-loading" wx:if="{{ selectedDevice.statusLoading }}">
             <van-loading type="spinner" size="20rpx">电量...</van-loading>
           </view>
 
           <!-- 电量显示（isCharging 厂商契约 boolean|null，当前固件恒发 null，充电态分支保留不触发；404 设备不展示电量） -->
-          <block wx:elif="{{ !item.statusNotFound }}">
-            <view wx:if="{{ item.battery !== undefined && item.battery !== null }}" class="battery-wrap {{ item.isCharging ? 'battery-charging' : '' }}">
+          <block wx:elif="{{ !selectedDevice.statusNotFound }}">
+            <view wx:if="{{ selectedDevice.battery !== undefined && selectedDevice.battery !== null }}" class="battery-wrap {{ selectedDevice.isCharging ? 'battery-charging' : '' }}">
               <view class="battery-icon">
-                <view class="battery-level" style="width: {{ item.battery }}%; background-color: {{ item.isCharging ? 'var(--color-primary)' : (item.battery >= 50 ? 'var(--color-success)' : (item.battery >= 20 ? 'var(--color-warning)' : 'var(--color-danger)')) }};"></view>
+                <view class="battery-level" style="width: {{ selectedDevice.battery }}%; background-color: {{ selectedDevice.isCharging ? 'var(--color-primary)' : (selectedDevice.battery >= 50 ? 'var(--color-success)' : (selectedDevice.battery >= 20 ? 'var(--color-warning)' : 'var(--color-danger)')) }};"></view>
               </view>
-              <text class="battery-text">{{ item.isCharging ? '⚡' : '' }}{{ item.battery }}%</text>
+              <text class="battery-text">{{ selectedDevice.isCharging ? '⚡' : '' }}{{ selectedDevice.battery }}%</text>
             </view>
             <!-- 设备尚未上报电量：显示 --，不按 0% 误导家长 -->
             <text wx:else class="battery-unknown-text">电量 --</text>
@@ -78,10 +84,10 @@
         </view>
 
         <!-- 孩子姓名 -->
-        <view class="child-name-top" bind:tap="onChildNameTap" data-id="{{ item.id }}">
-          <block wx:if="{{ item.childProfile && (item.childProfile.name || item.childProfile.englishName) }}">
-            <text class="child-name-cn">{{ item.childProfile.name || item.childProfile.englishName }}</text>
-            <text class="child-name-en" wx:if="{{ item.childProfile.name && item.childProfile.englishName }}">{{ item.childProfile.englishName }}</text>
+        <view class="child-name-top" bind:tap="onChildNameTap" data-id="{{ selectedDevice.id }}">
+          <block wx:if="{{ selectedDevice.childProfile && (selectedDevice.childProfile.name || selectedDevice.childProfile.englishName) }}">
+            <text class="child-name-cn">{{ selectedDevice.childProfile.name || selectedDevice.childProfile.englishName }}</text>
+            <text class="child-name-en" wx:if="{{ selectedDevice.childProfile.name && selectedDevice.childProfile.englishName }}">{{ selectedDevice.childProfile.englishName }}</text>
           </block>
           <block wx:else>
             <text class="child-name-empty">未设置孩子档案</text>
@@ -89,30 +95,30 @@
         </view>
 
         <!-- 设置入口 -->
-        <view class="settings-entry-right" bind:tap="onSettingsTap" data-id="{{ item.id }}">
+        <view class="settings-entry-right" bind:tap="onSettingsTap" data-id="{{ selectedDevice.id }}">
           <van-icon name="setting-o" size="32rpx" color="var(--color-body)" />
           <text class="settings-text">设置</text>
         </view>
       </view>
 
       <!-- 卡片中部：只放今日数据与最近活跃；在线/离线等状态已在顶部 -->
-      <view class="card-body" wx:if="{{ item.cardTitle || item.cardSubtitle || item.cardDesc || (!item.statusLoading && item.lastActiveText) }}">
+      <view class="card-body" wx:if="{{ selectedDevice.cardTitle || selectedDevice.cardSubtitle || selectedDevice.cardDesc || (!selectedDevice.statusLoading && selectedDevice.lastActiveText) }}">
         <view class="card-info">
-          <view class="card-title-row" wx:if="{{ item.cardTitle }}">
-            <text class="card-title">{{ item.cardTitle }}</text>
+          <view class="card-title-row" wx:if="{{ selectedDevice.cardTitle }}">
+            <text class="card-title">{{ selectedDevice.cardTitle }}</text>
             <!-- <image class="title-icon" src="" mode="aspectFill" /> -->
           </view>
-          <text class="card-subtitle" wx:if="{{ item.cardSubtitle }}">{{ item.cardSubtitle }}</text>
-          <text class="card-desc" wx:if="{{ item.cardDesc }}">{{ item.cardDesc }}</text>
+          <text class="card-subtitle" wx:if="{{ selectedDevice.cardSubtitle }}">{{ selectedDevice.cardSubtitle }}</text>
+          <text class="card-desc" wx:if="{{ selectedDevice.cardDesc }}">{{ selectedDevice.cardDesc }}</text>
           <!-- 最近活跃时间；从未上报为「暂未连接」 -->
-          <text class="last-active-text" wx:if="{{ !item.statusLoading && item.lastActiveText }}">{{ item.lastActiveText }}</text>
+          <text class="last-active-text" wx:if="{{ !selectedDevice.statusLoading && selectedDevice.lastActiveText }}">{{ selectedDevice.lastActiveText }}</text>
         </view>
       </view>
 
       <!-- 2026-11-25：对话记录功能暂时下线，卡片「查看对话」入口隐藏。
       恢复时放开本段，并补回 wxss 中 .card-actions / .action-btn / .action-icon / .action-text 样式。
       <view class="card-actions">
-        <view class="action-btn" bind:tap="onViewChat" data-id="{{ item.id }}">
+        <view class="action-btn" bind:tap="onViewChat" data-id="{{ selectedDevice.id }}">
           <van-icon class="action-icon" name="chat-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看对话</text>
         </view>
@@ -121,16 +127,15 @@
 
       <!-- 卡片底部：查看成长报告（跳到「更懂TA」tab 并自动选中本设备） -->
       <view class="card-actions">
-        <view class="action-btn" bind:tap="onViewReport" data-id="{{ item.id }}">
+        <view class="action-btn" bind:tap="onViewReport" data-id="{{ selectedDevice.id }}">
           <van-icon class="action-icon" name="chart-trending-o" size="32rpx" color="var(--color-primary)" />
           <text class="action-text">查看成长报告</text>
         </view>
       </view>
     </view>
-    </block>
   </view>
 
-  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly；点击进入哄睡配置页 -->
+  <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly；点击进入当前孩子的哄睡配置页 -->
   <view
     class="hero-card sleep-manage-hero"
     bind:tap="onSleepManageTap"
@@ -138,6 +143,15 @@
     aria-role="button"
     aria-label="哄睡管理：设置睡眠时间、时长与内容"
   >
+    <!-- 夜空装饰：纯展示，不接收点击，避免遮挡文案与插画 -->
+    <view class="sleep-manage-hero__sky" aria-hidden="true">
+      <view class="sleep-manage-hero__moon"></view>
+      <view class="sleep-manage-hero__star star-1"></view>
+      <view class="sleep-manage-hero__star star-2"></view>
+      <view class="sleep-manage-hero__star star-3"></view>
+      <view class="sleep-manage-hero__star star-4"></view>
+      <view class="sleep-manage-hero__star star-5"></view>
+    </view>
     <view class="sleep-manage-hero__copy">
       <text class="sleep-manage-hero__title">哄睡管理</text>
       <text class="sleep-manage-hero__subtitle">设定睡眠时间与故事，到点陪宝贝入睡</text>

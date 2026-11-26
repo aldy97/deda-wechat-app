@@ -25,6 +25,12 @@ import {
   DEFAULT_STATUS_BAR_HEIGHT,
   readNavBarMetrics,
 } from "../../utils/nav-bar";
+import {
+  readSelectedDeviceId,
+  resolveSelectedDeviceId,
+  writeSelectedDeviceId,
+} from "../../utils/selected-device";
+import { getDeviceDisplayName } from "../../utils/device-name";
 
 /** 设备列表缓存键（与 device-setting / owner-info / device-provision 的失效点保持一致） */
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -77,6 +83,14 @@ Page({
   data: {
     loading: true,
     devices: [] as DeviceDisplayItem[],
+    /** 当前选中的孩子设备（卡片只渲染这一台） */
+    selectedDevice: null as DeviceDisplayItem | null,
+    /** 当前选中设备 id（与「更懂TA」共享同一个 storage key） */
+    selectedDeviceId: "",
+    /** 当前选中设备展示名（孩子名优先） */
+    selectedDeviceName: "",
+    /** 导航栏 dropdown 选项：{ id, name } */
+    deviceOptions: [] as Array<{ id: string; name: string }>,
     /** 自定义导航栏：状态栏高度（px） */
     statusBarHeight: DEFAULT_STATUS_BAR_HEIGHT,
     /** 自定义导航栏：导航栏内容高度（px），与微信胶囊按钮垂直对齐 */
@@ -181,11 +195,17 @@ Page({
         devices,
         silent ? this.data.devices : undefined,
       );
-      const signature = buildDeviceListSignature(displayItems);
+      const selectedId = this.resolveSelectionId(displayItems);
+      // 选中项参与签名：轮询期间切换孩子也能触发一次渲染
+      const signature = `${buildDeviceListSignature(displayItems)}|${selectedId}`;
       this.writeDeviceListCache(displayItems);
       if (signature !== this.lastSignature) {
         this.lastSignature = signature;
-        this.setData({ devices: displayItems, loading: false });
+        this.setData({
+          devices: displayItems,
+          ...this.buildSelectionPatch(displayItems, selectedId),
+          loading: false,
+        });
       }
     } catch (error) {
       if (silent || hasRendered || restored) {
@@ -225,7 +245,12 @@ Page({
           this.applyStatusTag(next);
           return next;
         });
-        this.setData({ devices, loading: false });
+        const selectedId = this.resolveSelectionId(devices);
+        this.setData({
+          devices,
+          ...this.buildSelectionPatch(devices, selectedId),
+          loading: false,
+        });
         return true;
       }
     } catch (error) {
@@ -449,12 +474,11 @@ Page({
   },
 
   /**
-   * 哄睡管理入口：进入哄睡配置页（绑定后的日常修改）。
-   * 入口在页面级，配置却按设备维度存，因此取列表第一台设备；
-   * 没有设备时只提示，不跳转。
+   * 哄睡管理入口：进入当前选中孩子的哄睡配置页。
+   * 配置按设备维度存，取的是共享选择而不是列表第一台；没有设备时只提示。
    */
   onSleepManageTap() {
-    const device = this.data.devices[0];
+    const device = this.data.selectedDevice;
     if (!device) {
       wx.showToast({ title: "请先绑定设备", icon: "none" });
       return;
@@ -462,6 +486,51 @@ Page({
     wx.navigateTo({
       url: `/pages/sleep-config/sleep-config?id=${encodeURIComponent(device.id)}`,
     });
+  },
+
+  /**
+   * 解析当前应选中的设备：内存选择 → 跨页共享选择 → 第一台；
+   * 设备解绑导致旧 id 失效时自然回落，并把结果写回 storage。
+   */
+  resolveSelectionId(items: DeviceDisplayItem[]): string {
+    const stored = readSelectedDeviceId();
+    const selectedId = resolveSelectedDeviceId(
+      items,
+      this.data.selectedDeviceId || stored,
+    );
+    if (selectedId && selectedId !== stored) {
+      writeSelectedDeviceId(selectedId);
+    }
+    return selectedId;
+  },
+
+  /** 组装选中态渲染数据：卡片、导航栏 dropdown 的共同来源 */
+  buildSelectionPatch(items: DeviceDisplayItem[], selectedId: string) {
+    const selectedDevice = items.find((item) => item.id === selectedId) || null;
+    return {
+      selectedDevice,
+      selectedDeviceId: selectedId,
+      selectedDeviceName: selectedDevice
+        ? getDeviceDisplayName(selectedDevice, "暂无设备")
+        : "",
+      deviceOptions: items.map((item) => ({
+        id: item.id,
+        name: getDeviceDisplayName(item),
+      })),
+    };
+  },
+
+  /**
+   * dropdown 切换孩子：只切当前展示并写入共享选择，
+   * 状态已在轮询里按全量设备拉过，无需重新请求。
+   */
+  onDeviceChange(event: WechatMiniprogram.CustomEvent) {
+    const deviceId = String(event?.detail?.deviceId || "");
+    if (!deviceId || deviceId === this.data.selectedDeviceId) return;
+    if (!this.data.devices.some((item) => item.id === deviceId)) return;
+
+    writeSelectedDeviceId(deviceId);
+    this.setData(this.buildSelectionPatch(this.data.devices, deviceId));
   },
 
   /**

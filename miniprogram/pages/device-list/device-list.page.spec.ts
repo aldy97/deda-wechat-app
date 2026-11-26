@@ -580,18 +580,22 @@ describe("device-list card display mapping", () => {
   });
 
   describe("哄睡管理入口", () => {
-    it("有设备：带第一台设备 id 进入哄睡配置页", () => {
-      page.data.devices = [{ id: "dev-001", name: "样机" }];
+    it("按当前选中设备进入哄睡配置页（不是第一台）", () => {
+      page.data.devices = [
+        { id: "dev-001", name: "样机" },
+        { id: "dev-002", name: "样机二" },
+      ];
+      page.data.selectedDevice = page.data.devices[1];
 
       page.onSleepManageTap();
 
       expect(harness.wx.navigateTo).toHaveBeenCalledWith({
-        url: "/pages/sleep-config/sleep-config?id=dev-001",
+        url: "/pages/sleep-config/sleep-config?id=dev-002",
       });
     });
 
     it("设备 id 含特殊字符：按 URL 编码透传", () => {
-      page.data.devices = [{ id: "dev 002/甲", name: "样机" }];
+      page.data.selectedDevice = { id: "dev 002/甲", name: "样机" };
 
       page.onSleepManageTap();
 
@@ -602,8 +606,8 @@ describe("device-list card display mapping", () => {
       });
     });
 
-    it("无设备：只提示，不跳转", () => {
-      page.data.devices = [];
+    it("无选中设备：只提示，不跳转", () => {
+      page.data.selectedDevice = null;
 
       page.onSleepManageTap();
 
@@ -612,6 +616,188 @@ describe("device-list card display mapping", () => {
         icon: "none",
       });
       expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("当前孩子选择（首页 dropdown）", () => {
+    const twoDevices = [
+      { id: "dev-a", name: "样机 A", childProfile: { name: "小明" } },
+      { id: "dev-b", name: "样机 B", childProfile: { name: "小红" } },
+    ];
+
+    function mockTwoDevices() {
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: twoDevices,
+      });
+      mockApi.getDeviceStatus.mockImplementation((id: string) =>
+        Promise.resolve({
+          code: 0,
+          message: "",
+          data: {
+            deviceId: id,
+            status: "online",
+            battery: 80,
+            isCharging: false,
+            networkMode: "wifi",
+            wifiRssi: -50,
+            lastActiveAt: null,
+          },
+        }),
+      );
+    }
+
+    beforeEach(() => {
+      harness.wx.getStorageSync.mockImplementation(() => "");
+    });
+
+    it("首载默认选中第一台，并写入共享选择", async () => {
+      mockTwoDevices();
+
+      await page.loadDeviceList();
+
+      expect(page.data.selectedDevice.id).toBe("dev-a");
+      expect(page.data.deviceOptions).toEqual([
+        { id: "dev-a", name: "小明" },
+        { id: "dev-b", name: "小红" },
+      ]);
+      expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+        "selected_device_id",
+        "dev-a",
+      );
+    });
+
+    it("storage 里有上次选择：落到该设备", async () => {
+      mockTwoDevices();
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === "selected_device_id" ? "dev-b" : "",
+      );
+
+      await page.loadDeviceList();
+
+      expect(page.data.selectedDevice.id).toBe("dev-b");
+      expect(page.data.selectedDeviceId).toBe("dev-b");
+    });
+
+    it("上次选择的设备已解绑：回退第一台并改写 storage", async () => {
+      mockTwoDevices();
+      harness.wx.getStorageSync.mockImplementation((key: string) =>
+        key === "selected_device_id" ? "gone" : "",
+      );
+
+      await page.loadDeviceList();
+
+      expect(page.data.selectedDevice.id).toBe("dev-a");
+      expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+        "selected_device_id",
+        "dev-a",
+      );
+    });
+
+    it("切换孩子：只切展示并写 storage，不重新拉状态", async () => {
+      mockTwoDevices();
+      await page.loadDeviceList();
+      jest.clearAllMocks();
+
+      page.onDeviceChange({ detail: { deviceId: "dev-b" } });
+
+      expect(page.data.selectedDevice.id).toBe("dev-b");
+      expect(page.data.selectedDeviceId).toBe("dev-b");
+      expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+        "selected_device_id",
+        "dev-b",
+      );
+      expect(mockApi.getDeviceStatus).not.toHaveBeenCalled();
+    });
+
+    it("缓存首帧也按共享选择直出", () => {
+      harness.wx.getStorageSync.mockImplementation((key: string) => {
+        if (key === "device_list_cache") return twoDevices;
+        if (key === "selected_device_id") return "dev-b";
+        return "";
+      });
+
+      expect(page.restoreDeviceListCache()).toBe(true);
+      expect(page.data.selectedDevice.id).toBe("dev-b");
+    });
+
+    it("新增设备后静默刷新：dropdown 选项动态增加，当前孩子不变", async () => {
+      mockTwoDevices();
+      await page.loadDeviceList();
+
+      const third = {
+        id: "dev-c",
+        name: "样机 C",
+        childProfile: { name: "小刚" },
+      };
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: [...twoDevices, third],
+      });
+
+      await page.loadDeviceList({ silent: true });
+
+      expect(page.data.deviceOptions).toEqual([
+        { id: "dev-a", name: "小明" },
+        { id: "dev-b", name: "小红" },
+        { id: "dev-c", name: "小刚" },
+      ]);
+      expect(page.data.selectedDevice.id).toBe("dev-a");
+    });
+  });
+
+  describe("选择与状态兜底边界", () => {
+    it("空设备列表：解析出空选择且不写 storage", () => {
+      expect(page.resolveSelectionId([])).toBe("");
+      expect(harness.wx.setStorageSync).not.toHaveBeenCalled();
+    });
+
+    it("onDeviceChange：空 id / 未知设备直接忽略", () => {
+      page.setData({
+        devices: [{ id: "dev-1", name: "样机" }],
+        selectedDeviceId: "dev-1",
+      });
+
+      page.onDeviceChange({ detail: {} });
+      page.onDeviceChange({ detail: { deviceId: "gone" } });
+
+      expect(page.data.selectedDeviceId).toBe("dev-1");
+      expect(harness.wx.setStorageSync).not.toHaveBeenCalled();
+    });
+
+    it("onShow：首载完成后回前台走静默刷新并重启轮询", async () => {
+      page.hasInitialLoaded = true;
+      mockApi.ensureAuthToken.mockResolvedValue(undefined);
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: [],
+      });
+
+      page.onShow();
+      await flushMicrotasks();
+
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+      page.onUnload();
+    });
+
+    it("fetchDeviceStatus：404 返回 null（设备不存在）", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue({ statusCode: 404 });
+
+      await expect(page.fetchDeviceStatus("dev-x")).resolves.toBeNull();
+    });
+
+    it("fetchDeviceStatus：其他异常返回离线兜底", async () => {
+      mockApi.getDeviceStatus.mockRejectedValue(new Error("boom"));
+
+      await expect(page.fetchDeviceStatus("dev-x")).resolves.toMatchObject({
+        deviceId: "dev-x",
+        status: "offline",
+        battery: null,
+      });
     });
   });
 

@@ -67,23 +67,60 @@ Component({
     tempDurationMinutes: FALLBACK_DURATION_MINUTES,
     /** 本组件是否已请求过哄睡通知授权（持久标记在 storage） */
     subscriptionAsked: false,
+    /** 已成功加载过配置的设备 id：同设备不重复请求（失败则允许 show 时重试） */
+    loadedDeviceId: "",
+    /** 正在加载中的设备 id：防止 observer / show / attached 并发重复请求 */
+    loadInFlightDeviceId: "",
   },
   lifetimes: {
     attached() {
-      if (this.data.deviceId) {
-        this.fetchSleepConfig(this.data.deviceId);
-      }
+      this.loadConfigIfNeeded(this.data.deviceId);
+    },
+  },
+  pageLifetimes: {
+    /** 从别的页返回：设备 id 由页面 onLoad 注入的时序兜底，同时刷新服务端最新配置 */
+    show() {
+      this.loadConfigIfNeeded(this.data.deviceId);
+    },
+  },
+  observers: {
+    /** 设备 id 晚于 attached 到达（页面 onLoad 之后才注入）时补拉一次 */
+    deviceId(deviceId: string) {
+      this.loadConfigIfNeeded(deviceId);
     },
   },
   methods: {
     /**
-     * 读取哄睡配置；未设置（data 为 null）时保留页面默认值
+     * 按需加载配置：同一设备只在「未加载且没有在途请求」时发起。
+     * 抽出来给 attached / pageLifetimes.show / deviceId observer 共用。
      */
-    async fetchSleepConfig(deviceId: string) {
+    loadConfigIfNeeded(deviceId: string) {
+      const id = deviceId || "";
+      if (!id) return;
+      if (
+        id === this.data.loadedDeviceId ||
+        id === this.data.loadInFlightDeviceId
+      ) {
+        return;
+      }
+      this.setData({ loadInFlightDeviceId: id });
+      void this.fetchSleepConfig(id).then((loaded) => {
+        this.setData({
+          loadInFlightDeviceId: "",
+          ...(loaded ? { loadedDeviceId: id } : {}),
+        });
+      });
+    },
+
+    /**
+     * 读取哄睡配置；未设置（data 为 null）时保留页面默认值。
+     * 返回是否拿到有效响应（false 时调用方可重试）。
+     */
+    async fetchSleepConfig(deviceId: string): Promise<boolean> {
       try {
         const res = await getSleepConfig(deviceId);
         const config = res.data;
-        if (!config) return;
+        if (!config) return true;
         const durationMinutes =
           config.durationMinutes ?? FALLBACK_DURATION_MINUTES;
         this.setData({
@@ -99,9 +136,11 @@ Component({
           sleepTime: config.sleepTime,
           forceSleep: config.forceSleep,
         });
+        return true;
       } catch (error) {
         console.warn("[sleep-config-form] 加载哄睡配置失败", error);
         wx.showToast({ title: "加载失败", icon: "none" });
+        return false;
       }
     },
 

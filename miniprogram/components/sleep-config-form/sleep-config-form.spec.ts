@@ -93,6 +93,42 @@ describe("sleep-config-form 组件", () => {
       expect(mockGetSleepConfig).not.toHaveBeenCalled();
       expect(instance.data.sleepTime).toBe("21:30");
     });
+
+    it("deviceId 晚到（attached 时为空）：属性更新后补拉一次", async () => {
+      const instance = harness.createInstance();
+      instance.lifetimes.attached();
+      expect(mockGetSleepConfig).not.toHaveBeenCalled();
+
+      instance.data.deviceId = "dev-late";
+      instance.observers.deviceId("dev-late");
+      await flush();
+
+      expect(mockGetSleepConfig).toHaveBeenCalledTimes(1);
+      expect(mockGetSleepConfig).toHaveBeenCalledWith("dev-late");
+    });
+
+    it("同一 deviceId 重复触发（show / observer）：只拉一次", async () => {
+      const instance = attach("dev-1");
+      await flush();
+
+      instance.pageLifetimes.show();
+      instance.observers.deviceId("dev-1");
+      await flush();
+
+      expect(mockGetSleepConfig).toHaveBeenCalledTimes(1);
+    });
+
+    it("上次加载失败：回到页面 show 时重试", async () => {
+      mockGetSleepConfig.mockRejectedValueOnce(new Error("network"));
+      const instance = attach("dev-1");
+      await flush();
+      expect(mockGetSleepConfig).toHaveBeenCalledTimes(1);
+
+      instance.pageLifetimes.show();
+      await flush();
+
+      expect(mockGetSleepConfig).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("加载哄睡配置", () => {

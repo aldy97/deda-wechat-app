@@ -1,0 +1,39 @@
+<view class="device-switch-wrap variant-{{ variant }} {{ open ? 'device-switch-wrap-open' : '' }}">
+  <view
+    wx:if="{{ open }}"
+    class="device-switch-mask"
+    bind:tap="onClose"
+    aria-hidden="true"
+  ></view>
+
+  <button
+    class="device-switch {{ devices.length > 1 ? 'device-switch-active' : '' }}"
+    bind:tap="onToggle"
+    aria-label="切换孩子设备"
+    aria-haspopup="menu"
+    aria-expanded="{{ open }}"
+  >
+    <text class="device-switch-name">{{ loading ? '加载设备中' : (selectedName || '暂无设备') }}</text>
+    <view
+      wx:if="{{ devices.length > 1 }}"
+      class="device-switch-arrow {{ open ? 'device-switch-arrow-open' : '' }}"
+      aria-hidden="true"
+    ></view>
+  </button>
+
+  <view wx:if="{{ open }}" class="device-dropdown" aria-role="menu">
+    <view
+      wx:for="{{ devices }}"
+      wx:key="id"
+      class="device-dropdown-item {{ item.id === selectedId ? 'device-dropdown-item-selected' : '' }}"
+      data-id="{{ item.id }}"
+      hover-class="device-dropdown-item-hover"
+      bind:tap="onSelect"
+      aria-role="menuitem"
+      aria-label="切换到{{ item.name }}"
+    >
+      <text class="device-dropdown-name">{{ item.name }}</text>
+      <text wx:if="{{ item.id === selectedId }}" class="device-dropdown-check" aria-hidden="true">✓</text>
+    </view>
+  </view>
+</view>

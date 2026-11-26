@@ -15,6 +15,12 @@ import { formatDate } from "../../utils/date";
 import { CANVAS_MODE_COLORS, CANVAS_UI_COLORS } from "../../styles/palette";
 import { MODE_LABELS } from "../../constants/modes";
 import { REPORT_FOCUS_DEVICE_KEY } from "../../constants/report-focus";
+import {
+  readSelectedDeviceId,
+  resolveSelectedDeviceId,
+  writeSelectedDeviceId,
+} from "../../utils/selected-device";
+import { getDeviceDisplayName } from "../../utils/device-name";
 import { allocateIntegerPercentages } from "./learning-data.utils";
 import {
   buildPieTarget,
@@ -99,8 +105,9 @@ Page({
     reportError: false,
     usageError: false,
     feedbackSubmitting: false,
-    deviceDropdownVisible: false,
     devices: [] as Device[],
+    /** 页头 dropdown 选项：{ id, name }（name 已按孩子名优先解析） */
+    deviceOptions: [] as Array<{ id: string; name: string }>,
     selectedDeviceId: "",
     selectedDeviceName: "",
     reportDate: "",
@@ -139,23 +146,62 @@ Page({
   },
 
   async onShow() {
-    // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新
-    if (this.networkStarted && !this.data.loadingDevices) {
-      let focusedDeviceId = "";
-      if (this.data.devices.length) {
-        focusedDeviceId = this.consumeReportFocusDeviceId(this.data.devices);
-      }
-      if (focusedDeviceId && focusedDeviceId !== this.data.selectedDeviceId) {
-        await this.selectDevice(focusedDeviceId);
-        return;
-      }
-      if (!this.data.selectedDeviceId) {
-        // 首载时无设备（或选中设备失效）：重拉设备列表，
-        // 否则绑定设备后回到本页会永远停在「先绑定」空态
-        await this.initialize();
-      } else {
-        await this.loadReportData();
-      }
+    // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新。
+    // 设备列表必须每次同步：首页可能刚解绑设备，dropdown 不能继续展示已删除的孩子。
+    if (!this.networkStarted || this.data.loadingDevices) return;
+
+    const previousSelectedId = this.data.selectedDeviceId;
+    const devices: Device[] | null = await this.fetchLatestDevices();
+    if (!devices) {
+      // 同步失败：保留旧列表，只静默刷当前孩子的报告
+      if (previousSelectedId) await this.loadReportData();
+      return;
+    }
+
+    // 交接 id 用「最新列表」校验后再消费，避免已解绑的设备被选中
+    const focusedDeviceId = this.consumeReportFocusDeviceId(devices);
+    const selectedId = resolveSelectedDeviceId(
+      devices,
+      focusedDeviceId || previousSelectedId || readSelectedDeviceId(),
+    );
+    this.writeDeviceListCache(devices);
+    if (selectedId) writeSelectedDeviceId(selectedId);
+
+    const selectedDevice = devices.find((item) => item.id === selectedId);
+    this.setData({
+      devices,
+      deviceOptions: this.buildDeviceOptions(devices),
+      selectedDeviceId: selectedId,
+      selectedDeviceName: this.getDeviceName(selectedDevice),
+    });
+
+    if (!selectedId) {
+      this.setData({
+        loadingDaily: false,
+        loadingReport: false,
+        loadingUsage: false,
+      });
+      return;
+    }
+
+    if (selectedId !== previousSelectedId) {
+      await this.applySelectedDevice(selectedId);
+      return;
+    }
+
+    await this.loadReportData();
+  },
+
+  /**
+   * 静默拉取最新设备列表；失败返回 null（保留旧数据，不弹错）。
+   */
+  async fetchLatestDevices(): Promise<Device[] | null> {
+    try {
+      const res = await getDeviceList();
+      return res.data || [];
+    } catch (error) {
+      console.warn("[learning-data] 同步设备列表失败", error);
+      return null;
     }
   },
 
@@ -174,15 +220,20 @@ Page({
   warmupFromCache() {
     this.cleanExpiredReportCache();
     const cachedDevices: Device[] = this.readDeviceListCache();
-    // 首帧优先命中卡片交接的设备，避免先闪一下第一台孩子的报告
+    // 首帧优先命中卡片交接的设备，其次是跨页共享选择，避免先闪一下第一台孩子的报告
     const focusDeviceId = this.readReportFocusDeviceId();
-    const cachedSelected =
-      cachedDevices.find((item) => item.id === focusDeviceId) ||
-      cachedDevices[0];
+    const cachedSelectedId = resolveSelectedDeviceId(
+      cachedDevices,
+      focusDeviceId || readSelectedDeviceId(),
+    );
+    const cachedSelected = cachedDevices.find(
+      (item) => item.id === cachedSelectedId,
+    );
     if (!cachedSelected) return;
     this.warmedDeviceId = cachedSelected.id;
     this.setData({
       devices: cachedDevices,
+      deviceOptions: this.buildDeviceOptions(cachedDevices),
       selectedDeviceId: cachedSelected.id,
       selectedDeviceName: this.getDeviceName(cachedSelected),
       initialized: true,
@@ -190,6 +241,14 @@ Page({
       deviceError: false,
     });
     this.restoreReportCache(cachedSelected.id);
+  },
+
+  /** 下拉选项：统一走 getDeviceDisplayName，避免两页命名口径漂移 */
+  buildDeviceOptions(devices: Device[]): Array<{ id: string; name: string }> {
+    return devices.map((device) => ({
+      id: device.id,
+      name: getDeviceDisplayName(device),
+    }));
   },
 
   /**
@@ -233,13 +292,19 @@ Page({
       const res = await getDeviceList();
       const devices = res.data || [];
       const focusedDeviceId = this.consumeReportFocusDeviceId(devices);
-      const selected =
-        devices.find((item) => item.id === focusedDeviceId) ||
-        devices.find((item) => item.id === this.data.selectedDeviceId) ||
-        devices[0];
+      // 选择优先级：卡片交接 > 当前页选择 > 跨页共享选择 > 第一台
+      const selectedId = resolveSelectedDeviceId(
+        devices,
+        focusedDeviceId || this.data.selectedDeviceId || readSelectedDeviceId(),
+      );
+      const selected = devices.find((item) => item.id === selectedId);
       this.writeDeviceListCache(devices);
+      if (selected?.id) {
+        writeSelectedDeviceId(selected.id);
+      }
       this.setData({
         devices,
+        deviceOptions: this.buildDeviceOptions(devices),
         selectedDeviceId: selected?.id || "",
         selectedDeviceName: this.getDeviceName(selected),
         initialized: true,
@@ -388,11 +453,7 @@ Page({
 
   getDeviceName(device?: Device): string {
     if (!device) return "暂无设备";
-    return (
-      device.childProfile?.name ||
-      device.childProfile?.englishName ||
-      device.name
-    );
+    return getDeviceDisplayName(device, "暂无设备");
   },
 
   async loadReportData() {
@@ -838,26 +899,22 @@ Page({
     );
   },
 
-  onDeviceSwitch() {
-    if (this.data.devices.length <= 1) return;
-    this.setData({
-      deviceDropdownVisible: !this.data.deviceDropdownVisible,
-    });
-  },
-
-  onCloseDeviceDropdown() {
-    this.setData({ deviceDropdownVisible: false });
-  },
-
-  async onSelectDeviceOption(event: WechatMiniprogram.TouchEvent) {
-    const deviceId = String(event.currentTarget.dataset.id || "");
-    this.setData({ deviceDropdownVisible: false });
+  async onDeviceChange(event: WechatMiniprogram.CustomEvent) {
+    const deviceId = String(event?.detail?.deviceId || "");
     await this.selectDevice(deviceId);
   },
 
   async selectDevice(deviceId: string) {
     if (!deviceId || deviceId === this.data.selectedDeviceId) return;
+    await this.applySelectedDevice(deviceId);
+  },
+
+  /**
+   * 切到指定孩子并重载报告：selectDevice 与 onShow 的失效回退共用。
+   */
+  async applySelectedDevice(deviceId: string) {
     const device = this.data.devices.find((item) => item.id === deviceId);
+    writeSelectedDeviceId(deviceId);
     this.setData({
       selectedDeviceId: deviceId,
       selectedDeviceName: this.getDeviceName(device),

@@ -11,7 +11,7 @@
  *   3. 位置：设备卡片（含空态）之后、「听风原野信箱」之前
  *   4. 可点击且带悬停态 / 无障碍标签，路由目标是新页 sleep-config
  *   5. 右侧插画用 <elly-image>，asset-key / fallback / mode / lazy-load 正确且尺寸与 banner 一致
- *   6. 深夜蓝底色来自色板变量，不在业务样式里直写色值
+ *   6. 底色用深蓝渐变（135° 双色），前景用配套浅色，且只用色板变量
  *   7. 展示位 key 已登记并带中文标签
  */
 export {};
@@ -110,7 +110,7 @@ describe("设备列表哄睡管理入口位", () => {
   });
 
   it("排在设备卡片（含空态）之后、来信 banner 之前", () => {
-    const cardIndex = wxml.indexOf('wx:for="{{ devices }}"');
+    const cardIndex = wxml.indexOf('class="device-card card"');
     const emptyIndex = wxml.indexOf("empty-device-card");
     const bannerIndex = wxml.search(/class="[^"]*\bfeedback-hero\b/);
 
@@ -186,25 +186,65 @@ describe("设备列表哄睡管理入口位", () => {
     );
   });
 
-  it("深夜蓝底色来自色板变量，标题与副标题用配套前景色", () => {
+  it("入口卡使用深蓝渐变，前景用配套浅色", () => {
     const tokens = [
-      "--color-sleep-deep",
-      "--color-sleep-deep-end",
+      "--color-sleep-card-start",
+      "--color-sleep-card-end",
       "--color-sleep-title",
-      "--color-sleep-subtitle",
+      "--color-sleep-card-subtitle",
     ];
 
     for (const token of tokens) {
       expect(palette).toContain(`${token}:`);
     }
-    expect(declaration(rule(".sleep-manage-hero"), "background")).toContain(
-      "var(--color-sleep-deep)",
-    );
+    const background = declaration(rule(".sleep-manage-hero"), "background");
+    expect(background).toContain("linear-gradient");
+    expect(background).toContain("135deg");
+    expect(background).toContain("var(--color-sleep-card-start)");
+    expect(background).toContain("var(--color-sleep-card-end)");
+    expect(background).not.toContain("var(--color-mode-5-soft)");
     expect(declaration(rule(".sleep-manage-hero__title"), "color")).toBe(
       "var(--color-sleep-title)",
     );
     expect(declaration(rule(".sleep-manage-hero__subtitle"), "color")).toBe(
-      "var(--color-sleep-subtitle)",
+      "var(--color-sleep-card-subtitle)",
     );
+  });
+
+  it("夜空装饰：一个月亮 + 多颗星星，色板驱动且不挡点击", () => {
+    const section = wxml.slice(sectionStart, sectionEnd);
+    const sky = rule(".sleep-manage-hero__sky");
+    const moon = rule(".sleep-manage-hero__moon");
+    const star = rule(".sleep-manage-hero__star");
+
+    // 结构：装饰层在，月亮一个、星星不少于三颗，且对读屏隐藏
+    expect(section).toContain('class="sleep-manage-hero__sky"');
+    expect(section).toContain('aria-hidden="true"');
+    expect(section.match(/sleep-manage-hero__moon/g)).toHaveLength(1);
+    expect(
+      (section.match(/sleep-manage-hero__star\b/g) || []).length,
+    ).toBeGreaterThanOrEqual(3);
+
+    // 层级：装饰层垫底且不吃点击，文案与插画浮在它上面
+    expect(declaration(sky, "position")).toBe("absolute");
+    expect(declaration(sky, "z-index")).toBe("0");
+    expect(declaration(sky, "pointer-events")).toBe("none");
+    expect(declaration(rule(".sleep-manage-hero__copy"), "z-index")).toBe("1");
+    expect(declaration(rule(".sleep-manage-hero__art"), "z-index")).toBe("1");
+
+    // 颜色：月亮 / 星光 / 光晕全部来自色板，业务样式不直写色值
+    expect(palette).toContain("--color-sleep-moon:");
+    expect(palette).toContain("--color-sleep-star:");
+    expect(palette).toContain("--color-sleep-moon-glow:");
+    expect(declaration(moon, "background-color")).toBe(
+      "var(--color-sleep-moon)",
+    );
+    expect(declaration(moon, "box-shadow")).toContain(
+      "var(--color-sleep-moon-glow)",
+    );
+    expect(declaration(star, "background-color")).toBe(
+      "var(--color-sleep-star)",
+    );
+    expect(wxss).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
   });
 });

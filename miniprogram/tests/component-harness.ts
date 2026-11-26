@@ -65,6 +65,15 @@ export function installComponentHarness(): ComponentHarness {
         }
         instance.lifetimes = boundLifetimes;
       }
+      if (captured.pageLifetimes) {
+        const boundPageLifetimes: Record<string, any> = {};
+        for (const key of Object.keys(captured.pageLifetimes)) {
+          const lifetime = captured.pageLifetimes[key];
+          boundPageLifetimes[key] =
+            typeof lifetime === "function" ? lifetime.bind(instance) : lifetime;
+        }
+        instance.pageLifetimes = boundPageLifetimes;
+      }
       const propertyDefaults: Record<string, any> = {};
       for (const [key, def] of Object.entries(captured.properties ?? {})) {
         propertyDefaults[key] = (def as any)?.value;

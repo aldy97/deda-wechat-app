@@ -29,16 +29,83 @@
   );
 }
 
-/* 哄睡管理入口：深夜蓝底，右侧插画位暂留空，尺寸与 banner 等比 */
+/* 哄睡管理入口：深蓝渐变（与来信 banner 同一渐变技法，不共用浅色） */
 .sleep-manage-hero {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(
     135deg,
-    var(--color-sleep-deep) 0%,
-    var(--color-sleep-deep-end) 100%
+    var(--color-sleep-card-start) 0%,
+    var(--color-sleep-card-end) 100%
   );
 }
 
+/* 夜空装饰层：垫在文案与插画下面，不接收点击 */
+.sleep-manage-hero__sky {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sleep-manage-hero__moon {
+  position: absolute;
+  top: 26rpx;
+  right: 232rpx;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background-color: var(--color-sleep-moon);
+  box-shadow: 0 0 32rpx var(--color-sleep-moon-glow);
+}
+
+.sleep-manage-hero__star {
+  position: absolute;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background-color: var(--color-sleep-star);
+}
+
+.star-1 {
+  top: 18rpx;
+  left: 300rpx;
+}
+
+.star-2 {
+  top: 34rpx;
+  left: 220rpx;
+  width: 10rpx;
+  height: 10rpx;
+  opacity: 0.6;
+}
+
+.star-3 {
+  top: 168rpx;
+  left: 330rpx;
+  opacity: 0.9;
+}
+
+.star-4 {
+  top: 92rpx;
+  left: 434rpx;
+  opacity: 0.5;
+}
+
+.star-5 {
+  top: 160rpx;
+  left: 452rpx;
+  width: 8rpx;
+  height: 8rpx;
+  opacity: 0.7;
+}
+
 .sleep-manage-hero__copy {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
 }
@@ -56,11 +123,13 @@
   margin-top: 8rpx;
   font-size: 22rpx;
   line-height: 1.4;
-  color: var(--color-sleep-subtitle);
+  color: var(--color-sleep-card-subtitle);
 }
 
 /* 右侧插画：与 banner 插画同尺寸，换成远程展示位后版式不变 */
 .sleep-manage-hero__art {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   display: block;
   width: 168rpx;
@@ -385,7 +454,7 @@
   width: 100%;
 }
 
-/* 自定义导航栏：左侧圆形添加按钮 + 居中标题 */
+/* 自定义导航栏：左侧孩子设备下拉 + 圆形添加按钮 */
 .device-nav {
   background-color: var(--color-bg);
 }
@@ -394,20 +463,14 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 16rpx;
   padding: 0 24rpx;
 }
 
-.device-nav-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 50%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 34rpx;
-  font-weight: 600;
-  color: var(--color-text);
+.device-nav-switch {
+  display: block;
+  flex-shrink: 0;
+  max-width: 300rpx;
 }
 
 /* 圆形添加设备入口（导航栏左侧） */
