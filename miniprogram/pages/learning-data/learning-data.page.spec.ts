@@ -874,6 +874,11 @@ describe("learning-data parent report page", () => {
       expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
       expect(page.data.devices).toHaveLength(2);
       expect(page.data.selectedDeviceId).toBe("d1");
+      // dropdown 也要拿到新增设备（空态 → 两个孩子）
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明" },
+        { id: "d2", name: "小红" },
+      ]);
       // 解除空态后报告数据随之加载
       expect(mockApi.getParentReport).toHaveBeenCalledWith(
         "d1",
@@ -881,15 +886,101 @@ describe("learning-data parent report page", () => {
       );
     });
 
-    it("已有设备时 onShow 不重拉设备列表，只静默刷报告", async () => {
+    it("已有设备时 onShow 静默同步设备列表并刷报告（列表可能被首页解绑改过）", async () => {
       await page.onLoad();
       await page.onReady();
       expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
 
       await page.onShow();
 
-      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
       expect(mockApi.getParentReport).toHaveBeenCalledTimes(2);
+    });
+
+    it("首页解绑当前孩子后回到本页：dropdown 不再包含该孩子，选中回退第一台并重拉报告", async () => {
+      await page.onLoad();
+      await page.onReady();
+      await page.selectDevice("d2");
+      jest.clearAllMocks();
+
+      // 首页删掉了 d2：服务端只剩 d1
+      mockApi.getDeviceList.mockResolvedValue({ data: [devices[0]] });
+
+      await page.onShow();
+
+      expect(page.data.devices.map((d: any) => d.id)).toEqual(["d1"]);
+      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(page.data.selectedDeviceName).toBe("小明");
+      expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
+        "selected_device_id",
+        "d1",
+      );
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d1",
+        page.data.reportDate,
+      );
+    });
+
+    it("首页解绑其他孩子后回到本页：只更新 dropdown，当前孩子不变", async () => {
+      await page.onLoad();
+      await page.onReady();
+      jest.clearAllMocks();
+
+      // 当前是 d1，首页删掉了 d2
+      mockApi.getDeviceList.mockResolvedValue({ data: [devices[0]] });
+
+      await page.onShow();
+
+      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d1",
+        page.data.reportDate,
+      );
+    });
+
+    it("首页新增孩子后回到本页：dropdown 动态增加，当前孩子与报告不变", async () => {
+      mockApi.getDeviceList.mockResolvedValueOnce({ data: [devices[0]] });
+      await page.onLoad();
+      await page.onReady();
+      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      jest.clearAllMocks();
+
+      // 首页新增了 d2
+      mockApi.getDeviceList.mockResolvedValue({ data: devices });
+
+      await page.onShow();
+
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明" },
+        { id: "d2", name: "小红" },
+      ]);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(page.data.selectedDeviceName).toBe("小明");
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d1",
+        page.data.reportDate,
+      );
+    });
+
+    it("同步设备列表失败：保留旧列表与当前孩子，不崩", async () => {
+      await page.onLoad();
+      await page.onReady();
+      jest.clearAllMocks();
+      jest.spyOn(console, "warn").mockImplementation(() => undefined);
+
+      mockApi.getDeviceList.mockRejectedValue(new Error("offline"));
+
+      await page.onShow();
+
+      expect(page.data.devices).toHaveLength(2);
+      expect(page.data.selectedDeviceId).toBe("d1");
+      expect(mockApi.getParentReport).toHaveBeenCalledWith(
+        "d1",
+        page.data.reportDate,
+      );
+      (console.warn as jest.Mock).mockRestore();
     });
 
     it("下拉刷新时无选中设备：走 initialize 重拉设备列表", async () => {
@@ -947,7 +1038,7 @@ describe("learning-data parent report page", () => {
       );
     });
 
-    it("页面已加载后收到交接：切到该设备，不重拉设备列表", async () => {
+    it("页面已加载后收到交接：设备列表同步后仍按交接优先切过去", async () => {
       await page.onLoad();
       await page.onReady();
       expect(page.data.selectedDeviceId).toBe("d1");
@@ -956,7 +1047,8 @@ describe("learning-data parent report page", () => {
       await page.onShow();
 
       expect(page.data.selectedDeviceId).toBe("d2");
-      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(1);
+      // 每次回页都会同步设备列表（解绑后 dropdown 不能残留旧孩子）
+      expect(mockApi.getDeviceList).toHaveBeenCalledTimes(2);
       expect(harness.wx.removeStorageSync).toHaveBeenCalledTimes(1);
     });
 

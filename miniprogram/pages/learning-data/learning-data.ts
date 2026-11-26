@@ -146,23 +146,62 @@ Page({
   },
 
   async onShow() {
-    // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新
-    if (this.networkStarted && !this.data.loadingDevices) {
-      let focusedDeviceId = "";
-      if (this.data.devices.length) {
-        focusedDeviceId = this.consumeReportFocusDeviceId(this.data.devices);
-      }
-      if (focusedDeviceId && focusedDeviceId !== this.data.selectedDeviceId) {
-        await this.selectDevice(focusedDeviceId);
-        return;
-      }
-      if (!this.data.selectedDeviceId) {
-        // 首载时无设备（或选中设备失效）：重拉设备列表，
-        // 否则绑定设备后回到本页会永远停在「先绑定」空态
-        await this.initialize();
-      } else {
-        await this.loadReportData();
-      }
+    // 首轮网络加载由 onReady 触发，这里只负责后续回到本页时的静默刷新。
+    // 设备列表必须每次同步：首页可能刚解绑设备，dropdown 不能继续展示已删除的孩子。
+    if (!this.networkStarted || this.data.loadingDevices) return;
+
+    const previousSelectedId = this.data.selectedDeviceId;
+    const devices: Device[] | null = await this.fetchLatestDevices();
+    if (!devices) {
+      // 同步失败：保留旧列表，只静默刷当前孩子的报告
+      if (previousSelectedId) await this.loadReportData();
+      return;
+    }
+
+    // 交接 id 用「最新列表」校验后再消费，避免已解绑的设备被选中
+    const focusedDeviceId = this.consumeReportFocusDeviceId(devices);
+    const selectedId = resolveSelectedDeviceId(
+      devices,
+      focusedDeviceId || previousSelectedId || readSelectedDeviceId(),
+    );
+    this.writeDeviceListCache(devices);
+    if (selectedId) writeSelectedDeviceId(selectedId);
+
+    const selectedDevice = devices.find((item) => item.id === selectedId);
+    this.setData({
+      devices,
+      deviceOptions: this.buildDeviceOptions(devices),
+      selectedDeviceId: selectedId,
+      selectedDeviceName: this.getDeviceName(selectedDevice),
+    });
+
+    if (!selectedId) {
+      this.setData({
+        loadingDaily: false,
+        loadingReport: false,
+        loadingUsage: false,
+      });
+      return;
+    }
+
+    if (selectedId !== previousSelectedId) {
+      await this.applySelectedDevice(selectedId);
+      return;
+    }
+
+    await this.loadReportData();
+  },
+
+  /**
+   * 静默拉取最新设备列表；失败返回 null（保留旧数据，不弹错）。
+   */
+  async fetchLatestDevices(): Promise<Device[] | null> {
+    try {
+      const res = await getDeviceList();
+      return res.data || [];
+    } catch (error) {
+      console.warn("[learning-data] 同步设备列表失败", error);
+      return null;
     }
   },
 
@@ -867,6 +906,13 @@ Page({
 
   async selectDevice(deviceId: string) {
     if (!deviceId || deviceId === this.data.selectedDeviceId) return;
+    await this.applySelectedDevice(deviceId);
+  },
+
+  /**
+   * 切到指定孩子并重载报告：selectDevice 与 onShow 的失效回退共用。
+   */
+  async applySelectedDevice(deviceId: string) {
     const device = this.data.devices.find((item) => item.id === deviceId);
     writeSelectedDeviceId(deviceId);
     this.setData({

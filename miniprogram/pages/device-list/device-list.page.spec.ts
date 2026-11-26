@@ -722,6 +722,31 @@ describe("device-list card display mapping", () => {
       expect(page.restoreDeviceListCache()).toBe(true);
       expect(page.data.selectedDevice.id).toBe("dev-b");
     });
+
+    it("新增设备后静默刷新：dropdown 选项动态增加，当前孩子不变", async () => {
+      mockTwoDevices();
+      await page.loadDeviceList();
+
+      const third = {
+        id: "dev-c",
+        name: "样机 C",
+        childProfile: { name: "小刚" },
+      };
+      mockApi.getDeviceList.mockResolvedValue({
+        code: 0,
+        message: "",
+        data: [...twoDevices, third],
+      });
+
+      await page.loadDeviceList({ silent: true });
+
+      expect(page.data.deviceOptions).toEqual([
+        { id: "dev-a", name: "小明" },
+        { id: "dev-b", name: "小红" },
+        { id: "dev-c", name: "小刚" },
+      ]);
+      expect(page.data.selectedDevice.id).toBe("dev-a");
+    });
   });
 
   describe("选择与状态兜底边界", () => {

@@ -143,6 +143,15 @@
     aria-role="button"
     aria-label="哄睡管理：设置睡眠时间、时长与内容"
   >
+    <!-- 夜空装饰：纯展示，不接收点击，避免遮挡文案与插画 -->
+    <view class="sleep-manage-hero__sky" aria-hidden="true">
+      <view class="sleep-manage-hero__moon"></view>
+      <view class="sleep-manage-hero__star star-1"></view>
+      <view class="sleep-manage-hero__star star-2"></view>
+      <view class="sleep-manage-hero__star star-3"></view>
+      <view class="sleep-manage-hero__star star-4"></view>
+      <view class="sleep-manage-hero__star star-5"></view>
+    </view>
     <view class="sleep-manage-hero__copy">
       <text class="sleep-manage-hero__title">哄睡管理</text>
       <text class="sleep-manage-hero__subtitle">设定睡眠时间与故事，到点陪宝贝入睡</text>

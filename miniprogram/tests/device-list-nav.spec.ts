@@ -84,19 +84,20 @@ describe("设备列表导航与单卡展示", () => {
     expect(section).toContain("/pages/sleep-config/sleep-config");
   });
 
-  it("哄睡入口卡改为与来信 banner 同款浅色渐变", () => {
+  it("哄睡入口卡使用深蓝渐变，前景用配套浅色", () => {
     const hero = rule(".sleep-manage-hero");
+    const background = declaration(hero, "background");
 
-    expect(declaration(hero, "background")).toContain(
-      "var(--color-mode-5-soft)",
-    );
-    expect(declaration(hero, "background")).toContain("var(--color-surface)");
-    expect(hero).not.toContain("--color-sleep-deep");
+    expect(background).toContain("linear-gradient");
+    expect(background).toContain("135deg");
+    expect(background).toContain("var(--color-sleep-card-start)");
+    expect(background).toContain("var(--color-sleep-card-end)");
+    expect(background).not.toContain("var(--color-mode-5-soft)");
     expect(declaration(rule(".sleep-manage-hero__title"), "color")).toBe(
-      "var(--color-heading)",
+      "var(--color-sleep-title)",
     );
     expect(declaration(rule(".sleep-manage-hero__subtitle"), "color")).toBe(
-      "var(--color-mode-5)",
+      "var(--color-sleep-card-subtitle)",
     );
   });
 });

@@ -84,6 +84,14 @@ page {
   --color-sleep-deep-end: #222c45;
   --color-sleep-title: #f4f7fc;
   --color-sleep-subtitle: #c4cde1;
+  /* 首页哄睡入口卡的深蓝渐变：比 hero 兜底更淡一档，避免整块读作近黑 */
+  --color-sleep-card-start: #3c66a0;
+  --color-sleep-card-end: #243f61;
+  /* 入口卡夜空装饰：月亮 / 星光 / 月亮光晕 + 更淡底色上的副标题 */
+  --color-sleep-moon: #fdf3c8;
+  --color-sleep-moon-glow: rgba(253, 243, 200, 0.35);
+  --color-sleep-star: rgba(255, 255, 255, 0.9);
+  --color-sleep-card-subtitle: #e6edf8;
 
   /* 哄睡配置页：hero 标签/遮罩与「了解更多哄睡的科学原理」banner */
   --color-sleep-pill-bg: rgba(255, 255, 255, 0.16);
