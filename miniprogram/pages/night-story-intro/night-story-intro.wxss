@@ -1,0 +1,30 @@
+/* 功能版：仅保证可读的排版基线，视觉稿确认后再补样式 */
+.night-story-page {
+  padding: 32rpx;
+  padding-bottom: 64rpx;
+}
+
+.night-story-hero-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+
+.night-story-paragraph {
+  display: block;
+  font-size: 30rpx;
+  line-height: 1.8;
+  margin-bottom: 20rpx;
+}
+
+.night-story-section {
+  margin-top: 24rpx;
+}
+
+.night-story-section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}

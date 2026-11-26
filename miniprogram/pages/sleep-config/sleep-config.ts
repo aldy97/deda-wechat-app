@@ -48,6 +48,13 @@ Page({
   },
 
   /**
+   * 进入晚安故事模式介绍页
+   */
+  onOpenScience() {
+    wx.navigateTo({ url: "/pages/night-story-intro/night-story-intro" });
+  },
+
+  /**
    * 返回上一页；直接从页面路径进入（无页面栈）时回设备列表
    */
   onBack() {

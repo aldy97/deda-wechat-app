@@ -1,0 +1,20 @@
+<view class="night-story-page">
+  <text class="night-story-hero-title">{{ heroTitle }}</text>
+
+  <view class="night-story-intro">
+    <text
+      wx:for="{{ introParagraphs }}"
+      wx:key="*this"
+      class="night-story-paragraph"
+    >{{ item }}</text>
+  </view>
+
+  <view
+    class="night-story-section"
+    wx:for="{{ sections }}"
+    wx:key="title"
+  >
+    <text class="night-story-section-title">{{ item.title }}</text>
+    <text class="night-story-paragraph">{{ item.body }}</text>
+  </view>
+</view>

@@ -11,6 +11,7 @@
     "pages/owner-info/owner-info",
     "pages/sleep-manage/sleep-manage",
     "pages/sleep-config/sleep-config",
+    "pages/night-story-intro/night-story-intro",
     "pages/user-manual/user-manual",
     "pages/mine/mine",
     "pages/child-list/child-list",

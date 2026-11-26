@@ -63,7 +63,7 @@
     <text class="force-desc">开启后，到达设定时间，不能再继续聊天。哄睡过程中不能叫Elly打断（仅可以通过按键结束）。</text>
   </view>
 
-  <!-- 如何进入哄睡模式（可展开） -->
+  <!-- 暂停展示：如何进入哄睡模式卡片（代码保留，恢复时去掉外层注释即可）
   <view class="guide-card">
     <view class="guide-header" bind:tap="onToggleGuide">
       <view class="guide-left">
@@ -77,7 +77,7 @@
     </view>
 
     <view class="guide-body" wx:if="{{ guideOpen }}">
-      <!-- 方式1：语音指令 -->
+      方式1：语音指令
       <view class="guide-way">
         <view class="way-head">
           <text class="way-badge">方式1</text>
@@ -95,7 +95,7 @@
         </view>
       </view>
 
-      <!-- 方式2：定时进入 -->
+      方式2：定时进入
       <view class="guide-way">
         <view class="way-head">
           <text class="way-badge">方式2</text>
@@ -115,6 +115,7 @@
       </view>
     </view>
   </view>
+  -->
 
   <!-- 时间选择弹窗 -->
   <van-popup
