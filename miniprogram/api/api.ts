@@ -735,3 +735,41 @@ export async function reportPushSubscription(
     data: params,
   });
 }
+
+// ==================== 家长档案 ====================
+
+/**
+ * 家长档案（对齐 deda-server GET / PATCH /users/profile）
+ * 服务端不返回 openid；nickname 未设置时为 null。
+ */
+export interface UserProfile {
+  id: string;
+  nickname: string | null;
+  phone: string | null;
+  createdAt: string;
+  deviceCount: number;
+  childCount: number;
+}
+
+/**
+ * 获取当前登录家长的档案
+ */
+export async function getUserProfile(): Promise<ApiResponse<UserProfile>> {
+  return request<UserProfile>({
+    method: "GET",
+    url: "/users/profile",
+  });
+}
+
+/**
+ * 更新家长昵称（服务端校验：trim 后 1–20 字，未知字段 400）
+ */
+export async function updateUserProfile(data: {
+  nickname: string;
+}): Promise<ApiResponse<UserProfile>> {
+  return request<UserProfile>({
+    method: "PATCH",
+    url: "/users/profile",
+    data,
+  });
+}

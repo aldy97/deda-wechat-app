@@ -1,0 +1,169 @@
+page {
+  background-color: var(--color-kid-bg-bottom);
+}
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+}
+
+/* 自定义导航栏 */
+.profile-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.profile-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+}
+
+.profile-back-hover {
+  background-color: var(--color-kid-bubble);
+}
+
+.profile-nav-title {
+  margin-left: 8rpx;
+  color: var(--color-title);
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+/* 加载 / 错误态 */
+.profile-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 48rpx;
+  color: var(--color-body);
+  font-size: 28rpx;
+}
+
+.profile-state-text {
+  text-align: center;
+}
+
+.profile-retry {
+  margin-top: 28rpx;
+  padding: 18rpx 48rpx;
+  border-radius: 999rpx;
+  background-color: var(--color-surface);
+  box-shadow: 0 8rpx 24rpx var(--color-kid-shadow);
+  color: var(--color-kid-accent);
+  font-size: 28rpx;
+}
+
+/* 表单卡片 */
+.profile-card {
+  margin: 32rpx 32rpx 0;
+  padding: 0 32rpx;
+  border-radius: 24rpx;
+  background-color: var(--color-surface);
+  box-shadow: 0 8rpx 24rpx var(--color-kid-shadow);
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  min-height: 104rpx;
+  border-bottom: 2rpx solid var(--color-divider);
+}
+
+.profile-row:last-child {
+  border-bottom: none;
+}
+
+.profile-row-label {
+  flex-shrink: 0;
+  width: 150rpx;
+  color: var(--color-title);
+  font-size: 30rpx;
+}
+
+.profile-row-input {
+  flex: 1;
+  min-width: 0;
+  height: 104rpx;
+  color: var(--color-title);
+  font-size: 30rpx;
+  text-align: right;
+}
+
+.profile-placeholder {
+  color: var(--color-placeholder);
+  font-size: 28rpx;
+}
+
+.profile-row-value {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.profile-row-text {
+  color: var(--color-title);
+  font-size: 30rpx;
+}
+
+.profile-row-text-placeholder {
+  color: var(--color-placeholder);
+}
+
+.profile-row-hint {
+  margin-top: 4rpx;
+  color: var(--color-secondary);
+  font-size: 22rpx;
+}
+
+.profile-tip {
+  margin: 24rpx 48rpx 0;
+  color: var(--color-body);
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+/* 底部保存按钮 */
+.profile-cta-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 56rpx;
+}
+
+.profile-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 260rpx;
+  height: 112rpx;
+  border-radius: 56rpx;
+  background: linear-gradient(
+    90deg,
+    var(--color-kid-cta-start) 0%,
+    var(--color-kid-cta-end) 100%
+  );
+  box-shadow: 0 14rpx 30rpx var(--color-kid-accent-soft);
+  color: var(--color-surface);
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.profile-cta-hover {
+  opacity: 0.85;
+}
+
+.profile-cta-disabled {
+  background: var(--color-disabled);
+  box-shadow: none;
+  color: var(--color-surface);
+}
