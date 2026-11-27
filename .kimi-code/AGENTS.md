@@ -118,3 +118,16 @@
     已接入两处：`ci.yml` 的 `gate` job（独立步骤，**不加 `if`**，push 到 main/master 时也跑，
     防仓库级配置与模板漂移）与 `package.json` 的 `pre-commit`。
     新增 `repo-tests/*.mjs` **无需改这两处**，glob 会自动带上。
+
+## 组件复用与抽象（2026-11-27）
+
+17. 新建页面前先查 `miniprogram/components/**`（load-more、elly-bubble、elly-image、
+    sleep-config-form 等已存在）；能复用就复用，缺口用 properties / slot 补，
+    禁止复制一份近似实现。
+18. 同一 layout + 框架出现在第 2 处 → 抽到 `miniprogram/components/<kebab-name>/`
+    四件套（.ts / .wxml / .wxss / .json），页面 json 的 usingComponents 登记，
+    两处都改成调用。小程序自定义组件有实打实的装配成本（四文件 + 登记 + 构建），
+    只有 1 处时不要提前抽象。
+19. 组件 .ts 改动同样受第 3 条约束：跑 `npm run build` 重新生成 .js，不手改产物；
+    新增组件补装配用例（page-harness），并满足第 10 条 ≥90% 覆盖率。
+20. 完成报告必须写：复用了哪个 / 抽出了哪个 + ≥2 个调用点路径，或「无」。
