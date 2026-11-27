@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "../config/api.config";
 import { reportApi } from "./monitor";
+import { PROFILE_CACHE_KEY } from "./user-profile";
 
 /**
  * 小程序统一请求封装
@@ -32,6 +33,8 @@ function handleUnauthorized(): void {
   isRedirectingToLogin = true;
 
   wx.removeStorageSync("token");
+  // 档案缓存是登录态数据：不清就会在换账号后先闪出上一个家长的昵称
+  wx.removeStorageSync(PROFILE_CACHE_KEY);
   wx.reLaunch({
     url: "/pages/login/login",
     complete: () => {
