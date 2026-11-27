@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "孩子信息",
   "usingComponents": {
-    "van-icon": "@vant/weapp/icon/index"
+    "van-icon": "@vant/weapp/icon/index",
+    "child-avatar": "/components/child-avatar/child-avatar"
   }
 }

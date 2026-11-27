@@ -1,11 +1,12 @@
 import { ensureAuthToken, getChildProfile } from "../../api/api";
+import { normalizeChildGender } from "../../utils/child-gender";
 
 export function formatChildGender(gender?: string | null): string {
-  const normalized = gender?.trim().toLowerCase();
-  if (normalized === "male" || normalized === "m" || normalized === "男") {
+  const normalized = normalizeChildGender(gender);
+  if (normalized === "male") {
     return "王子";
   }
-  if (normalized === "female" || normalized === "f" || normalized === "女") {
+  if (normalized === "female") {
     return "公主";
   }
   return "未设置";
@@ -22,6 +23,7 @@ Page({
     deviceId: "",
     childName: "未设置",
     genderLabel: "未设置",
+    avatarGender: "",
     birthdayLabel: "未设置",
   },
 
@@ -46,6 +48,7 @@ Page({
       const profile = res.data;
       this.setData({
         childName: profile?.name || profile?.englishName || "未设置",
+        avatarGender: profile?.gender ?? "",
         genderLabel: formatChildGender(profile?.gender),
         birthdayLabel: formatChildBirthday(profile?.birthday),
       });

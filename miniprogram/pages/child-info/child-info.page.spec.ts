@@ -47,6 +47,7 @@ describe("child info page", () => {
     expect(page.data.deviceId).toBe("dev-001");
     expect(page.data.childName).toBe("乐乐");
     expect(page.data.genderLabel).toBe("公主");
+    expect(page.data.avatarGender).toBe("female");
     expect(page.data.birthdayLabel).toBe("2020.05.20");
     expect(page.data.loadError).toBe(false);
   });
@@ -88,6 +89,7 @@ describe("child info page", () => {
 
     expect(page.data.childName).toBe("Bagel");
     expect(page.data.genderLabel).toBe("未设置");
+    expect(page.data.avatarGender).toBe("");
     expect(page.data.birthdayLabel).toBe("未设置");
   });
 
