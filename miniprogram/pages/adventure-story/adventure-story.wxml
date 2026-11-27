@@ -1,49 +1,52 @@
 <kid-gradient-bg>
-  <view class="container adventure-story-page">
-    <!-- 页头：与设备列表入口卡同一套插画与薄荷绿底色 -->
-    <view class="adventure-hero">
-      <view class="adventure-hero__copy">
-        <text class="adventure-hero__eyebrow">每日冒险</text>
-        <text class="adventure-hero__title">和 Elly 一起去冒险</text>
-        <text class="adventure-hero__subtitle">每天一集，孩子做选择，故事往前走</text>
-      </view>
+  <view class="adventure-story-page">
+    <!-- 顶部 hero：背景图走远端展示位 adventure-story/hero-bg，未命中时透出渐变兜底 -->
+    <view class="adventure-story-hero" style="height: {{ heroHeight }}rpx;">
+      <!-- empty-fallback 是仓库级 fallback 闸口的显式豁免：本页用渐变兜底，不留包内占位图 -->
       <elly-image
-        class="adventure-hero__art"
-        asset-key="device-list/adventure-story"
-        fallback="/static/images/device-list/adventure-story.png"
-        mode="aspectFit"
+        class="adventure-story-hero__bg"
+        asset-key="adventure-story/hero-bg"
+        fallback=""
+        empty-fallback="{{ true }}"
+        mode="aspectFill"
         lazy-load="{{ false }}"
+        bind:load="onHeroImageLoad"
       />
     </view>
 
-    <!-- 总开关位：本期只读；adventure-configs 就绪后替换为可交互开关 -->
-    <view class="card adventure-status">
-      <view class="adventure-status__head">
-        <text class="adventure-status__label">每日冒险</text>
-        <text class="adventure-status__value">默认开启</text>
-      </view>
-      <text class="adventure-status__main">每天一集</text>
-      <text class="adventure-status__hint">总开关将在后续版本开放，当前默认开启</text>
-    </view>
+    <view class="container adventure-story-body">
+      <text class="adventure-story-title">{{ heroTitle }}</text>
+      <text class="adventure-story-subtitle">{{ heroSubtitle }}</text>
 
-    <!-- 语音触发指引：冒险由孩子开口进入，不做家长端定时 -->
-    <view class="card adventure-guide">
-      <text class="adventure-guide__title">怎么开始？</text>
-      <text class="adventure-guide__label">对 Elly 说：</text>
-      <view class="adventure-guide__chips">
-        <text class="adventure-guide__chip">“我想听冒险故事”</text>
-        <text class="adventure-guide__chip">“今天有什么冒险？”</text>
+      <!-- 总开关位：本期只读；adventure-configs 就绪后替换为可交互开关 -->
+      <view class="card adventure-status">
+        <view class="adventure-status__head">
+          <text class="adventure-status__label">每日冒险</text>
+          <text class="adventure-status__value">默认开启</text>
+        </view>
+        <text class="adventure-status__main">每天一集</text>
+        <text class="adventure-status__hint">总开关将在后续版本开放，当前默认开启</text>
       </view>
-    </view>
 
-    <!-- 玩法说明：每天一集、孩子做选择、收集星光 -->
-    <view
-      class="card adventure-section"
-      wx:for="{{ sections }}"
-      wx:key="title"
-    >
-      <text class="adventure-section__title">{{ item.title }}</text>
-      <text class="adventure-section__body">{{ item.body }}</text>
+      <!-- 语音触发指引：冒险由孩子开口进入，不做家长端定时 -->
+      <view class="card adventure-guide">
+        <text class="adventure-guide__title">怎么开始？</text>
+        <text class="adventure-guide__label">对 Elly 说：</text>
+        <view class="adventure-guide__chips">
+          <text class="adventure-guide__chip">“我想听冒险故事”</text>
+          <text class="adventure-guide__chip">“今天有什么冒险？”</text>
+        </view>
+      </view>
+
+      <!-- 玩法说明：每天一集、孩子做选择、收集星光 -->
+      <view
+        class="card adventure-section"
+        wx:for="{{ sections }}"
+        wx:key="title"
+      >
+        <text class="adventure-section__title">{{ item.title }}</text>
+        <text class="adventure-section__body">{{ item.body }}</text>
+      </view>
     </view>
   </view>
 </kid-gradient-bg>

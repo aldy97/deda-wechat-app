@@ -17,6 +17,8 @@ export const APP_ASSET_KEYS = {
   SLEEP_CONFIG_HERO_BG: "sleep-config/hero-bg",
   /** 晚安故事模式介绍页顶部背景图 */
   NIGHT_STORY_INTRO_HERO_BG: "night-story-intro/hero-bg",
+  /** 冒险故事页顶部背景图 */
+  ADVENTURE_STORY_HERO_BG: "adventure-story/hero-bg",
   /** 孩子信息页与哄睡页共用的页头吉祥物 */
   OWNER_INFO_MASCOT: "owner-info/mascot",
 } as const;
@@ -32,5 +34,6 @@ export const APP_ASSET_LABELS: Record<AppAssetKey, string> = {
     "设备列表冒险故事入口与介绍页插画",
   [APP_ASSET_KEYS.SLEEP_CONFIG_HERO_BG]: "哄睡配置页顶部背景图",
   [APP_ASSET_KEYS.NIGHT_STORY_INTRO_HERO_BG]: "晚安故事模式介绍页顶部背景图",
+  [APP_ASSET_KEYS.ADVENTURE_STORY_HERO_BG]: "冒险故事页顶部背景图",
   [APP_ASSET_KEYS.OWNER_INFO_MASCOT]: "孩子信息页与哄睡页吉祥物",
 };
