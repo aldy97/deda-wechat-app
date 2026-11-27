@@ -1,4 +1,5 @@
 import { login } from "../../api/api";
+import { reportClientInfoIfNeeded } from "../../utils/client-info";
 
 /**
  * 登录页
@@ -28,6 +29,7 @@ Page({
       const wxLoginRes = await this.wxLogin();
       const res = await login({ code: wxLoginRes.code });
       wx.setStorageSync("token", res.data.token);
+      void reportClientInfoIfNeeded();
       wx.showToast({ title: "登录成功", icon: "success" });
 
       setTimeout(() => {
