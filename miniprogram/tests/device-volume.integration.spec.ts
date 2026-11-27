@@ -92,7 +92,7 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
     expect(page.data.volume).toBe(before);
   });
 
-  it("401 → 全局清 token 并 reLaunch 到登录页", async () => {
+  it("401 → 全局清 token 与家长档案缓存，并 reLaunch 到登录页", async () => {
     const page = createPage();
     page.onLoad({ id: "dev-1" });
     await page.onReady();
@@ -101,6 +101,10 @@ describe("device-control 音量控制全链路（契约 3.4 / 3.6）", () => {
     await page.onVolumeMinus();
 
     expect(harness.wx.removeStorageSync).toHaveBeenCalledWith("token");
+    // 换账号登录后不能先闪出上一个家长的昵称
+    expect(harness.wx.removeStorageSync).toHaveBeenCalledWith(
+      "user_profile_cache",
+    );
     expect(harness.wx.reLaunch).toHaveBeenCalledWith(
       expect.objectContaining({ url: "/pages/login/login" }),
     );

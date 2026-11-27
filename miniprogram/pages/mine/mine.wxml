@@ -1,14 +1,42 @@
 <view class="container mine-page">
-  <!-- 用户资料卡 -->
-  <view class="profile-card card">
-    <view class="avatar-placeholder"></view>
+  <!-- 用户资料卡：加载 / 失败 / 正常 三态共用同一张卡片尺寸，避免布局跳动 -->
+  <view wx:if="{{ loading }}" class="profile-card card" aria-label="资料加载中">
+    <view class="avatar-default avatar-skeleton"></view>
     <view class="profile-info">
-      <text class="phone">{{ phone }}</text>
-      <view class="child-row">
-        <text class="child-name">{{ childName }}</text>
-        <van-icon class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
-      </view>
+      <view class="skeleton-line skeleton-line-title"></view>
+      <view class="skeleton-line skeleton-line-meta"></view>
     </view>
+  </view>
+
+  <view
+    wx:elif="{{ loadError }}"
+    class="profile-card card profile-card-error"
+    bind:tap="onProfileCardTap"
+    hover-class="profile-card-hover"
+    aria-role="button"
+    aria-label="资料加载失败，点击重试"
+  >
+    <text class="profile-error-text">资料加载失败，点击重试</text>
+    <van-icon class="arrow-icon" name="replay" size="32rpx" color="var(--color-secondary)" />
+  </view>
+
+  <view
+    wx:else
+    class="profile-card card"
+    bind:tap="onProfileCardTap"
+    hover-class="profile-card-hover"
+    aria-role="button"
+    aria-label="查看用户信息"
+  >
+    <view class="avatar-default">
+      <van-icon name="user-o" size="56rpx" color="var(--color-secondary)" />
+    </view>
+    <view class="profile-info">
+      <text class="profile-name">{{ displayName }}</text>
+      <text class="profile-meta">{{ metaText }}</text>
+    </view>
+    <view wx:if="{{ isEmptyProfile }}" class="profile-action">去填写</view>
+    <van-icon wx:else class="arrow-icon" name="arrow" size="28rpx" color="var(--color-secondary)" />
   </view>
 
   <!-- 仅“我的孩子”进入列表，其余入口不绑定点击事件 -->

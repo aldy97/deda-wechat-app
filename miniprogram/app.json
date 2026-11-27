@@ -16,6 +16,7 @@
     "pages/adventure-story-mode/adventure-story-mode",
     "pages/user-manual/user-manual",
     "pages/mine/mine",
+    "pages/user-profile/user-profile",
     "pages/child-list/child-list",
     "pages/child-info/child-info",
     "pages/feedback/feedback",

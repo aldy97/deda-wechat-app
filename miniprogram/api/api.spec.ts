@@ -4,11 +4,13 @@ import {
   getLearningStatsDaily,
   getLearningStatsModeUsage,
   getSleepConfig,
+  getUserProfile,
   controlDeviceVolume,
   reportPushSubscription,
   submitFeedback,
   updateDeviceOrder,
   updateSleepConfig,
+  updateUserProfile,
 } from "./api";
 import { request } from "../utils/request";
 
@@ -236,6 +238,46 @@ describe("device volume control request", () => {
       method: "POST",
       url: "/devices/dev%20local%20001/control",
       data: { action: "volume", volume: 0 },
+    });
+  });
+});
+
+describe("user profile contract (backend: /users/profile)", () => {
+  const profile = {
+    id: "user-1",
+    nickname: "熊爸爸",
+    phone: null,
+    createdAt: "2026-11-01T00:00:00.000Z",
+    deviceCount: 2,
+    childCount: 1,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequest.mockResolvedValue({
+      code: 0,
+      message: "success",
+      data: profile,
+    });
+  });
+
+  it("reads the current parent profile with GET", async () => {
+    const res = await getUserProfile();
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/users/profile",
+    });
+    expect(res.data).toBe(profile);
+  });
+
+  it("patches the nickname and nothing else", async () => {
+    await updateUserProfile({ nickname: "熊爸爸" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/users/profile",
+      data: { nickname: "熊爸爸" },
     });
   });
 });

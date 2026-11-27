@@ -11,44 +11,89 @@
   margin-bottom: 24rpx;
 }
 
-/* 用户资料卡 */
+/* 用户资料卡（loading / error / 正常三态共用同一尺寸） */
 .profile-card {
   display: flex;
   align-items: center;
   padding: 40rpx 32rpx;
+  box-sizing: border-box;
 }
 
-.avatar-placeholder {
+.profile-card-hover {
+  background-color: var(--color-bg);
+}
+
+.avatar-default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
-  background-color: var(--color-placeholder);
+  background-color: var(--color-divider);
   margin-right: 32rpx;
   flex-shrink: 0;
 }
 
+.avatar-skeleton {
+  background-color: var(--color-divider);
+}
+
 .profile-info {
   display: flex;
+  flex: 1;
+  min-width: 0;
   flex-direction: column;
   justify-content: center;
 }
 
-.phone {
+.profile-name {
   font-size: 36rpx;
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 12rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.child-row {
-  display: flex;
-  align-items: center;
-}
-
-.child-name {
-  font-size: 30rpx;
+.profile-meta {
+  font-size: 26rpx;
   color: var(--color-secondary);
-  margin-right: 4rpx;
+}
+
+.profile-action {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 28rpx;
+  color: var(--color-primary);
+}
+
+.profile-card-error {
+  justify-content: center;
+}
+
+.profile-error-text {
+  font-size: 30rpx;
+  color: var(--color-body);
+  margin-right: 12rpx;
+}
+
+/* 骨架条：与资料卡主/副文案同位置同尺寸 */
+.skeleton-line {
+  border-radius: 8rpx;
+  background-color: var(--color-divider);
+}
+
+.skeleton-line-title {
+  width: 240rpx;
+  height: 32rpx;
+  margin-bottom: 20rpx;
+}
+
+.skeleton-line-meta {
+  width: 180rpx;
+  height: 24rpx;
 }
 
 /* 菜单列表 */
