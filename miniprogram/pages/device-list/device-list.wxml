@@ -1,7 +1,13 @@
 <view class="device-list-page">
-  <!-- 自定义导航栏：左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
+  <!-- 自定义导航栏：中间品牌 logo（与刘海水平中线对齐）+ 左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
   <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
     <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
+      <image
+        class="device-nav-logo"
+        src="/static/images/kid-info/logo.png"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
       <device-switch-dropdown
         wx:if="{{ devices.length > 1 }}"
         class="device-nav-switch"

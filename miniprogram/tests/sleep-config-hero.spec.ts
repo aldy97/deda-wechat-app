@@ -4,7 +4,7 @@
  * 本 guard 焊死六件事：
  *   1. hero 背景图走 elly-image 展示位 sleep-config/hero-bg，fallback 留空走渐变兜底
  *   2. hero 只叠白色「哄睡管理」标题与三个能力标签（不含自动熄屏），且标签来自页面数据
- *   3. 科学原理 banner 文案与 GO 徽标存在，点击进入晚安故事模式介绍页
+ *   3. 科学原理 banner 使用共享 science-banner 组件，点击进入晚安故事模式介绍页
  *   4. 顺序：hero → 科学原理 banner → 共享表单
  *   5. 展示位 key 已登记并带中文标签
  *   6. hero 顶到状态栏（高度按背景图原始比例），渐变与遮罩只用色板变量
@@ -95,19 +95,24 @@ describe("哄睡配置页 hero 与科学原理 banner", () => {
     expect(ts).not.toContain("自动熄屏");
   });
 
-  it("科学原理 banner 文案与 GO 徽标存在，点击进入晚安故事模式介绍页", () => {
-    const bannerStart = wxml.indexOf('class="science-banner"');
+  it("科学原理 banner 使用共享组件，点击进入晚安故事模式介绍页", () => {
+    const bannerStart = wxml.indexOf("<science-banner");
     const bannerEnd = wxml.indexOf('class="sleep-config-body"');
     const banner = wxml.slice(bannerStart, bannerEnd);
 
-    expect(wxml).toMatch(
-      /<text class="science-banner__title">了解更多哄睡的科学原理<\/text>/,
-    );
-    expect(wxml).toContain("science-banner__badge-text");
-    expect(wxml).toContain("GO");
-    expect(banner).toContain('bind:tap="onOpenScience"');
-    expect(banner).toContain('aria-role="button"');
+    expect(bannerStart).toBeGreaterThan(-1);
+    expect(banner).toContain('title="了解更多哄睡的科学原理"');
+    expect(banner).toContain('tone="sleep"');
+    expect(banner).toContain('bind:open="onOpenScience"');
     expect(banner).not.toContain("<navigator");
+  });
+
+  it("页面 json 注册共享 science-banner 组件", () => {
+    const config = JSON.parse(read(`${PAGE}.json`));
+
+    expect(config.usingComponents["science-banner"]).toBe(
+      "/components/science-banner/science-banner",
+    );
   });
 
   it("背景图顶到状态栏：hero 高度按图片比例，返回键对齐胶囊", () => {
@@ -121,7 +126,7 @@ describe("哄睡配置页 hero 与科学原理 banner", () => {
 
   it("顺序：hero → 科学原理 banner → 共享表单", () => {
     const heroIndex = wxml.indexOf('class="sleep-config-hero"');
-    const bannerIndex = wxml.indexOf('class="science-banner"');
+    const bannerIndex = wxml.indexOf("<science-banner");
     const formIndex = wxml.indexOf("<sleep-config-form");
 
     expect(heroIndex).toBeGreaterThan(-1);

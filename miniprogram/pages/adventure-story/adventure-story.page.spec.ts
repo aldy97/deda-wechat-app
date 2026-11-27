@@ -24,12 +24,14 @@ describe("adventure-story page 装配", () => {
     jest.clearAllMocks();
   });
 
-  it("onLoad 注入 deviceId", () => {
+  it("onLoad 注入 deviceId 并按胶囊位置算导航栏高度", () => {
     const page = harness.createInstance();
 
     page.onLoad({ id: "dev-1" });
 
     expect(page.data.deviceId).toBe("dev-1");
+    expect(page.data.statusBarHeight).toBe(20);
+    expect(page.data.navBarHeight).toBe(44);
   });
 
   it("缺少设备 id 时提示但不抛错", () => {
@@ -41,6 +43,28 @@ describe("adventure-story page 装配", () => {
     expect(harness.wx.showToast).toHaveBeenCalledWith({
       title: "缺少设备信息",
       icon: "none",
+    });
+  });
+
+  it("返回上一页", () => {
+    const page = harness.createInstance();
+
+    page.onBack();
+
+    expect(harness.wx.navigateBack).toHaveBeenCalled();
+    expect(harness.wx.switchTab).not.toHaveBeenCalled();
+  });
+
+  it("返回失败时降级到设备列表", () => {
+    harness.wx.navigateBack.mockImplementationOnce((options: any) => {
+      options.fail();
+    });
+    const page = harness.createInstance();
+
+    page.onBack();
+
+    expect(harness.wx.switchTab).toHaveBeenCalledWith({
+      url: "/pages/device-list/device-list",
     });
   });
 
@@ -123,7 +147,53 @@ describe("adventure-story page 装配", () => {
     expect(source).toContain("[APP_ASSET_KEYS.ADVENTURE_STORY_HERO_BG]:");
   });
 
-  it("页面 json 注册 kid-gradient-bg 与 elly-image", () => {
+  it("科学原理 banner 使用共享组件，并排在 hero 与正文之间", () => {
+    const wxml: string = read("adventure-story.wxml");
+    const bannerStart = wxml.indexOf("<science-banner");
+    const bodyStart = wxml.indexOf('class="container adventure-story-body"');
+    const banner = wxml.slice(bannerStart, bodyStart);
+
+    expect(bannerStart).toBeGreaterThan(-1);
+    expect(banner).toContain('title="了解更多冒险故事的科学原理"');
+    expect(banner).toContain('tone="adventure"');
+    expect(banner).toContain('bind:open="onOpenAdventureScience"');
+    expect(bodyStart).toBeGreaterThan(bannerStart);
+  });
+
+  it("点击科学原理 banner 进入冒险故事模式介绍页", () => {
+    const page = harness.createInstance();
+
+    page.onOpenAdventureScience();
+
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/adventure-story-mode/adventure-story-mode",
+    });
+  });
+
+  it("hero 顶到状态栏：隐藏系统导航，只保留叠在 hero 上的返回键", () => {
+    const wxml: string = read("adventure-story.wxml");
+
+    expect(wxml).toContain('class="adventure-story-nav"');
+    expect(wxml).toContain(
+      'style="padding-top: {{ statusBarHeight }}px; height: {{ statusBarHeight + navBarHeight }}px;"',
+    );
+    expect(wxml).toContain('bind:tap="onBack"');
+    expect(wxml).toContain('aria-label="返回"');
+    expect(wxml).toContain('<van-icon name="arrow-left"');
+  });
+
+  it("页面使用自定义导航并注册 van-icon", () => {
+    const config = JSON.parse(read("adventure-story.json"));
+
+    expect(config.navigationStyle).toBe("custom");
+    expect(config.navigationBarTextStyle).toBe("white");
+    expect(config.navigationBarTitleText).toBeUndefined();
+    expect(config.usingComponents["van-icon"]).toContain(
+      "@vant/weapp/icon/index",
+    );
+  });
+
+  it("页面 json 注册 kid-gradient-bg、elly-image 与 science-banner", () => {
     const config = JSON.parse(read("adventure-story.json"));
 
     expect(config.usingComponents["kid-gradient-bg"]).toContain(
@@ -131,6 +201,9 @@ describe("adventure-story page 装配", () => {
     );
     expect(config.usingComponents["elly-image"]).toContain(
       "components/elly-image/elly-image",
+    );
+    expect(config.usingComponents["science-banner"]).toBe(
+      "/components/science-banner/science-banner",
     );
   });
 

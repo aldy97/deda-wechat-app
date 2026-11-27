@@ -13,6 +13,7 @@
     "pages/sleep-config/sleep-config",
     "pages/night-story-intro/night-story-intro",
     "pages/adventure-story/adventure-story",
+    "pages/adventure-story-mode/adventure-story-mode",
     "pages/user-manual/user-manual",
     "pages/mine/mine",
     "pages/child-list/child-list",

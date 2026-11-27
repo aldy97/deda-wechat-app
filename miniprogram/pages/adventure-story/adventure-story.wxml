@@ -12,7 +12,30 @@
         lazy-load="{{ false }}"
         bind:load="onHeroImageLoad"
       />
+
+      <!-- 自定义导航：无系统导航栏，只保留叠在 hero 上的返回键 -->
+      <view
+        class="adventure-story-nav"
+        style="padding-top: {{ statusBarHeight }}px; height: {{ statusBarHeight + navBarHeight }}px;"
+      >
+        <view
+          class="adventure-story-back"
+          bind:tap="onBack"
+          hover-class="adventure-story-back-hover"
+          aria-role="button"
+          aria-label="返回"
+        >
+          <van-icon name="arrow-left" size="34rpx" color="var(--color-surface)" />
+        </view>
+      </view>
     </view>
+
+    <!-- 科学原理 banner：与哄睡配置页共用 components/science-banner，冒险故事用森林绿色调 -->
+    <science-banner
+      title="了解更多冒险故事的科学原理"
+      tone="adventure"
+      bind:open="onOpenAdventureScience"
+    />
 
     <view class="container adventure-story-body">
       <text class="adventure-story-title">{{ heroTitle }}</text>

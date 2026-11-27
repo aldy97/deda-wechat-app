@@ -1,0 +1,75 @@
+/* 功能版：顶部 hero 图向下接森林绿渐变，正文区不再使用纯黑底。 */
+page {
+  background-color: var(--color-adventure-mode-bg-end);
+}
+
+.adventure-story-mode-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--color-adventure-mode-bg-end);
+}
+
+.adventure-story-mode-hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--color-adventure-mode-bg-end) 0%,
+    var(--color-adventure-mode-bg-start) 100%
+  );
+}
+
+.adventure-story-mode-hero__bg {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+}
+
+/* 正文区向上压住 hero 底部 120rpx：顶部透明处透出 hero 图，
+   渐变为与图底部协调的森林绿，再过渡到深绿。 */
+.adventure-story-mode-body {
+  position: relative;
+  z-index: 1;
+  margin-top: -120rpx;
+  padding: 152rpx 32rpx 64rpx;
+  background: linear-gradient(
+    180deg,
+    transparent 0,
+    var(--color-adventure-mode-bg-start) 120rpx,
+    var(--color-adventure-mode-bg-mid) 55%,
+    var(--color-adventure-mode-bg-end) 100%
+  );
+}
+
+.adventure-story-mode-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+  color: var(--color-sleep-title);
+  text-align: center;
+}
+
+.adventure-story-mode-paragraph {
+  display: block;
+  font-size: 30rpx;
+  line-height: 1.8;
+  margin-bottom: 20rpx;
+  color: var(--color-sleep-subtitle);
+}
+
+.adventure-story-mode-section {
+  margin-top: 24rpx;
+}
+
+.adventure-story-mode-section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  color: var(--color-sleep-title);
+  text-align: center;
+}

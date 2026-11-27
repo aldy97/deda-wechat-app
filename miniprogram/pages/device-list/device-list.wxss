@@ -509,13 +509,30 @@
   padding: 0 24rpx;
 }
 
-.device-nav-switch {
+/* 顶栏品牌 logo：水平居中于刘海中线，与添加设备按钮同尺寸。
+   logo 的可见像素在 300×300 画布里偏下约 3rpx（上留白 76 / 下 47），
+   用 top 补一个光学上移，让头像视觉中心落在导航栏垂直中线上。 */
+.device-nav-logo {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 3rpx);
+  z-index: 0;
   display: block;
-  flex-shrink: 0;
-  max-width: 300rpx;
+  width: 64rpx;
+  height: 64rpx;
+  transform: translate(-50%, -50%);
 }
 
-/* 圆形添加设备入口（导航栏左侧） */
+/* 多设备下拉给中间 logo 留出空间，避免长名字压到 logo */
+.device-nav-switch {
+  position: relative;
+  z-index: 1;
+  display: block;
+  flex-shrink: 0;
+  max-width: 230rpx;
+}
+
+/* 圆形添加设备入口（导航栏左组，多设备时紧跟设备下拉） */
 .add-device-fab {
   position: relative;
   z-index: 1;

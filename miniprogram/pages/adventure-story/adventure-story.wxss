@@ -30,6 +30,34 @@ page {
   height: calc(100% + 2px);
 }
 
+/* 自定义导航：只保留返回键，叠在 hero 图上 */
+.adventure-story-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding-left: 24rpx;
+}
+
+.adventure-story-back {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: var(--color-adventure-nav-pill-bg);
+  border: 2rpx solid var(--color-adventure-nav-pill-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adventure-story-back-hover {
+  opacity: 0.8;
+}
+
 .adventure-story-body {
   padding-top: 40rpx;
 }

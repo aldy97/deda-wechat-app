@@ -1,0 +1,69 @@
+:host {
+  display: block;
+}
+
+.science-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24rpx 24rpx 0;
+  padding: 22rpx 28rpx;
+  border-radius: 999rpx;
+  box-shadow: 0 4rpx 16rpx var(--color-shadow);
+}
+
+.science-banner--sleep {
+  background: linear-gradient(
+    90deg,
+    var(--color-sleep-science-start) 0%,
+    var(--color-sleep-science-end) 100%
+  );
+}
+
+.science-banner--adventure {
+  background: linear-gradient(
+    90deg,
+    var(--color-adventure-science-start) 0%,
+    var(--color-adventure-science-end) 100%
+  );
+}
+
+.science-banner__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--color-surface);
+}
+
+.science-banner__badge {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.science-banner--sleep .science-banner__badge {
+  background-color: var(--color-sleep-science-badge);
+}
+
+.science-banner--adventure .science-banner__badge {
+  background-color: var(--color-adventure-science-badge);
+}
+
+.science-banner__badge-text {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.science-banner--sleep .science-banner__badge-text {
+  color: var(--color-sleep-science-badge-text);
+}
+
+.science-banner--adventure .science-banner__badge-text {
+  color: var(--color-adventure-science-badge-text);
+}
+
+.science-banner--hover {
+  opacity: 0.92;
+}
