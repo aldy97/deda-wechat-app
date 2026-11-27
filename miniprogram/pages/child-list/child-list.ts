@@ -8,6 +8,7 @@ import {
 interface ChildListItem {
   deviceId: string;
   name: string;
+  gender: string | null;
   dragOffset?: number;
 }
 
@@ -32,6 +33,12 @@ Page({
 
   dragState: null as DragState | null,
 
+  /** 首次加载是否已发起：真机首个 onShow 早于 onReady，初始加载归 onReady */
+  hasInitialLoaded: false,
+
+  /** 列表刷新在途：onShow 静默刷新去重，避免请求叠加 */
+  refreshInFlight: false,
+
   /** 首屏加载 promise（onReady 不能 return Promise，会破坏 Page 类型推断；测试用它 await） */
   initialLoad: null as Promise<void> | null,
 
@@ -43,8 +50,25 @@ Page({
     this.initialLoad = this.loadChildren();
   },
 
-  async loadChildren() {
-    this.setData({ loading: true, loadError: false });
+  onShow() {
+    // 真机首个 onShow 早于 onReady；之后每次回到前台静默刷新，性别修改才能及时反映
+    if (!this.hasInitialLoaded) return;
+    if (this.data.saving || this.dragState) return;
+    this.loadChildren({ silent: true });
+  },
+
+  /**
+   * 加载孩子列表。
+   * silent（onShow 静默刷新）：不翻 loading、不清空列表，失败保留旧数据。
+   */
+  async loadChildren(options?: { silent?: boolean }) {
+    if (this.refreshInFlight) return;
+    this.refreshInFlight = true;
+    this.hasInitialLoaded = true;
+    const silent = !!options?.silent;
+    if (!silent) {
+      this.setData({ loading: true, loadError: false });
+    }
     try {
       await ensureAuthToken();
       const res = await getDeviceList();
@@ -57,13 +81,18 @@ Page({
             device.childProfile?.englishName ||
             device.name ||
             "未命名孩子",
+          gender: device.childProfile?.gender ?? null,
           dragOffset: 0,
         }));
-      this.setData({ children });
+      this.setData({ children, loading: false, loadError: false });
     } catch (error) {
-      this.setData({ children: [], loadError: true });
+      if (silent) {
+        console.warn("[child-list] silent refresh failed:", error);
+        return;
+      }
+      this.setData({ children: [], loadError: true, loading: false });
     } finally {
-      this.setData({ loading: false });
+      this.refreshInFlight = false;
     }
   },
 

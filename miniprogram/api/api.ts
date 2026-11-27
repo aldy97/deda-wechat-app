@@ -77,6 +77,7 @@ export interface Device {
   childProfile?: {
     name?: string | null;
     englishName?: string | null;
+    gender?: string | null;
   } | null;
   todayUsage?: DeviceTodayUsage | null;
 }

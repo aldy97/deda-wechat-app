@@ -75,14 +75,6 @@
   white-space: nowrap;
 }
 
-.child-avatar {
-  width: 80rpx;
-  height: 80rpx;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background-color: var(--color-placeholder);
-}
-
 .sleep-card {
   padding: 32rpx;
   margin-top: 28rpx;

@@ -18,7 +18,7 @@
       <view class="info-row">
         <text class="info-label">孩子头像</text>
         <view class="info-value-with-arrow">
-          <view class="child-avatar" aria-label="灰色头像占位"></view>
+          <child-avatar gender="{{ avatarGender }}" size="{{ 80 }}" />
           <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
         </view>
       </view>

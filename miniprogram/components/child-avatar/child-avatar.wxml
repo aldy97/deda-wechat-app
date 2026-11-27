@@ -1,0 +1,13 @@
+<view
+  class="child-avatar"
+  style="width: {{size}}rpx; height: {{size}}rpx;"
+  aria-label="{{label}}"
+>
+  <image
+    wx:if="{{avatarSrc && !failed}}"
+    class="child-avatar__img"
+    src="{{avatarSrc}}"
+    mode="aspectFill"
+    binderror="onImageError"
+  />
+</view>

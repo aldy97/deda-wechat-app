@@ -11,7 +11,9 @@
       data-device-id="{{ item.deviceId }}"
       bind:tap="onChildTap"
     >
-      <view class="child-avatar" aria-label="灰色头像占位"></view>
+      <view class="child-avatar-item">
+        <child-avatar gender="{{ item.gender }}" size="{{ 88 }}" />
+      </view>
       <text class="child-name">{{ item.name }}</text>
       <view
         class="drag-handle"
