@@ -1,6 +1,7 @@
 import { request } from "./utils/request";
 import { ensureAuthToken } from "./api/api";
 import { hookApp, reportError } from "./utils/monitor";
+import { reportClientInfoIfNeeded } from "./utils/client-info";
 
 /**
  * 连通性检查：调用 /health 确认服务端可达
@@ -38,9 +39,11 @@ App<{
       checkServerHealth();
 
       // 预热静默登录：token 缺失时后台换取，页面请求经 ensureAuthToken 自动等待
-      ensureAuthToken().catch((error) => {
-        console.warn("[App] silent auth warm-up failed:", error);
-      });
+      ensureAuthToken()
+        .then(() => reportClientInfoIfNeeded())
+        .catch((error) => {
+          console.warn("[App] silent auth warm-up failed:", error);
+        });
     },
 
     onShow() {
