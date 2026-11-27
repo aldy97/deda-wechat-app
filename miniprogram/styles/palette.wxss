@@ -105,6 +105,21 @@ page {
   --color-sleep-science-badge: #ffd24d;
   --color-sleep-science-badge-text: #8a5b00;
 
+  /* 冒险故事页：科学原理 banner 的森林绿渐变与太阳徽标 */
+  --color-adventure-science-start: #2f7d5b;
+  --color-adventure-science-end: #8fd9b6;
+  --color-adventure-science-badge: #ffd166;
+  --color-adventure-science-badge-text: #6b4a00;
+
+  /* 冒险故事页：hero 顶部自定义返回键的深绿半透明胶囊 */
+  --color-adventure-nav-pill-bg: rgba(20, 48, 36, 0.32);
+  --color-adventure-nav-pill-border: rgba(255, 255, 255, 0.55);
+
+  /* 冒险故事模式介绍页：hero 图向下延伸到正文的森林绿渐变 */
+  --color-adventure-mode-bg-start: #2e5b46;
+  --color-adventure-mode-bg-mid: #1d4032;
+  --color-adventure-mode-bg-end: #122a20;
+
   /* 不支持 CSS 变量的原生配置由同步脚本读取 */
   --color-nav-bg: var(--color-surface);
   --color-tab-text: var(--color-secondary);

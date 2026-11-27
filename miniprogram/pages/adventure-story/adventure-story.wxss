@@ -1,0 +1,175 @@
+/* 页面底色跟随孩子场景的浅蓝渐变，回弹不露白 */
+page {
+  background-color: var(--color-kid-bg-bottom);
+}
+
+.adventure-story-page {
+  min-height: 100vh;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+/* 顶部 hero：与 night-story-intro/hero-bg 相同的满宽背景图版式 */
+.adventure-story-hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--color-kid-bg-top) 0%,
+    var(--color-kid-bg-bottom) 100%
+  );
+}
+
+/* 背景图向四边各溢出 1px：亚像素舍入不会在边缘露出底色 */
+.adventure-story-hero__bg {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+}
+
+/* 自定义导航：只保留返回键，叠在 hero 图上 */
+.adventure-story-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding-left: 24rpx;
+}
+
+.adventure-story-back {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: var(--color-adventure-nav-pill-bg);
+  border: 2rpx solid var(--color-adventure-nav-pill-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adventure-story-back-hover {
+  opacity: 0.8;
+}
+
+.adventure-story-body {
+  padding-top: 40rpx;
+}
+
+.adventure-story-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--color-heading);
+}
+
+.adventure-story-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-body);
+}
+
+/* 三张内容卡：沿用全局 .card 的白底与阴影，只补圆角与间距 */
+.adventure-status,
+.adventure-guide,
+.adventure-section {
+  margin: 24rpx 0 0;
+  padding: 28rpx;
+  border-radius: 24rpx;
+}
+
+.adventure-status {
+  margin-top: 32rpx;
+}
+
+.adventure-status__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adventure-status__label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.adventure-status__value {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: var(--color-success);
+  background-color: var(--color-success-soft);
+}
+
+.adventure-status__main {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+.adventure-status__hint {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: var(--color-body);
+}
+
+.adventure-guide__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.adventure-guide__label {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: var(--color-body);
+}
+
+.adventure-guide__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.adventure-guide__chip {
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: var(--color-primary);
+  background-color: var(--color-brand-light);
+}
+
+.adventure-section__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.adventure-section__body {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--color-body);
+}

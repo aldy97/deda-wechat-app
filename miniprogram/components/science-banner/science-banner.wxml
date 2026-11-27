@@ -1,0 +1,12 @@
+<view
+  class="science-banner science-banner--{{ tone }}"
+  bind:tap="onTap"
+  hover-class="science-banner--hover"
+  aria-role="button"
+  aria-label="{{ title }}"
+>
+  <text class="science-banner__title">{{ title }}</text>
+  <view class="science-banner__badge">
+    <text class="science-banner__badge-text">GO</text>
+  </view>
+</view>

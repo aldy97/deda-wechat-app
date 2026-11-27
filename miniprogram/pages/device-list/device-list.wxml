@@ -1,7 +1,13 @@
 <view class="device-list-page">
-  <!-- 自定义导航栏：左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
+  <!-- 自定义导航栏：中间品牌 logo（与刘海水平中线对齐）+ 左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
   <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
     <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
+      <image
+        class="device-nav-logo"
+        src="/static/images/kid-info/logo.png"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
       <device-switch-dropdown
         wx:if="{{ devices.length > 1 }}"
         class="device-nav-switch"
@@ -133,6 +139,27 @@
         </view>
       </view>
     </view>
+  </view>
+
+  <!-- 冒险故事入口位：与「哄睡管理」「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/adventure-story；点击进入冒险故事介绍页 -->
+  <view
+    class="hero-card adventure-story-hero"
+    bind:tap="onAdventureStoryTap"
+    hover-class="adventure-story-hero-hover"
+    aria-role="button"
+    aria-label="冒险故事：查看每日冒险玩法"
+  >
+    <view class="adventure-story-hero__copy">
+      <text class="adventure-story-hero__title">冒险故事</text>
+      <text class="adventure-story-hero__subtitle">每天一段新旅程，和 Elly 一起探索听风原野</text>
+    </view>
+    <elly-image
+      class="adventure-story-hero__art"
+      asset-key="device-list/adventure-story"
+      fallback="/static/images/device-list/adventure-story.png"
+      mode="aspectFit"
+      lazy-load="{{ false }}"
+    />
   </view>
 
   <!-- 哄睡管理入口位：与「听风原野信箱」共用 .hero-card 版式，插画走展示位 device-list/sleepy-elly；点击进入当前孩子的哄睡配置页 -->

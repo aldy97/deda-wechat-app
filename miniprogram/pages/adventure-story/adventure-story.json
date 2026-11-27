@@ -1,0 +1,10 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "white",
+  "usingComponents": {
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "elly-image": "/components/elly-image/elly-image",
+    "science-banner": "/components/science-banner/science-banner",
+    "van-icon": "@vant/weapp/icon/index"
+  }
+}

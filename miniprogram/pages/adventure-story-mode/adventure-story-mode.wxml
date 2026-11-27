@@ -1,0 +1,36 @@
+<view class="adventure-story-mode-page">
+  <!-- 顶部 hero：背景图走远端展示位 adventure-story-mode/hero-bg，未命中时透出渐变兜底 -->
+  <view class="adventure-story-mode-hero" style="height: {{ heroHeight }}rpx;">
+    <!-- empty-fallback 是仓库级 fallback 闸口的显式豁免：本页用渐变兜底，不留包内占位图 -->
+    <elly-image
+      class="adventure-story-mode-hero__bg"
+      asset-key="adventure-story-mode/hero-bg"
+      fallback=""
+      empty-fallback="{{ true }}"
+      mode="aspectFill"
+      lazy-load="{{ false }}"
+      bind:load="onHeroImageLoad"
+    />
+  </view>
+
+  <view class="adventure-story-mode-body">
+    <text class="adventure-story-mode-title">{{ heroTitle }}</text>
+
+    <view class="adventure-story-mode-intro">
+      <text
+        wx:for="{{ introParagraphs }}"
+        wx:key="*this"
+        class="adventure-story-mode-paragraph"
+      >{{ item }}</text>
+    </view>
+
+    <view
+      class="adventure-story-mode-section"
+      wx:for="{{ sections }}"
+      wx:key="title"
+    >
+      <text class="adventure-story-mode-section-title">{{ item.title }}</text>
+      <text class="adventure-story-mode-paragraph">{{ item.body }}</text>
+    </view>
+  </view>
+</view>

@@ -3,6 +3,7 @@
   "usingComponents": {
     "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
     "elly-image": "/components/elly-image/elly-image",
+    "science-banner": "/components/science-banner/science-banner",
     "sleep-config-form": "/components/sleep-config-form/sleep-config-form",
     "van-icon": "@vant/weapp/icon/index"
   }

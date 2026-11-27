@@ -100,4 +100,38 @@ describe("设备列表导航与单卡展示", () => {
       "var(--color-sleep-card-subtitle)",
     );
   });
+
+  it("顶栏 logo 水平居中于刘海中线，并与添加设备按钮同尺寸", () => {
+    const logo = /<image\b[^>]*class="device-nav-logo"[^>]*>/.exec(wxml);
+    const logoIndex = wxml.indexOf('class="device-nav-logo"');
+    const dropdownIndex = wxml.indexOf("<device-switch-dropdown");
+    const fabIndex = wxml.indexOf('class="add-device-fab"');
+
+    expect(logo).not.toBeNull();
+    expect((logo as RegExpExecArray)[0]).toContain(
+      'src="/static/images/kid-info/logo.png"',
+    );
+    expect(logoIndex).toBeGreaterThan(-1);
+    expect(logoIndex).toBeLessThan(dropdownIndex);
+    expect(logoIndex).toBeLessThan(fabIndex);
+
+    const logoRule = rule(".device-nav-logo");
+
+    expect(declaration(rule(".device-nav-bar"), "align-items")).toBe("center");
+    expect(declaration(logoRule, "position")).toBe("absolute");
+    expect(declaration(logoRule, "left")).toBe("50%");
+    expect(declaration(logoRule, "top")).toBe("calc(50% - 3rpx)");
+    expect(declaration(logoRule, "transform")).toBe("translate(-50%, -50%)");
+    expect(declaration(logoRule, "width")).toBe(
+      declaration(rule(".add-device-fab"), "width"),
+    );
+    expect(declaration(logoRule, "height")).toBe(
+      declaration(rule(".add-device-fab"), "height"),
+    );
+    expect(
+      fs.existsSync(
+        path.join(MINIPROGRAM_ROOT, "static/images/kid-info/logo.png"),
+      ),
+    ).toBe(true);
+  });
 });

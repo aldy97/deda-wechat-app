@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "冒险故事模式",
+  "usingComponents": {
+    "elly-image": "/components/elly-image/elly-image"
+  }
+}

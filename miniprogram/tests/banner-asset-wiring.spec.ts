@@ -155,8 +155,12 @@ describe("设备列表来信反馈 banner：代码版式 + 插画槽位", () => 
     );
   });
 
-  it("不再用裸 <image> 渲染 banner 插图（远程化被回退会在此变红）", () => {
+  it("来信 banner 仍用 elly-image，不用裸 <image> 渲染插画", () => {
+    const bannerIndex = wxml.search(/class="[^"]*\bfeedback-hero\b/);
+    const banner = wxml.slice(bannerIndex);
     const rawImage = new RegExp(`<image\\b[^>]*${FALLBACK}`);
-    expect(rawImage.test(wxml)).toBe(false);
+
+    expect(bannerIndex).toBeGreaterThan(-1);
+    expect(rawImage.test(banner)).toBe(false);
   });
 });

@@ -1363,3 +1363,38 @@ describe("我的设备 60s 前台降频轮询", () => {
     expect(page.data.devices[0].isCharging).toBe(true);
   });
 });
+
+describe("device-list 冒险故事入口", () => {
+  let page: any;
+
+  beforeAll(() => {
+    require("./device-list");
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    page = harness.createInstance();
+  });
+
+  it("有选中设备时进入冒险故事页并带上设备 id", () => {
+    page.data.selectedDevice = { id: "dev-001" };
+
+    page.onAdventureStoryTap();
+
+    expect(harness.wx.navigateTo).toHaveBeenCalledWith({
+      url: "/pages/adventure-story/adventure-story?id=dev-001",
+    });
+  });
+
+  it("无选中设备时提示先绑定且不跳转", () => {
+    page.data.selectedDevice = null;
+
+    page.onAdventureStoryTap();
+
+    expect(harness.wx.showToast).toHaveBeenCalledWith({
+      title: "请先绑定设备",
+      icon: "none",
+    });
+    expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+  });
+});

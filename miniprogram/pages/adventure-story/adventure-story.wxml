@@ -1,0 +1,75 @@
+<kid-gradient-bg>
+  <view class="adventure-story-page">
+    <!-- 顶部 hero：背景图走远端展示位 adventure-story/hero-bg，未命中时透出渐变兜底 -->
+    <view class="adventure-story-hero" style="height: {{ heroHeight }}rpx;">
+      <!-- empty-fallback 是仓库级 fallback 闸口的显式豁免：本页用渐变兜底，不留包内占位图 -->
+      <elly-image
+        class="adventure-story-hero__bg"
+        asset-key="adventure-story/hero-bg"
+        fallback=""
+        empty-fallback="{{ true }}"
+        mode="aspectFill"
+        lazy-load="{{ false }}"
+        bind:load="onHeroImageLoad"
+      />
+
+      <!-- 自定义导航：无系统导航栏，只保留叠在 hero 上的返回键 -->
+      <view
+        class="adventure-story-nav"
+        style="padding-top: {{ statusBarHeight }}px; height: {{ statusBarHeight + navBarHeight }}px;"
+      >
+        <view
+          class="adventure-story-back"
+          bind:tap="onBack"
+          hover-class="adventure-story-back-hover"
+          aria-role="button"
+          aria-label="返回"
+        >
+          <van-icon name="arrow-left" size="34rpx" color="var(--color-surface)" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 科学原理 banner：与哄睡配置页共用 components/science-banner，冒险故事用森林绿色调 -->
+    <science-banner
+      title="了解更多冒险故事的科学原理"
+      tone="adventure"
+      bind:open="onOpenAdventureScience"
+    />
+
+    <view class="container adventure-story-body">
+      <text class="adventure-story-title">{{ heroTitle }}</text>
+      <text class="adventure-story-subtitle">{{ heroSubtitle }}</text>
+
+      <!-- 总开关位：本期只读；adventure-configs 就绪后替换为可交互开关 -->
+      <view class="card adventure-status">
+        <view class="adventure-status__head">
+          <text class="adventure-status__label">每日冒险</text>
+          <text class="adventure-status__value">默认开启</text>
+        </view>
+        <text class="adventure-status__main">每天一集</text>
+        <text class="adventure-status__hint">总开关将在后续版本开放，当前默认开启</text>
+      </view>
+
+      <!-- 语音触发指引：冒险由孩子开口进入，不做家长端定时 -->
+      <view class="card adventure-guide">
+        <text class="adventure-guide__title">怎么开始？</text>
+        <text class="adventure-guide__label">对 Elly 说：</text>
+        <view class="adventure-guide__chips">
+          <text class="adventure-guide__chip">“我想听冒险故事”</text>
+          <text class="adventure-guide__chip">“今天有什么冒险？”</text>
+        </view>
+      </view>
+
+      <!-- 玩法说明：每天一集、孩子做选择、收集星光 -->
+      <view
+        class="card adventure-section"
+        wx:for="{{ sections }}"
+        wx:key="title"
+      >
+        <text class="adventure-section__title">{{ item.title }}</text>
+        <text class="adventure-section__body">{{ item.body }}</text>
+      </view>
+    </view>
+  </view>
+</kid-gradient-bg>
