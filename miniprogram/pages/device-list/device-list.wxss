@@ -20,6 +20,48 @@
   border-radius: 24rpx;
 }
 
+/* 冒险故事入口：薄荷绿浅渐变，与来信 banner 同一渐变技法 */
+.adventure-story-hero {
+  background: linear-gradient(
+    135deg,
+    var(--color-mode-2-soft) 0%,
+    var(--color-surface) 68%
+  );
+}
+
+.adventure-story-hero__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.adventure-story-hero__title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-heading);
+}
+
+.adventure-story-hero__subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--color-body);
+}
+
+.adventure-story-hero__art {
+  flex-shrink: 0;
+  display: block;
+  width: 168rpx;
+  height: 168rpx;
+  margin-left: 16rpx;
+}
+
+.adventure-story-hero-hover {
+  opacity: 0.92;
+}
+
 /* 来信反馈 banner：代码版式 + 插画槽位，配色只取色板变量 */
 .feedback-hero {
   background: linear-gradient(

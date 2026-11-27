@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "冒险故事",
+  "usingComponents": {
+    "kid-gradient-bg": "../../components/kid-gradient-bg/kid-gradient-bg",
+    "elly-image": "/components/elly-image/elly-image"
+  }
+}

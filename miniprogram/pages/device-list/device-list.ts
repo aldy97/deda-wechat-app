@@ -474,6 +474,21 @@ Page({
   },
 
   /**
+   * 冒险故事入口：进入当前选中孩子的冒险故事介绍页。
+   * 设备 id 先带上，后续接 adventure-configs 时不用改路由；没有设备时只提示。
+   */
+  onAdventureStoryTap() {
+    const device = this.data.selectedDevice;
+    if (!device) {
+      wx.showToast({ title: "请先绑定设备", icon: "none" });
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/adventure-story/adventure-story?id=${encodeURIComponent(device.id)}`,
+    });
+  },
+
+  /**
    * 哄睡管理入口：进入当前选中孩子的哄睡配置页。
    * 配置按设备维度存，取的是共享选择而不是列表第一台；没有设备时只提示。
    */
