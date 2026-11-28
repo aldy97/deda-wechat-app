@@ -112,6 +112,9 @@
 
 /* 导航栏变体：与圆形「添加设备」按钮同一视觉体系（白底 + 描边 + 轻阴影） */
 .variant-nav .device-switch {
+  /* inline-flex 让宽度回到内容尺寸：块级 button 会被父容器 max-width 撑满，
+     两个字的设备名也占满 230rpx，把居中的品牌 logo 挤到「+」按钮边上 */
+  display: inline-flex;
   min-height: 64rpx;
   max-width: 260rpx;
   padding: 8rpx 20rpx;

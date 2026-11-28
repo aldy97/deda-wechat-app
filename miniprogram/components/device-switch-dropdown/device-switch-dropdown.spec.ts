@@ -146,4 +146,20 @@ describe("device-switch-dropdown 组件", () => {
     expect(wxml).toContain('bind:tap="onSelect"');
     expect(wxml).toContain("device-dropdown-check");
   });
+
+  it("wxss：导航栏变体的胶囊宽度随内容收缩，长名字仍由 max-width 截断", () => {
+    // 真机实测：块级 button 会撑满父容器 max-width，两个字的设备名也占满 230rpx，
+    // 把居中的 logo 挤到「+」按钮边上。inline-flex 让宽度回到内容尺寸。
+    const wxss = fs.readFileSync(
+      path.join(__dirname, "device-switch-dropdown.wxss"),
+      "utf8",
+    );
+    const navRule = /\.variant-nav \.device-switch\s*\{([^}]*)\}/.exec(wxss);
+
+    expect(navRule).not.toBeNull();
+    const body = (navRule as RegExpExecArray)[1];
+
+    expect(body).toContain("display: inline-flex;");
+    expect(body).toContain("max-width: 260rpx;");
+  });
 });
