@@ -40,10 +40,7 @@ const SINGLE_IMAGE_LIMIT = 200 * 1024;
 const TOTAL_STATIC_LIMIT = 1.5 * 1024 * 1024;
 
 /** 单图预算白名单：键为相对 miniprogram 根目录的路径，值必须写明原因 */
-const OVERSIZE_ALLOWLIST: Record<string, string> = {
-  "static/images/user-manual.jpg":
-    "1280×11785 长图操作手册，压到 200KB 内文字不可读；拆图或改 CDN 另行排期",
-};
+const OVERSIZE_ALLOWLIST: Record<string, string> = {};
 
 /** 孤儿图片白名单：只允许登记确实需要保留的未引用资源 */
 const ORPHAN_ALLOWLIST: Record<string, string> = {};

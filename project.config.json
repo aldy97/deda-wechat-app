@@ -5,6 +5,26 @@
       {
         "value": "node_modules",
         "type": "folder"
+      },
+      {
+        "value": "tests",
+        "type": "folder"
+      },
+      {
+        "value": ".spec.js",
+        "type": "suffix"
+      },
+      {
+        "value": ".spec.ts",
+        "type": "suffix"
+      },
+      {
+        "value": ".DS_Store",
+        "type": "suffix"
+      },
+      {
+        "value": "static/images/exmaples",
+        "type": "folder"
       }
     ],
     "include": []

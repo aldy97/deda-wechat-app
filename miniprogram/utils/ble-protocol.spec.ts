@@ -118,7 +118,11 @@ describe("createReceiver 组帧解析", () => {
     "4A 4C 00 11 20 01 7B 22 77 69 66 69 4C 69 73 74 22 3A 5B 5D 7D E3 92 FF",
   );
 
-  let messages: ProvisionMessage[];
+  interface ParsedMessage extends ProvisionMessage {
+    data: { status?: number; wifiList?: unknown };
+  }
+
+  let messages: ParsedMessage[];
   let errors: string[];
   let receive: (chunk: ArrayLike<number>) => void;
 
@@ -126,7 +130,7 @@ describe("createReceiver 组帧解析", () => {
     messages = [];
     errors = [];
     receive = createReceiver(
-      (msg) => messages.push(msg),
+      (msg) => messages.push(msg as ParsedMessage),
       (err) => errors.push(err),
     );
   });

@@ -101,7 +101,7 @@ Page({
   hasInitialLoaded: false,
 
   /** 60s 前台轮询定时器（0 = 未启动） */
-  pollTimer: 0 as any,
+  pollTimer: 0,
 
   /** 列表刷新在途：轮询与下拉刷新共用，避免请求叠加 */
   refreshInFlight: false,

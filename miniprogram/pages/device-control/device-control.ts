@@ -1,7 +1,4 @@
-import {
-  controlDeviceVolume,
-  getDeviceStatus,
-} from "../../api/api";
+import { controlDeviceVolume, getDeviceStatus } from "../../api/api";
 import {
   normalizeVolume,
   snapVolumeDown,
@@ -74,7 +71,7 @@ Page({
   },
 
   /** 10s 前台轮询定时器（0 = 未启动） */
-  statusPollTimer: 0 as any,
+  statusPollTimer: 0,
 
   /** 状态请求在途：轮询、回前台刷新与手动刷新共用，避免请求叠加 */
   statusInFlight: false,
@@ -256,8 +253,7 @@ Page({
   applyVolume(volume: number | null) {
     const unknown = volume === null;
     const blocked = this.data.controlDisabled || unknown;
-    const activeDots =
-      volume === null ? 0 : Math.round(volume / VOLUME_STEP);
+    const activeDots = volume === null ? 0 : Math.round(volume / VOLUME_STEP);
     this.setData({
       volume,
       volumeUnknown: unknown,

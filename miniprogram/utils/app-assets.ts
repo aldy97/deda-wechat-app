@@ -38,24 +38,26 @@ function now(): number {
 }
 
 /** 规范化 manifest；非法结构返回 null，缺失 url 的 entry 会被丢弃。 */
-function normalizeManifest(raw: any): AppAssetManifest | null {
+function normalizeManifest(raw: unknown): AppAssetManifest | null {
   if (!raw || typeof raw !== "object") return null;
-  if (Array.isArray(raw.assets)) return null;
-  if (!raw.assets || typeof raw.assets !== "object") return null;
+  const record = raw as { assets?: unknown; version?: unknown };
+  if (Array.isArray(record.assets)) return null;
+  if (!record.assets || typeof record.assets !== "object") return null;
 
   const assets: Record<string, AppAssetEntry> = {};
-  const rawAssets = raw.assets as Record<string, any>;
+  const rawAssets = record.assets as Record<string, unknown>;
   for (const key of Object.keys(rawAssets)) {
     const entry = rawAssets[key];
     if (!entry || typeof entry !== "object") continue;
-    if (typeof entry.url !== "string") continue;
-    const url = entry.url.trim();
+    const rawUrl = (entry as { url?: unknown }).url;
+    if (typeof rawUrl !== "string") continue;
+    const url = rawUrl.trim();
     if (!url) continue;
     assets[key] = { url };
   }
 
   return {
-    version: typeof raw.version === "string" ? raw.version : "",
+    version: typeof record.version === "string" ? record.version : "",
     assets,
   };
 }
