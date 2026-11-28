@@ -92,7 +92,7 @@ describe("about-device page", () => {
       "8.0.50",
     );
     expect(versionRows.find((row: any) => row.key === "phone").value).toBe(
-      "iPhone 15",
+      "Apple iPhone 15",
     );
     expect(versionRows.find((row: any) => row.key === "system").value).toBe(
       "iOS 18.2",
@@ -190,7 +190,7 @@ describe("about-device page", () => {
     expect(call.data).toContain("微信版本：8.0.50");
     expect(call.data).not.toContain("小程序版本");
     expect(call.data).not.toContain("基础库");
-    expect(call.data).toContain("手机：iPhone 15");
+    expect(call.data).toContain("手机：Apple iPhone 15");
     expect(call.data).toContain("系统：iOS 18.2");
     expect(call.data).not.toContain("当前对话模式");
   });

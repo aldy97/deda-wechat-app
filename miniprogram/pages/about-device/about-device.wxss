@@ -16,10 +16,12 @@
   overflow: hidden;
 }
 
-/* 固件版本等长文本允许换行，避免撑破 cell */
+/* 固件版本等长文本允许换行，避免撑破 cell；
+   用 overflow-wrap 而不是 break-all：机型名只在单词边界断，不再把 iPhone1 / 6,1> 劈开 */
 .info-value {
-  max-width: 60%;
-  word-break: break-all;
+  max-width: 70%;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
   text-align: right;
 }
 

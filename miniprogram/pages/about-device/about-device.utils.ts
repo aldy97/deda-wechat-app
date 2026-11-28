@@ -5,6 +5,8 @@ export interface DiagnosticRow {
   label: string;
   value: string;
   copyable: boolean;
+  /** 复制给客服时用的原文（如保留 <iPhone16,1>），缺省取 value */
+  copyValue?: string;
 }
 
 export interface DiagnosticSection {
@@ -23,6 +25,8 @@ export interface RawLocalEnv {
 export interface DeviceLocalEnv {
   wechatText: string;
   phoneText: string;
+  /** 含 <iPhone16,1> 这类硬件标识的原始型号串，只用于「复制诊断信息」 */
+  phoneRawText: string;
   systemText: string;
 }
 
@@ -63,12 +67,42 @@ export function formatWechatEnv(
   return (appBaseInfo?.version ?? "").trim() || "未获取";
 }
 
+/** 去掉微信 model 里的硬件标识后缀："iPhone 15 pro<iPhone16,1>" → "iPhone 15 pro" */
+export function stripHardwareId(model?: string | null): string {
+  return (model ?? "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** 厂商 + 型号；型号已含厂商前缀（如 brand=iPhone / model=iPhone 15）时不重复拼接 */
+function joinBrandModel(brand?: string | null, model?: string | null): string {
+  const brandText = (brand ?? "").trim();
+  const modelText = (model ?? "").replace(/\s+/g, " ").trim();
+  if (!modelText) return brandText;
+  if (
+    !brandText ||
+    modelText.toLowerCase().startsWith(brandText.toLowerCase())
+  ) {
+    return modelText;
+  }
+  return `${brandText} ${modelText}`;
+}
+
 export function formatPhoneEnv(
   deviceInfo?: { brand?: string; model?: string } | null,
 ): string {
-  const text =
-    (deviceInfo?.model ?? "").trim() || (deviceInfo?.brand ?? "").trim();
-  return text || "未获取";
+  return (
+    joinBrandModel(deviceInfo?.brand, stripHardwareId(deviceInfo?.model)) ||
+    "未获取"
+  );
+}
+
+/** 原始串（保留硬件标识），供客服排查固件/机型问题时复制 */
+export function formatPhoneRawEnv(
+  deviceInfo?: { brand?: string; model?: string } | null,
+): string {
+  return joinBrandModel(deviceInfo?.brand, deviceInfo?.model) || "未获取";
 }
 
 export function formatSystemEnv(
@@ -81,6 +115,7 @@ export function buildLocalEnv(raw: RawLocalEnv = {}): DeviceLocalEnv {
   return {
     wechatText: formatWechatEnv(raw.appBaseInfo),
     phoneText: formatPhoneEnv(raw.deviceInfo),
+    phoneRawText: formatPhoneRawEnv(raw.deviceInfo),
     systemText: formatSystemEnv(raw.deviceInfo),
   };
 }
@@ -90,8 +125,12 @@ function makeRow(
   label: string,
   value: string,
   copyable = false,
+  copyValue?: string,
 ): DiagnosticRow {
-  return { key, label, value, copyable };
+  const row: DiagnosticRow = { key, label, value, copyable };
+  // 只在复制串与展示串不同时才挂字段，避免给纯展示行加噪音
+  if (copyValue && copyValue !== value) row.copyValue = copyValue;
+  return row;
 }
 
 function buildIdentityRows(detail: DeviceAboutInfo): DiagnosticRow[] {
@@ -187,7 +226,7 @@ function buildVersionRows(
       (detail.firmwareVersion ?? "").trim() || "未上报",
     ),
     makeRow("wechat", "微信版本", env.wechatText),
-    makeRow("phone", "手机", env.phoneText),
+    makeRow("phone", "手机", env.phoneText, false, env.phoneRawText),
     makeRow("system", "系统", env.systemText),
   ];
 }
@@ -222,7 +261,7 @@ export function buildDiagnosticsText(sections: DiagnosticSection[]): string {
   for (const section of sections) {
     lines.push("", `【${section.title}】`);
     for (const row of section.rows) {
-      lines.push(`${row.label}：${row.value}`);
+      lines.push(`${row.label}：${row.copyValue ?? row.value}`);
     }
   }
   return lines.join("\n");
