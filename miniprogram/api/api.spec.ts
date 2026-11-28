@@ -247,6 +247,8 @@ describe("user profile contract (backend: /users/profile)", () => {
     id: "user-1",
     nickname: "熊爸爸",
     phone: null,
+    gender: null,
+    birthday: null,
     createdAt: "2026-11-01T00:00:00.000Z",
     deviceCount: 2,
     childCount: 1,
@@ -278,6 +280,26 @@ describe("user profile contract (backend: /users/profile)", () => {
       method: "PATCH",
       url: "/users/profile",
       data: { nickname: "熊爸爸" },
+    });
+  });
+
+  it("只传性别时只发送 gender", async () => {
+    await updateUserProfile({ gender: "female" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/users/profile",
+      data: { gender: "female" },
+    });
+  });
+
+  it("同时传性别与生日时原样透传，支持 null 清空", async () => {
+    await updateUserProfile({ gender: null, birthday: "1990-05-20" });
+
+    expect(mockRequest).toHaveBeenCalledWith({
+      method: "PATCH",
+      url: "/users/profile",
+      data: { gender: null, birthday: "1990-05-20" },
     });
   });
 });

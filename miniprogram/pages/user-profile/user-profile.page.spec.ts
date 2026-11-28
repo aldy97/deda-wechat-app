@@ -10,12 +10,22 @@ const PROFILE = {
   id: "user-1",
   nickname: "熊爸爸",
   phone: null,
+  gender: null,
+  birthday: null,
   createdAt: "2026-11-01T00:00:00.000Z",
   deviceCount: 2,
   childCount: 2,
 };
 
 function inputEvent(value: string) {
+  return { detail: { value } };
+}
+
+function genderEvent(value: string) {
+  return { currentTarget: { dataset: { gender: value } } };
+}
+
+function pickerEvent(value: string) {
   return { detail: { value } };
 }
 
@@ -43,28 +53,36 @@ describe("user profile page", () => {
     });
   });
 
-  it("backfills the form from the server profile", async () => {
-    await page.onLoad();
-
-    expect(page.data.loading).toBe(false);
-    expect(page.data.loadError).toBe(false);
-    expect(page.data.form.nickname).toBe("熊爸爸");
-    expect(page.data.initialNickname).toBe("熊爸爸");
-    expect(page.data.canSave).toBe(false);
-    expect(page.data.phoneText).toBe("未绑定");
-  });
-
-  it("shows the bound phone read-only when present", async () => {
+  it("backfills nickname/gender/birthday from the server profile", async () => {
     mockApi.getUserProfile.mockResolvedValue({
       code: 0,
       message: "",
-      data: { ...PROFILE, phone: "18016235670" },
+      data: {
+        ...PROFILE,
+        nickname: "熊妈妈",
+        gender: "female",
+        birthday: "1990-05-20",
+      },
     });
 
     await page.onLoad();
 
-    expect(page.data.phoneText).toBe("18016235670");
-    expect(page.data.phoneUnbound).toBe(false);
+    expect(page.data.loading).toBe(false);
+    expect(page.data.loadError).toBe(false);
+    expect(page.data.form).toEqual({
+      nickname: "熊妈妈",
+      gender: "female",
+      birthday: "1990-05-20",
+    });
+    expect(page.data.initial).toEqual({
+      nickname: "熊妈妈",
+      gender: "female",
+      birthday: "1990-05-20",
+    });
+    expect(page.data.canSave).toBe(false);
+    // 手机号不在家长信息页展示
+    expect(page.data).not.toHaveProperty("phoneText");
+    expect(page.data).not.toHaveProperty("phoneUnbound");
   });
 
   it("disables saving for an empty or unchanged nickname", async () => {
@@ -90,7 +108,28 @@ describe("user profile page", () => {
 
     page.onNicknameChange(inputEvent("熊爸"));
 
-    expect(page.data.initialNickname).toBe("");
+    expect(page.data.initial.nickname).toBe("");
+    expect(page.data.canSave).toBe(true);
+  });
+
+  it("toggles gender and allows clearing the selection", async () => {
+    await page.onLoad();
+
+    page.onSelectGender(genderEvent("male"));
+    expect(page.data.form.gender).toBe("male");
+    expect(page.data.canSave).toBe(true);
+
+    page.onSelectGender(genderEvent("male"));
+    expect(page.data.form.gender).toBeNull();
+    expect(page.data.canSave).toBe(false);
+  });
+
+  it("updates birthday from the native picker", async () => {
+    await page.onLoad();
+
+    page.onBirthdayChange(pickerEvent("1992-08-08"));
+
+    expect(page.data.form.birthday).toBe("1992-08-08");
     expect(page.data.canSave).toBe(true);
   });
 
@@ -103,7 +142,7 @@ describe("user profile page", () => {
     expect(mockApi.updateUserProfile).not.toHaveBeenCalled();
   });
 
-  it("saves the trimmed nickname, caches it and navigates back", async () => {
+  it("saves only the changed nickname, caches it and navigates back", async () => {
     await page.onLoad();
 
     page.onNicknameChange(inputEvent("  熊妈妈  "));
@@ -121,6 +160,39 @@ describe("user profile page", () => {
     );
     expect(harness.wx.navigateBack).toHaveBeenCalled();
     expect(page.data.saving).toBe(false);
+  });
+
+  it("saves only gender when nickname is unchanged", async () => {
+    await page.onLoad();
+
+    page.onSelectGender(genderEvent("female"));
+    await page.onSave();
+
+    expect(mockApi.updateUserProfile).toHaveBeenCalledWith({
+      gender: "female",
+    });
+  });
+
+  it("saves only birthday when nickname is unchanged", async () => {
+    await page.onLoad();
+
+    page.onBirthdayChange(pickerEvent("1991-01-02"));
+    await page.onSave();
+
+    expect(mockApi.updateUserProfile).toHaveBeenCalledWith({
+      birthday: "1991-01-02",
+    });
+  });
+
+  it("caps the nickname at 10 characters on save", async () => {
+    await page.onLoad();
+
+    page.onNicknameChange(inputEvent("一二三四五六七八九十十一"));
+    await page.onSave();
+
+    expect(mockApi.updateUserProfile).toHaveBeenCalledWith({
+      nickname: "一二三四五六七八九十",
+    });
   });
 
   it("keeps the draft and resets the button when saving fails", async () => {

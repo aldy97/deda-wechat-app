@@ -12,6 +12,8 @@ const PROFILE = {
   id: "user-1",
   nickname: "熊爸爸",
   phone: null,
+  gender: "male" as const,
+  birthday: "1990-05-20",
   createdAt: "2026-11-01T00:00:00.000Z",
   deviceCount: 2,
   childCount: 2,
@@ -73,6 +75,24 @@ describe("user-profile cache", () => {
     expect(readCachedProfile()).toEqual(empty);
   });
 
+  it("old cache without gender/birthday is normalized to null", () => {
+    const legacy = {
+      id: "user-1",
+      nickname: "熊爸爸",
+      phone: null,
+      createdAt: "2026-11-01T00:00:00.000Z",
+      deviceCount: 2,
+      childCount: 2,
+    };
+    storage.getStorageSync.mockReturnValue(JSON.stringify(legacy));
+
+    expect(readCachedProfile()).toEqual({
+      ...legacy,
+      gender: null,
+      birthday: null,
+    });
+  });
+
   it("swallows write failures", () => {
     storage.setStorageSync.mockImplementation(() => {
       throw new Error("quota exceeded");
@@ -128,8 +148,8 @@ describe("normalizeNickname", () => {
     expect(normalizeNickname("  小熊 ")).toBe("小熊");
   });
 
-  it("caps the result at 20 characters", () => {
-    expect(normalizeNickname("a".repeat(30))).toHaveLength(20);
+  it("caps the result at 10 characters", () => {
+    expect(normalizeNickname("a".repeat(30))).toHaveLength(10);
   });
 
   it("returns an empty string for blank input", () => {

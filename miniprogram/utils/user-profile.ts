@@ -3,8 +3,8 @@ import type { UserProfile } from "../api/api";
 /** 家长档案缓存键 */
 export const PROFILE_CACHE_KEY = "user_profile_cache";
 
-/** 昵称上限（与服务端 PATCH /users/profile 校验一致） */
-export const NICKNAME_MAX_LENGTH = 20;
+/** 昵称上限（wechat-app 前端约束 10 字；服务端仍按 1–20 字兼容旧数据） */
+export const NICKNAME_MAX_LENGTH = 10;
 
 function isUserProfile(value: any): value is UserProfile {
   return (
@@ -13,6 +13,13 @@ function isUserProfile(value: any): value is UserProfile {
     typeof value.id === "string" &&
     (value.nickname === null || typeof value.nickname === "string") &&
     (value.phone === null || typeof value.phone === "string") &&
+    (value.gender === undefined ||
+      value.gender === null ||
+      value.gender === "male" ||
+      value.gender === "female") &&
+    (value.birthday === undefined ||
+      value.birthday === null ||
+      typeof value.birthday === "string") &&
     typeof value.createdAt === "string" &&
     typeof value.deviceCount === "number" &&
     typeof value.childCount === "number"
@@ -21,13 +28,19 @@ function isUserProfile(value: any): value is UserProfile {
 
 /**
  * 读取缓存档案；storage 异常、JSON 非法或结构不符时返回 null。
+ * 旧版本缓存没有 gender/birthday，读取时归一成 null，避免升级后整份缓存失效。
  */
 export function readCachedProfile(): UserProfile | null {
   try {
     const raw = wx.getStorageSync(PROFILE_CACHE_KEY);
     if (!raw) return null;
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    return isUserProfile(parsed) ? parsed : null;
+    if (!isUserProfile(parsed)) return null;
+    return {
+      ...parsed,
+      gender: parsed.gender ?? null,
+      birthday: parsed.birthday ?? null,
+    };
   } catch (error) {
     return null;
   }

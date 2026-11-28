@@ -82,6 +82,13 @@
   font-size: 32rpx;
 }
 
+.contact-hint {
+  margin-top: 12rpx;
+  color: var(--color-secondary);
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
 .submit-error {
   display: flex;
   align-items: flex-start;

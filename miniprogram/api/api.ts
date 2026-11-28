@@ -747,6 +747,9 @@ export interface UserProfile {
   id: string;
   nickname: string | null;
   phone: string | null;
+  gender: "male" | "female" | null;
+  /** YYYY-MM-DD */
+  birthday: string | null;
   createdAt: string;
   deviceCount: number;
   childCount: number;
@@ -762,12 +765,20 @@ export async function getUserProfile(): Promise<ApiResponse<UserProfile>> {
   });
 }
 
+export interface UpdateUserProfileParams {
+  /** 昵称：trim 后 1–20 字，前端输入上限 10 字 */
+  nickname?: string;
+  gender?: "male" | "female" | null;
+  /** YYYY-MM-DD；null 清空。当前页面不提供清空入口 */
+  birthday?: string | null;
+}
+
 /**
- * 更新家长昵称（服务端校验：trim 后 1–20 字，未知字段 400）
+ * 更新家长档案：只传需要修改的字段，服务端按字段部分更新。
  */
-export async function updateUserProfile(data: {
-  nickname: string;
-}): Promise<ApiResponse<UserProfile>> {
+export async function updateUserProfile(
+  data: UpdateUserProfileParams,
+): Promise<ApiResponse<UserProfile>> {
   return request<UserProfile>({
     method: "PATCH",
     url: "/users/profile",
