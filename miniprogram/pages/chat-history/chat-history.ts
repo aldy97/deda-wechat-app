@@ -25,13 +25,23 @@ interface ChatHistoryData {
   contextHint: string;
 }
 
+/** 页面自定义方法：显式声明，替代 Record<string, any> */
+interface ChatHistoryMethods {
+  loadContext(deviceId: string, mode: string): Promise<void>;
+  applyContext(config: DeviceConfig): void;
+  loadInitialRecords(): Promise<void>;
+  onScrollToUpper(): Promise<void>;
+  onLoadMore(): Promise<void>;
+  loadOlderRecords(): Promise<void>;
+}
+
 /**
  * 对话记录页
  * 进入页面展示最新消息并定位到底部，向上滚动加载更早消息。
  * 后端分页锚定最新（page=1 为最新一页），页内按时间正序返回
  * （最旧在前、最新在后），前端按返回顺序直接渲染，不要自行反转。
  */
-Page<ChatHistoryData, Record<string, any>>({
+Page<ChatHistoryData, ChatHistoryMethods>({
   data: {
     deviceId: "",
     mode: "",

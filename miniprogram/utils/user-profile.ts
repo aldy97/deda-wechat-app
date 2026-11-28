@@ -6,16 +6,16 @@ export const PROFILE_CACHE_KEY = "user_profile_cache";
 /** 昵称上限（与服务端 PATCH /users/profile 校验一致） */
 export const NICKNAME_MAX_LENGTH = 20;
 
-function isUserProfile(value: any): value is UserProfile {
+function isUserProfile(value: unknown): value is UserProfile {
+  if (!value || typeof value !== "object") return false;
+  const profile = value as Record<string, unknown>;
   return (
-    Boolean(value) &&
-    typeof value === "object" &&
-    typeof value.id === "string" &&
-    (value.nickname === null || typeof value.nickname === "string") &&
-    (value.phone === null || typeof value.phone === "string") &&
-    typeof value.createdAt === "string" &&
-    typeof value.deviceCount === "number" &&
-    typeof value.childCount === "number"
+    typeof profile.id === "string" &&
+    (profile.nickname === null || typeof profile.nickname === "string") &&
+    (profile.phone === null || typeof profile.phone === "string") &&
+    typeof profile.createdAt === "string" &&
+    typeof profile.deviceCount === "number" &&
+    typeof profile.childCount === "number"
   );
 }
 

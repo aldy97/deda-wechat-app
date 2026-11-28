@@ -95,13 +95,13 @@ Page({
   receiver: null as ((chunk: ArrayLike<number>) => void) | null,
   /** 认领阶段锁定的设备 ID（单台自动或用户多选后），供绑定重试 */
   claimDeviceId: "",
-  claimTimer: 0 as any,
+  claimTimer: 0,
   claimAttempts: 0,
   pollInFlight: false,
   scanStopper: null as (() => void) | null,
-  scanTimer: 0 as any,
-  wifiListTimer: 0 as any,
-  provisionTimer: 0 as any,
+  scanTimer: 0,
+  wifiListTimer: 0,
+  provisionTimer: 0,
   finished: false,
 
   onLoad() {
@@ -117,9 +117,12 @@ Page({
   /** 位置权限：Android 扫 BLE 与双端读取当前 WiFi 的前置条件 */
   async ensureLocationPermission(): Promise<boolean> {
     try {
-      const setting = await new Promise<any>((resolve, reject) => {
-        wx.getSetting({ success: resolve, fail: reject });
-      });
+      const setting =
+        await new Promise<WechatMiniprogram.GetSettingSuccessCallbackResult>(
+          (resolve, reject) => {
+            wx.getSetting({ success: resolve, fail: reject });
+          },
+        );
       if (setting.authSetting["scope.userLocation"]) return true;
 
       await new Promise<void>((resolve, reject) => {
@@ -131,21 +134,28 @@ Page({
       });
       return true;
     } catch (e) {
-      const modal = await new Promise<any>((resolve) => {
-        wx.showModal({
-          title: "需要位置权限",
-          content: "搜索蓝牙设备和读取当前 WiFi 需要位置权限，请在设置中允许",
-          confirmText: "去设置",
-          success: resolve,
-        });
-      });
+      const modal =
+        await new Promise<WechatMiniprogram.ShowModalSuccessCallbackResult>(
+          (resolve) => {
+            wx.showModal({
+              title: "需要位置权限",
+              content:
+                "搜索蓝牙设备和读取当前 WiFi 需要位置权限，请在设置中允许",
+              confirmText: "去设置",
+              success: resolve,
+            });
+          },
+        );
       if (modal.confirm) {
         await new Promise((resolve) => {
           wx.openSetting({ complete: resolve });
         });
-        const after = await new Promise<any>((resolve, reject) => {
-          wx.getSetting({ success: resolve, fail: reject });
-        });
+        const after =
+          await new Promise<WechatMiniprogram.GetSettingSuccessCallbackResult>(
+            (resolve, reject) => {
+              wx.getSetting({ success: resolve, fail: reject });
+            },
+          );
         return !!after.authSetting["scope.userLocation"];
       }
       return false;
@@ -400,12 +410,20 @@ Page({
     if (msg.t1 === CMD_WIFI_LIST[0] && msg.t2 === CMD_WIFI_LIST[1]) {
       // 设备推送的周边 AP 列表（协议 4.1：{"wifiList":[{ssid,rssi}]}；
       // 设备端已过滤 rssi<-70；可能重复推送，收到即更新）
-      const raw = Array.isArray(msg.data?.wifiList) ? msg.data.wifiList : [];
+      const payload = msg.data as { wifiList?: unknown } | null;
+      const raw = Array.isArray(payload?.wifiList) ? payload.wifiList : [];
+      const isScannedWifi = (
+        it: unknown,
+      ): it is { ssid: string; rssi?: unknown } => {
+        if (!it || typeof it !== "object") return false;
+        const candidate = it as { ssid?: unknown };
+        return typeof candidate.ssid === "string" && candidate.ssid.length > 0;
+      };
       const wifiList: ScannedWifi[] = raw
-        .filter((it: any) => typeof it?.ssid === "string" && it.ssid.length > 0)
-        .map((it: any) => ({
-          ssid: it.ssid as string,
-          rssi: typeof it?.rssi === "number" ? it.rssi : null,
+        .filter(isScannedWifi)
+        .map((it) => ({
+          ssid: it.ssid,
+          rssi: typeof it.rssi === "number" ? it.rssi : null,
         }))
         .sort(
           (a: ScannedWifi, b: ScannedWifi) =>
@@ -429,7 +447,8 @@ Page({
       console.log("[provision] status frame raw:", JSON.stringify(msg.data));
     }
 
-    const status = msg.data?.status;
+    const statusPayload = msg.data as { status?: unknown } | null;
+    const status = statusPayload?.status;
     if (typeof status !== "number") {
       console.warn("[provision] status 非数值：", JSON.stringify(msg.data));
       return;

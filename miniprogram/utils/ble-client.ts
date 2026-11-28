@@ -38,20 +38,38 @@ export interface ScannedDevice {
   advertisDataHex: string;
 }
 
-/** wx 回调风格 API → Promise */
-function promisify<T>(fn: (option: any) => void, option: any): Promise<T> {
-  return new Promise((resolve, reject) => {
-    fn({
-      ...option,
-      success: (res: T) => resolve(res),
-      fail: (err: any) => reject(err),
-    });
+/** 从 unknown 错误对象上读一个字段 */
+function readErrorField(source: unknown, key: string): unknown {
+  return typeof source === "object" && source !== null
+    ? (source as Record<string, unknown>)[key]
+    : undefined;
+}
+
+interface WxCallback<T> {
+  success: (res: T) => void;
+  fail: (err: unknown) => void;
+}
+
+/**
+ * wx 回调风格 API → Promise。
+ *
+ * 调用方把「带字段的参数 + 回调」一起传给 wx API：
+ *   callWx<Result>((cb) => wx.getBLEDeviceServices({ deviceId, ...cb }))
+ * 这样字段类型仍由微信 typings 校验，不需要把 option 声明成 any。
+ */
+function callWx<T = unknown>(
+  run: (callback: WxCallback<T>) => void,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    run({ success: resolve, fail: reject });
   });
 }
 
 /** wx BLE 错误码 → 用户可读文案 */
-export function describeBleError(err: any): string {
-  const code = err?.errCode;
+export function describeBleError(err: unknown): string {
+  const rawCode = readErrorField(err, "errCode");
+  const code = typeof rawCode === "number" ? rawCode : undefined;
+  const rawMsg = readErrorField(err, "errMsg");
   switch (code) {
     case 10000:
       return "蓝牙未初始化，请重试";
@@ -72,8 +90,8 @@ export function describeBleError(err: any): string {
     case 10012:
       return "蓝牙操作超时，请重试";
     default:
-      return typeof err?.errMsg === "string" && err.errMsg
-        ? err.errMsg
+      return typeof rawMsg === "string" && rawMsg
+        ? rawMsg
         : "蓝牙操作失败，请重试";
   }
 }
@@ -83,14 +101,24 @@ export class BleProvisionClient {
   private serviceId = "";
   private writeCharId = "";
   private notifyCharId = "";
-  private notifyListener: ((res: any) => void) | null = null;
-  private disconnectListener: ((res: any) => void) | null = null;
-  private scanListener: ((res: any) => void) | null = null;
+  private notifyListener:
+    | ((
+        res: WechatMiniprogram.OnBLECharacteristicValueChangeListenerResult,
+      ) => void)
+    | null = null;
+  private disconnectListener:
+    | ((
+        res: WechatMiniprogram.OnBLEConnectionStateChangeListenerResult,
+      ) => void)
+    | null = null;
+  private scanListener:
+    | ((res: WechatMiniprogram.OnBluetoothDeviceFoundListenerResult) => void)
+    | null = null;
 
   /** 初始化蓝牙适配器 */
   async init(): Promise<void> {
     try {
-      await promisify(wx.openBluetoothAdapter, {});
+      await callWx((cb) => wx.openBluetoothAdapter(cb));
     } catch (err) {
       throw new Error(describeBleError(err));
     }
@@ -103,7 +131,7 @@ export class BleProvisionClient {
    */
   startScan(onDevice: (device: ScannedDevice) => void): () => void {
     const seen = new Set<string>();
-    this.scanListener = (res: any) => {
+    this.scanListener = (res) => {
       for (const d of res.devices || []) {
         const label = `${d.localName || ""}${d.name || ""}`;
         if (!label.toUpperCase().includes(BROADCAST_NAME_KEYWORD)) continue;
@@ -126,9 +154,9 @@ export class BleProvisionClient {
 
   async startDiscovery(): Promise<void> {
     try {
-      await promisify(wx.startBluetoothDevicesDiscovery, {
-        allowDuplicatesKey: false,
-      });
+      await callWx((cb) =>
+        wx.startBluetoothDevicesDiscovery({ allowDuplicatesKey: false, ...cb }),
+      );
     } catch (err) {
       throw new Error(describeBleError(err));
     }
@@ -136,7 +164,8 @@ export class BleProvisionClient {
 
   stopScan(): void {
     if (this.scanListener) {
-      (wx as any).offBluetoothDeviceFound(this.scanListener);
+      // 该 API 不支持定向移除（签名无参），本类只注册一个监听，等价
+      wx.offBluetoothDeviceFound();
       this.scanListener = null;
     }
     wx.stopBluetoothDevicesDiscovery({ complete: () => {} });
@@ -150,33 +179,41 @@ export class BleProvisionClient {
     this.stopScan();
     this.deviceId = deviceId;
     try {
-      await promisify(wx.createBLEConnection, { deviceId, timeout: 10000 });
+      await callWx((cb) =>
+        wx.createBLEConnection({ deviceId, timeout: 10000, ...cb }),
+      );
     } catch (err) {
       throw new Error(describeBleError(err));
     }
 
     try {
-      const servicesRes = await promisify<any>(wx.getBLEDeviceServices, {
-        deviceId,
-      });
+      const servicesRes =
+        await callWx<WechatMiniprogram.GetBLEDeviceServicesSuccessCallbackResult>(
+          (cb) => wx.getBLEDeviceServices({ deviceId, ...cb }),
+        );
       const service = (servicesRes.services || []).find(
-        (s: any) => s.uuid.toUpperCase() === PROVISION_SERVICE_UUID,
+        (s) => s.uuid.toUpperCase() === PROVISION_SERVICE_UUID,
       );
       if (!service) {
         throw new Error("未找到配网服务（AE80），该设备可能不是配网状态");
       }
       this.serviceId = service.uuid;
 
-      const charsRes = await promisify<any>(wx.getBLEDeviceCharacteristics, {
-        deviceId,
-        serviceId: this.serviceId,
-      });
+      const charsRes =
+        await callWx<WechatMiniprogram.GetBLEDeviceCharacteristicsSuccessCallbackResult>(
+          (cb) =>
+            wx.getBLEDeviceCharacteristics({
+              deviceId,
+              serviceId: this.serviceId,
+              ...cb,
+            }),
+        );
       const chars = charsRes.characteristics || [];
       const writeChar = chars.find(
-        (c: any) => c.uuid.toUpperCase() === PROVISION_WRITE_UUID,
+        (c) => c.uuid.toUpperCase() === PROVISION_WRITE_UUID,
       );
       const notifyChar = chars.find(
-        (c: any) => c.uuid.toUpperCase() === PROVISION_NOTIFY_UUID,
+        (c) => c.uuid.toUpperCase() === PROVISION_NOTIFY_UUID,
       );
       // 协议要求 writeNoResponse；只检查 properties.write 会在真机上写不进
       if (!writeChar || !writeChar.properties?.writeNoResponse) {
@@ -204,7 +241,7 @@ export class BleProvisionClient {
     onDisconnect: () => void,
   ): Promise<void> {
     const { deviceId, serviceId, notifyCharId } = this;
-    this.notifyListener = (res: any) => {
+    this.notifyListener = (res) => {
       if (
         res.deviceId !== deviceId ||
         res.serviceId?.toUpperCase() !== serviceId.toUpperCase() ||
@@ -214,7 +251,7 @@ export class BleProvisionClient {
       }
       onChunk(new Uint8Array(res.value));
     };
-    this.disconnectListener = (res: any) => {
+    this.disconnectListener = (res) => {
       if (res.deviceId === deviceId && !res.connected) onDisconnect();
     };
     // 顺序固定：先注册回调，再开启 Notify
@@ -222,12 +259,15 @@ export class BleProvisionClient {
     wx.onBLEConnectionStateChange(this.disconnectListener);
 
     try {
-      await promisify(wx.notifyBLECharacteristicValueChange, {
-        deviceId,
-        serviceId,
-        characteristicId: notifyCharId,
-        state: true,
-      });
+      await callWx((cb) =>
+        wx.notifyBLECharacteristicValueChange({
+          deviceId,
+          serviceId,
+          characteristicId: notifyCharId,
+          state: true,
+          ...cb,
+        }),
+      );
     } catch (err) {
       throw new Error(describeBleError(err));
     }
@@ -241,13 +281,18 @@ export class BleProvisionClient {
     for (let offset = 0; offset < frame.length; offset += BLE_CHUNK_SIZE) {
       const chunk = frame.slice(offset, offset + BLE_CHUNK_SIZE);
       try {
-        await promisify(wx.writeBLECharacteristicValue, {
-          deviceId: this.deviceId,
-          serviceId: this.serviceId,
-          characteristicId: this.writeCharId,
-          writeType: "writeNoResponse",
-          value: chunk.buffer,
-        });
+        await callWx((cb) =>
+          wx.writeBLECharacteristicValue({
+            deviceId: this.deviceId,
+            serviceId: this.serviceId,
+            characteristicId: this.writeCharId,
+            writeType: "writeNoResponse",
+            // slice 会分配独立 ArrayBuffer；Uint8Array.buffer 的静态类型是
+            // ArrayBufferLike，这里收窄到 wx 接口要求的 ArrayBuffer
+            value: chunk.buffer as ArrayBuffer,
+            ...cb,
+          }),
+        );
       } catch (err) {
         throw new Error(describeBleError(err));
       }
@@ -258,16 +303,19 @@ export class BleProvisionClient {
   async disconnect(): Promise<void> {
     this.stopScan();
     if (this.notifyListener) {
-      (wx as any).offBLECharacteristicValueChange(this.notifyListener);
+      // 该 API 签名无参（移除全部监听）；本类只注册一个
+      wx.offBLECharacteristicValueChange();
       this.notifyListener = null;
     }
     if (this.disconnectListener) {
-      (wx as any).offBLEConnectionStateChange(this.disconnectListener);
+      wx.offBLEConnectionStateChange(this.disconnectListener);
       this.disconnectListener = null;
     }
     if (this.deviceId) {
       try {
-        await promisify(wx.closeBLEConnection, { deviceId: this.deviceId });
+        await callWx((cb) =>
+          wx.closeBLEConnection({ deviceId: this.deviceId, ...cb }),
+        );
       } catch (err) {
         // 已断开时忽略
       }

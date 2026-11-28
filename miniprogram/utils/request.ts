@@ -18,7 +18,7 @@ export interface ApiResponse<T> {
 export interface RequestOptions {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   url: string;
-  data?: any;
+  data?: string | WechatMiniprogram.IAnyObject | ArrayBuffer;
 }
 
 /** 401 全局重定向守卫：并发请求同时 401 时只 reLaunch 一次 */
@@ -52,7 +52,9 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
     wx.request({
       url,
-      method: options.method as any,
+      // wx typings 的 method 联合不含 PATCH，但后端确实用 PATCH
+      method:
+        options.method as unknown as WechatMiniprogram.RequestOption["method"],
       data: options.data,
       header: {
         "Content-Type": "application/json",
@@ -60,7 +62,8 @@ export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
       },
       success: (res) => {
         const statusCode = res.statusCode || 0;
-        const body = res.data as any;
+        const body = res.data as unknown as
+          (Partial<ApiResponse<T>> & { message?: string }) | null;
 
         // 401 无论以 HTTP 状态码还是业务 code 返回，都统一走全局重登录
         if (statusCode === 401 || body?.code === 401) {

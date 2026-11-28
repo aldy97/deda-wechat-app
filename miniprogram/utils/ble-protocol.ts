@@ -110,8 +110,8 @@ export function makeConfigFrame(ssid: string, pass: string): Uint8Array {
 export interface ProvisionMessage {
   t1: number;
   t2: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  /** JSON 负载，由消费方按 t1/t2 窄化 */
+  data: unknown;
 }
 
 /**
