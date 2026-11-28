@@ -25,6 +25,8 @@ Page({
     displayName: "未设置昵称",
     /** 资料卡副文案（设备数 · 孩子数） */
     metaText: "",
+    /** 家长性别：决定资料卡头像用 dad / mum 包内图；空值保留占位图标 */
+    parentGender: "",
   },
 
   onShow() {
@@ -65,6 +67,7 @@ Page({
       isEmptyProfile: isProfileEmpty(profile),
       displayName: profileDisplayName(profile.nickname),
       metaText: profileMeta(profile.deviceCount, profile.childCount),
+      parentGender: profile.gender ?? "",
     });
   },
 

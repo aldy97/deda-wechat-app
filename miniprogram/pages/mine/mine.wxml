@@ -29,7 +29,21 @@
     aria-label="查看用户信息"
   >
     <view class="avatar-default">
-      <van-icon name="user-o" size="56rpx" color="var(--color-secondary)" />
+      <image
+        wx:if="{{ parentGender === 'male' }}"
+        class="avatar-photo"
+        src="/static/images/parent-info/dad.png"
+        mode="aspectFill"
+        aria-label="爸爸头像"
+      />
+      <image
+        wx:elif="{{ parentGender === 'female' }}"
+        class="avatar-photo"
+        src="/static/images/parent-info/mum.png"
+        mode="aspectFill"
+        aria-label="妈妈头像"
+      />
+      <van-icon wx:else name="user-o" size="56rpx" color="var(--color-secondary)" />
     </view>
     <view class="profile-info">
       <text class="profile-name">{{ displayName }}</text>

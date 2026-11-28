@@ -1,5 +1,9 @@
 import { installPageHarness } from "../../tests/page-harness";
 
+declare const __dirname: string;
+const fs = require("fs");
+const path = require("path");
+
 const mockApi = {
   getUserProfile: jest.fn(),
 };
@@ -127,6 +131,44 @@ describe("mine page profile card", () => {
     expect(page.data.loadError).toBe(false);
     expect(page.data.displayName).toBe("熊爸爸");
     expect(harness.wx.navigateTo).not.toHaveBeenCalled();
+  });
+
+  it("家长选了性别：资料卡头像用包内 dad/mum 图展示", async () => {
+    mockApi.getUserProfile.mockResolvedValue({
+      code: 0,
+      message: "",
+      data: { ...PROFILE, gender: "male" },
+    });
+
+    await page.onShow();
+
+    expect(page.data.parentGender).toBe("male");
+  });
+
+  it("头像走包内静态图，src 是字面量（不走 manifest、不能动态绑定）", () => {
+    const wxml: string = fs.readFileSync(
+      path.join(__dirname, "mine.wxml"),
+      "utf8",
+    );
+
+    expect(wxml).toContain('src="/static/images/parent-info/dad.png"');
+    expect(wxml).toContain('src="/static/images/parent-info/mum.png"');
+    expect(wxml).toContain("parentGender === 'male'");
+    expect(wxml).toContain("parentGender === 'female'");
+    // 静态资源闸口要求本地路径可静态解析
+    expect(wxml).not.toContain('src="{{');
+  });
+
+  it("没选性别：保留原来的占位图标，不展示父母形象", async () => {
+    await page.onShow();
+
+    expect(page.data.parentGender).toBe("");
+
+    const wxml: string = fs.readFileSync(
+      path.join(__dirname, "mine.wxml"),
+      "utf8",
+    );
+    expect(wxml).toContain('<van-icon wx:else name="user-o"');
   });
 
   it("opens the user profile page from the card", async () => {
