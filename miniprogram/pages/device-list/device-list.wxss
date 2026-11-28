@@ -523,34 +523,11 @@
   transform: translate(-50%, -50%);
 }
 
-/* 多设备下拉给中间 logo 留出空间，避免长名字压到 logo */
+/* 孩子设备下拉：与「更懂TA」页头同一个组件、同一套尺寸，这里只管层级与不压缩 */
 .device-nav-switch {
   position: relative;
   z-index: 1;
-  display: block;
   flex-shrink: 0;
-  max-width: 230rpx;
-}
-
-/* 圆形添加设备入口（导航栏左组，多设备时紧跟设备下拉） */
-.add-device-fab {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64rpx;
-  height: 64rpx;
-  margin: 0;
-  border-radius: 50%;
-  background-color: var(--color-surface);
-  border: 2rpx solid var(--color-border);
-  box-shadow: 0 4rpx 16rpx var(--color-shadow);
-}
-
-.add-device-fab-hover {
-  background-color: var(--color-brand-light);
 }
 
 /* 卡片中部 */

@@ -89,8 +89,10 @@ Page({
     selectedDeviceId: "",
     /** 当前选中设备展示名（孩子名优先） */
     selectedDeviceName: "",
-    /** 导航栏 dropdown 选项：{ id, name } */
-    deviceOptions: [] as Array<{ id: string; name: string }>,
+    /** 当前选中孩子的性别，决定导航栏胶囊左侧头像 */
+    selectedDeviceGender: "",
+    /** 导航栏 dropdown 选项：{ id, name, gender }，gender 决定选项左侧头像 */
+    deviceOptions: [] as Array<{ id: string; name: string; gender: string }>,
     /** 自定义导航栏：状态栏高度（px） */
     statusBarHeight: DEFAULT_STATUS_BAR_HEIGHT,
     /** 自定义导航栏：导航栏内容高度（px），与微信胶囊按钮垂直对齐 */
@@ -528,9 +530,11 @@ Page({
       selectedDeviceName: selectedDevice
         ? getDeviceDisplayName(selectedDevice, "暂无设备")
         : "",
+      selectedDeviceGender: selectedDevice?.childProfile?.gender || "",
       deviceOptions: items.map((item) => ({
         id: item.id,
         name: getDeviceDisplayName(item),
+        gender: item.childProfile?.gender || "",
       })),
     };
   },

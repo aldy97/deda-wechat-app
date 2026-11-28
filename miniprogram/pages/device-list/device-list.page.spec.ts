@@ -621,8 +621,16 @@ describe("device-list card display mapping", () => {
 
   describe("当前孩子选择（首页 dropdown）", () => {
     const twoDevices = [
-      { id: "dev-a", name: "样机 A", childProfile: { name: "小明" } },
-      { id: "dev-b", name: "样机 B", childProfile: { name: "小红" } },
+      {
+        id: "dev-a",
+        name: "样机 A",
+        childProfile: { name: "小明", gender: "male" },
+      },
+      {
+        id: "dev-b",
+        name: "样机 B",
+        childProfile: { name: "小红", gender: "female" },
+      },
     ];
 
     function mockTwoDevices() {
@@ -660,9 +668,10 @@ describe("device-list card display mapping", () => {
 
       expect(page.data.selectedDevice.id).toBe("dev-a");
       expect(page.data.deviceOptions).toEqual([
-        { id: "dev-a", name: "小明" },
-        { id: "dev-b", name: "小红" },
+        { id: "dev-a", name: "小明", gender: "male" },
+        { id: "dev-b", name: "小红", gender: "female" },
       ]);
+      expect(page.data.selectedDeviceGender).toBe("male");
       expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
         "selected_device_id",
         "dev-a",
@@ -730,7 +739,7 @@ describe("device-list card display mapping", () => {
       const third = {
         id: "dev-c",
         name: "样机 C",
-        childProfile: { name: "小刚" },
+        childProfile: { name: "小刚", gender: "male" },
       };
       mockApi.getDeviceList.mockResolvedValue({
         code: 0,
@@ -741,9 +750,9 @@ describe("device-list card display mapping", () => {
       await page.loadDeviceList({ silent: true });
 
       expect(page.data.deviceOptions).toEqual([
-        { id: "dev-a", name: "小明" },
-        { id: "dev-b", name: "小红" },
-        { id: "dev-c", name: "小刚" },
+        { id: "dev-a", name: "小明", gender: "male" },
+        { id: "dev-b", name: "小红", gender: "female" },
+        { id: "dev-c", name: "小刚", gender: "male" },
       ]);
       expect(page.data.selectedDevice.id).toBe("dev-a");
     });

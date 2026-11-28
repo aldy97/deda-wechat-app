@@ -7,6 +7,7 @@
       devices="{{ deviceOptions }}"
       selected-id="{{ selectedDeviceId }}"
       selected-name="{{ selectedDeviceName }}"
+      selected-gender="{{ selectedDeviceGender }}"
       loading="{{ loadingDevices }}"
       bind:change="onDeviceChange"
     />

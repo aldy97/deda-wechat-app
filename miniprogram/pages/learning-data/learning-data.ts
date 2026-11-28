@@ -107,10 +107,12 @@ Page({
     usageError: false,
     feedbackSubmitting: false,
     devices: [] as Device[],
-    /** 页头 dropdown 选项：{ id, name }（name 已按孩子名优先解析） */
-    deviceOptions: [] as Array<{ id: string; name: string }>,
+    /** 页头 dropdown 选项：{ id, name, gender }（name 已按孩子名优先解析） */
+    deviceOptions: [] as Array<{ id: string; name: string; gender: string }>,
     selectedDeviceId: "",
     selectedDeviceName: "",
+    /** 当前选中孩子的性别，决定胶囊左侧头像 */
+    selectedDeviceGender: "",
     reportDate: "",
     reportGeneratedAt: "",
     trendBars: [] as TrendBar[],
@@ -174,6 +176,7 @@ Page({
       deviceOptions: this.buildDeviceOptions(devices),
       selectedDeviceId: selectedId,
       selectedDeviceName: this.getDeviceName(selectedDevice),
+      selectedDeviceGender: this.getDeviceGender(selectedDevice),
     });
 
     if (!selectedId) {
@@ -237,6 +240,7 @@ Page({
       deviceOptions: this.buildDeviceOptions(cachedDevices),
       selectedDeviceId: cachedSelected.id,
       selectedDeviceName: this.getDeviceName(cachedSelected),
+      selectedDeviceGender: this.getDeviceGender(cachedSelected),
       initialized: true,
       loadingDevices: false,
       deviceError: false,
@@ -245,10 +249,13 @@ Page({
   },
 
   /** 下拉选项：统一走 getDeviceDisplayName，避免两页命名口径漂移 */
-  buildDeviceOptions(devices: Device[]): Array<{ id: string; name: string }> {
+  buildDeviceOptions(
+    devices: Device[],
+  ): Array<{ id: string; name: string; gender: string }> {
     return devices.map((device) => ({
       id: device.id,
       name: getDeviceDisplayName(device),
+      gender: this.getDeviceGender(device),
     }));
   },
 
@@ -308,6 +315,7 @@ Page({
         deviceOptions: this.buildDeviceOptions(devices),
         selectedDeviceId: selected?.id || "",
         selectedDeviceName: this.getDeviceName(selected),
+        selectedDeviceGender: this.getDeviceGender(selected),
         initialized: true,
       });
       if (selected) {
@@ -455,6 +463,11 @@ Page({
   getDeviceName(device?: Device): string {
     if (!device) return "暂无设备";
     return getDeviceDisplayName(device, "暂无设备");
+  },
+
+  /** 孩子性别（决定头像）；未填 / 老数据为 null 时走高亮前的中性头像 */
+  getDeviceGender(device?: Device): string {
+    return device?.childProfile?.gender || "";
   },
 
   async loadReportData() {
@@ -925,6 +938,7 @@ Page({
     this.setData({
       selectedDeviceId: deviceId,
       selectedDeviceName: this.getDeviceName(device),
+      selectedDeviceGender: this.getDeviceGender(device),
       activeModeUsage: null,
       summary: null,
       hasSummaryContent: false,

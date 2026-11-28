@@ -1,4 +1,4 @@
-<view class="device-switch-wrap variant-{{ variant }} {{ open ? 'device-switch-wrap-open' : '' }}">
+<view class="device-switch-wrap {{ open ? 'device-switch-wrap-open' : '' }}">
   <view
     wx:if="{{ open }}"
     class="device-switch-mask"
@@ -7,33 +7,65 @@
   ></view>
 
   <button
-    class="device-switch {{ devices.length > 1 ? 'device-switch-active' : '' }}"
+    class="device-switch {{ devices.length > 1 || addable ? 'device-switch-active' : '' }}"
     bind:tap="onToggle"
     aria-label="切换孩子设备"
     aria-haspopup="menu"
     aria-expanded="{{ open }}"
   >
+    <child-avatar
+      class="device-switch__avatar"
+      gender="{{ selectedGender }}"
+      size="{{ 44 }}"
+    />
     <text class="device-switch-name">{{ loading ? '加载设备中' : (selectedName || '暂无设备') }}</text>
-    <view
-      wx:if="{{ devices.length > 1 }}"
-      class="device-switch-arrow {{ open ? 'device-switch-arrow-open' : '' }}"
-      aria-hidden="true"
-    ></view>
+    <expand-arrow
+      wx:if="{{ devices.length > 1 || addable }}"
+      class="device-switch-arrow"
+      open="{{ open }}"
+      size="{{ 12 }}"
+      weight="{{ 3 }}"
+    />
   </button>
 
-  <view wx:if="{{ open }}" class="device-dropdown" aria-role="menu">
+  <view
+    wx:if="{{ open }}"
+    class="device-dropdown device-dropdown--{{ menuAlign }}"
+    aria-role="menu"
+  >
+    <!-- 当前选中项不出现在菜单里：胶囊上已经显示了它，菜单只列可切换的目标 -->
+    <block wx:for="{{ devices }}" wx:key="id">
+      <view
+        wx:if="{{ item.id !== selectedId }}"
+        class="device-dropdown-item"
+        data-id="{{ item.id }}"
+        hover-class="device-dropdown-item-hover"
+        bind:tap="onSelect"
+        aria-role="menuitem"
+        aria-label="切换到{{ item.name }}"
+      >
+        <view class="device-dropdown-main">
+          <child-avatar
+            class="device-dropdown-item__avatar"
+            gender="{{ item.gender }}"
+            size="{{ 48 }}"
+          />
+          <text class="device-dropdown-name">{{ item.name }}</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- 绑定入口收在菜单底部：导航栏不再单占一个圆形「+」按钮 -->
     <view
-      wx:for="{{ devices }}"
-      wx:key="id"
-      class="device-dropdown-item {{ item.id === selectedId ? 'device-dropdown-item-selected' : '' }}"
-      data-id="{{ item.id }}"
+      wx:if="{{ addable }}"
+      class="device-dropdown-add"
       hover-class="device-dropdown-item-hover"
-      bind:tap="onSelect"
+      bind:tap="onAdd"
       aria-role="menuitem"
-      aria-label="切换到{{ item.name }}"
+      aria-label="{{ addLabel }}"
     >
-      <text class="device-dropdown-name">{{ item.name }}</text>
-      <text wx:if="{{ item.id === selectedId }}" class="device-dropdown-check" aria-hidden="true">✓</text>
+      <text class="device-dropdown-add__plus" aria-hidden="true">+</text>
+      <text class="device-dropdown-add__label">{{ addLabel }}</text>
     </view>
   </view>
 </view>
