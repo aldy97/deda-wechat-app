@@ -131,3 +131,18 @@
 19. 组件 .ts 改动同样受第 3 条约束：跑 `npm run build` 重新生成 .js，不手改产物；
     新增组件补装配用例（page-harness），并满足第 10 条 ≥90% 覆盖率。
 20. 完成报告必须写：复用了哪个 / 抽出了哪个 + ≥2 个调用点路径，或「无」。
+
+## 质量闸口（2026-11-28）
+
+21. **显式 any 零容忍**：生产代码（非 `*.spec.ts`、非 `miniprogram/tests/`）显式 `any` 必须为 0，
+    由 `repo-tests/any-guard.mjs` 用 TypeScript AST 计数（注释/字符串不误报）；测试侧按
+    `repo-tests/lib/any-allowlist.mjs` 逐文件登记配额，**只降不升**，实际数低于上限也红。
+    不设 `--no-verify` 之外的第二条豁免通道。
+22. **仓库卫生**：`repo-tests/hygiene.mjs` 双模式——`git ls-files`（CI，已入库垃圾）与文件系统
+    （本地 hook，能看见未跟踪文件）。拦垃圾命名、空目录、重复内容、0 字节入库、>1MB 入库文件；
+    垃圾一律移入 `.runtime/trash/<日期>-<原因>/`，不直接删。
+23. **包体积**：`repo-tests/package-size.mjs` 按 `packOptions.ignore` 复刻进包文件，
+    主包/分包源体积上界 2MB；`.ts` 由编译插件产出 `.js`，不计入。
+24. **执行时机**：`prebuild`（npm 自动）、`pre-commit`、`pre-push`（复跑全量）、CI
+    （`node --test repo-tests/*.mjs` 自动发现，新增闸口无需改 ci.yml）。
+25. **类型检查统一入口**：`npm run typecheck`，hook 与 CI 跑同一条命令，避免两边漂移。
