@@ -20,6 +20,15 @@ yarn-error.log*
 .DS_Store
 coverage/
 
+# 历史交付快照（2026-11-28 移出仓库，归档在 ~/Desktop/瓴玩资料/wechat-app-artifacts/）
+artifacts/
+
+# 设计稿（本机资产，不进包也不入库）
+design-mockups/
+
+# 运行时临时目录
+.tmp/
+
 # TypeScript 编译产物 —— 由微信开发者工具 / tsc 自动生成，禁止提交
 # 本仓库唯一事实源是 .ts；提交 .js 会导致源码与产物脱节（曾出现 .js 陈旧 6 个文件的事故）
 miniprogram/**/*.js

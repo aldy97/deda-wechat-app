@@ -1,6 +1,14 @@
 import { loadAppAssets, resolveAppAsset } from "../../utils/app-assets";
 
 /**
+ * 组件实例上不在 data 声明的内部标记。
+ * 用显式接口替代 `this as any`，detached 后不再 setData。
+ */
+interface EllyImageSelf {
+  detached?: boolean;
+}
+
+/**
  * 展示型素材图片组件。
  *
  * attached 先渲染本地 fallback，再尝试 manifest；命中则切到远程 URL，
@@ -44,12 +52,12 @@ Component({
       this.loadRemoteAsset();
     },
     detached() {
-      (this as any).detached = true;
+      (this as unknown as typeof this & EllyImageSelf).detached = true;
     },
   },
   methods: {
     loadRemoteAsset() {
-      const self = this as any;
+      const self = this as unknown as typeof this & EllyImageSelf;
       return loadAppAssets()
         .then(() => {
           if (self.detached) return;
@@ -67,7 +75,7 @@ Component({
     },
 
     onImageError() {
-      if ((this as any).detached) return;
+      if ((this as unknown as typeof this & EllyImageSelf).detached) return;
       if (this.data.useWebp) {
         // 远程图片失败 → 回退本地 fallback
         this.setData({

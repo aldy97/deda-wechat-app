@@ -20,7 +20,7 @@ jobs:
         run: npm ci
 
       - name: 类型检查（替代人工审查编译产物）
-        run: cd miniprogram && npx tsc --noEmit
+        run: npm run typecheck
 
       - name: 百分比分配契约测试
         run: npm test -- --runInBand miniprogram/pages/learning-data/learning-data.utils.spec.ts

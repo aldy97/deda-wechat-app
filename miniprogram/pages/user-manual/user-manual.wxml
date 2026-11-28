@@ -1,8 +1,11 @@
 <view class="container user-manual-page">
   <image
+    wx:if="{{ manualUrl }}"
     class="manual-image"
-    src="/static/images/user-manual.jpg"
+    src="{{ manualUrl }}"
     mode="widthFix"
     lazy-load
   />
+  <view wx:elif="{{ loading }}" class="manual-state">说明书加载中…</view>
+  <view wx:else class="manual-state">说明书暂不可用，请稍后再试</view>
 </view>

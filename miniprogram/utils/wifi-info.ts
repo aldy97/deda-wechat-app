@@ -13,20 +13,33 @@ export interface CurrentWifi {
   secure: boolean;
 }
 
-function promisify<T>(fn: (option: any) => void, option: any): Promise<T> {
-  return new Promise((resolve, reject) => {
-    fn({
-      ...option,
-      success: (res: T) => resolve(res),
-      fail: (err: any) => reject(err),
-    });
+/** 从 unknown 错误对象上读一个字段 */
+function readErrorField(source: unknown, key: string): unknown {
+  return typeof source === "object" && source !== null
+    ? (source as Record<string, unknown>)[key]
+    : undefined;
+}
+
+interface WxCallback<T> {
+  success: (res: T) => void;
+  fail: (err: unknown) => void;
+}
+
+/** wx 回调风格 API → Promise（字段类型仍由微信 typings 校验） */
+function callWx<T = unknown>(
+  run: (callback: WxCallback<T>) => void,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    run({ success: resolve, fail: reject });
   });
 }
 
 /** wx WiFi 错误码 → 用户可读文案 */
-function describeWifiError(err: any): string {
-  const code = err?.errCode;
-  const msg: string = err?.errMsg || "";
+function describeWifiError(err: unknown): string {
+  const rawCode = readErrorField(err, "errCode");
+  const code = typeof rawCode === "number" ? rawCode : undefined;
+  const rawMsg = readErrorField(err, "errMsg");
+  const msg = typeof rawMsg === "string" ? rawMsg : "";
   if (msg.includes("auth") || msg.includes("authorize")) {
     return "需要位置权限才能读取当前 WiFi，请在设置中允许";
   }
@@ -68,8 +81,11 @@ export async function getCurrentWifi(
   });
   const task = (async (): Promise<CurrentWifi> => {
     // 重复调用 startWifi 在部分平台返回失败，属正常，忽略
-    await promisify(wx.startWifi, {}).catch(() => {});
-    const res = await promisify<any>(wx.getConnectedWifi, {});
+    await callWx((cb) => wx.startWifi(cb)).catch(() => {});
+    const res =
+      await callWx<WechatMiniprogram.GetConnectedWifiSuccessCallbackResult>(
+        (cb) => wx.getConnectedWifi(cb),
+      );
     const ssid: string = res?.wifi?.SSID || "";
     if (!ssid) {
       throw new Error("未读取到当前 WiFi 名称，请确认手机已连接 WiFi");

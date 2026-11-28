@@ -1,5 +1,14 @@
 const MIN_LOADING_MS = 400;
 
+/**
+ * 组件实例上不在 data/properties 声明的内部字段。
+ * 用显式接口替代 `this as any`，让 tsc 仍能检查这些字段的读写。
+ */
+interface LoadMoreSelf {
+  loadingStartAt?: number;
+  loadingTimer: ReturnType<typeof setTimeout> | null;
+}
+
 Component({
   options: {
     addGlobalClass: true,
@@ -52,7 +61,7 @@ Component({
     },
 
     enterLoading() {
-      const self = this as any;
+      const self = this as unknown as typeof this & LoadMoreSelf;
       self.clearLoadingTimer();
       self.setData({ internalLoading: true });
       self.loadingStartAt = Date.now();
@@ -65,7 +74,7 @@ Component({
     },
 
     tryExitLoading() {
-      const self = this as any;
+      const self = this as unknown as typeof this & LoadMoreSelf;
       if (!self.data.internalLoading) return;
 
       const elapsed = Date.now() - (self.loadingStartAt || 0);
@@ -77,7 +86,7 @@ Component({
     },
 
     clearLoadingTimer() {
-      const self = this as any;
+      const self = this as unknown as typeof this & LoadMoreSelf;
       if (self.loadingTimer) {
         clearTimeout(self.loadingTimer);
         self.loadingTimer = null;

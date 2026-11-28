@@ -7,3 +7,10 @@
   display: block;
   width: 100%;
 }
+
+.manual-state {
+  padding: 120rpx 40rpx;
+  font-size: 28rpx;
+  color: var(--color-secondary);
+  text-align: center;
+}

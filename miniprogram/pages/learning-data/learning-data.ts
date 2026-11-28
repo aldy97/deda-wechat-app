@@ -80,8 +80,9 @@ interface ReportCache {
  */
 Page({
   reportRequestId: 0,
-  pieCanvas: null as any,
-  pieContext: null as any,
+  pieCanvas: null as WechatMiniprogram.Canvas | null,
+  pieContext:
+    null as WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D | null,
   pieSize: 0,
   pieSegments: [] as PieSegment[],
   pieHasRendered: false,
@@ -642,8 +643,14 @@ Page({
       .in(this)
       .select("#usagePieCanvas")
       .fields({ node: true, size: true })
-      .exec((result: any[]) => {
-        const canvasInfo = result?.[0];
+      .exec((result: unknown[]) => {
+        const canvasInfo = result?.[0] as
+          | {
+              node?: WechatMiniprogram.Canvas;
+              width: number;
+              height: number;
+            }
+          | undefined;
         if (!canvasInfo?.node) {
           // wx:if 刚展示原生 Canvas 时，节点可能晚于 setData 回调就绪。
           if (this.pendingPieItems && attempt < 3) {
@@ -874,7 +881,7 @@ Page({
     wx.createSelectorQuery()
       .in(this)
       .select(".usage-pie")
-      .boundingClientRect((rect: any) => {
+      .boundingClientRect((rect) => {
         if (!rect) return;
         this.setData(
           {
