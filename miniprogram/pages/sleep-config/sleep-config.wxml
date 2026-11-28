@@ -11,6 +11,7 @@
       mode="aspectFill"
       lazy-load="{{ false }}"
       bind:load="onHeroImageLoad"
+      bind:unavailable="onHeroUnavailable"
     />
     <view class="sleep-config-hero__mask"></view>
 

@@ -10,6 +10,7 @@
       mode="aspectFill"
       lazy-load="{{ false }}"
       bind:load="onHeroImageLoad"
+      bind:unavailable="onHeroUnavailable"
     />
   </view>
 

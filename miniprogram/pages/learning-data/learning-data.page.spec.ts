@@ -15,8 +15,16 @@ const mockApi = {
 jest.mock("../../api/api", () => mockApi);
 
 const devices = [
-  { id: "d1", name: "Elly 一号", childProfile: { name: "小明" } },
-  { id: "d2", name: "Elly 二号", childProfile: { name: "小红" } },
+  {
+    id: "d1",
+    name: "Elly 一号",
+    childProfile: { name: "小明", gender: "male" },
+  },
+  {
+    id: "d2",
+    name: "Elly 二号",
+    childProfile: { name: "小红", gender: "female" },
+  },
 ];
 
 function parentReport(deviceId = "d1") {
@@ -359,8 +367,8 @@ describe("learning-data parent report page", () => {
 
       expect(page.data.selectedDeviceId).toBe("d2");
       expect(page.data.deviceOptions).toEqual([
-        { id: "d1", name: "小明" },
-        { id: "d2", name: "小红" },
+        { id: "d1", name: "小明", gender: "male" },
+        { id: "d2", name: "小红", gender: "female" },
       ]);
     } finally {
       harness.wx.getStorageSync.mockImplementation(() => "");
@@ -398,6 +406,8 @@ describe("learning-data parent report page", () => {
     await page.onDeviceChange({ detail: { deviceId: "d2" } });
 
     expect(page.data.selectedDeviceId).toBe("d2");
+    // 胶囊头像跟着切到该孩子的性别
+    expect(page.data.selectedDeviceGender).toBe("female");
     expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
       "selected_device_id",
       "d2",
@@ -876,8 +886,8 @@ describe("learning-data parent report page", () => {
       expect(page.data.selectedDeviceId).toBe("d1");
       // dropdown 也要拿到新增设备（空态 → 两个孩子）
       expect(page.data.deviceOptions).toEqual([
-        { id: "d1", name: "小明" },
-        { id: "d2", name: "小红" },
+        { id: "d1", name: "小明", gender: "male" },
+        { id: "d2", name: "小红", gender: "female" },
       ]);
       // 解除空态后报告数据随之加载
       expect(mockApi.getParentReport).toHaveBeenCalledWith(
@@ -909,7 +919,9 @@ describe("learning-data parent report page", () => {
       await page.onShow();
 
       expect(page.data.devices.map((d: any) => d.id)).toEqual(["d1"]);
-      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明", gender: "male" },
+      ]);
       expect(page.data.selectedDeviceId).toBe("d1");
       expect(page.data.selectedDeviceName).toBe("小明");
       expect(harness.wx.setStorageSync).toHaveBeenCalledWith(
@@ -932,7 +944,9 @@ describe("learning-data parent report page", () => {
 
       await page.onShow();
 
-      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明", gender: "male" },
+      ]);
       expect(page.data.selectedDeviceId).toBe("d1");
       expect(mockApi.getParentReport).toHaveBeenCalledWith(
         "d1",
@@ -944,7 +958,9 @@ describe("learning-data parent report page", () => {
       mockApi.getDeviceList.mockResolvedValueOnce({ data: [devices[0]] });
       await page.onLoad();
       await page.onReady();
-      expect(page.data.deviceOptions).toEqual([{ id: "d1", name: "小明" }]);
+      expect(page.data.deviceOptions).toEqual([
+        { id: "d1", name: "小明", gender: "male" },
+      ]);
       jest.clearAllMocks();
 
       // 首页新增了 d2
@@ -953,8 +969,8 @@ describe("learning-data parent report page", () => {
       await page.onShow();
 
       expect(page.data.deviceOptions).toEqual([
-        { id: "d1", name: "小明" },
-        { id: "d2", name: "小红" },
+        { id: "d1", name: "小明", gender: "male" },
+        { id: "d2", name: "小红", gender: "female" },
       ]);
       expect(page.data.selectedDeviceId).toBe("d1");
       expect(page.data.selectedDeviceName).toBe("小明");

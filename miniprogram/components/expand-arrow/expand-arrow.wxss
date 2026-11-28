@@ -1,0 +1,26 @@
+:host {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* V 形只留右下两条边；颜色继承使用处，尺寸与描边由内联样式给 */
+.expand-arrow {
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: currentColor;
+  transform: translateY(-2rpx) rotate(45deg);
+  transition: transform 200ms ease;
+  will-change: transform;
+}
+
+/* 展开：翻转 180°，V 朝上 */
+.expand-arrow--open {
+  transform: translateY(2rpx) rotate(225deg);
+}
+
+/* 系统开启「减弱动态效果」时直接跳变，不做动画 */
+@media (prefers-reduced-motion: reduce) {
+  .expand-arrow {
+    transition: none;
+  }
+}

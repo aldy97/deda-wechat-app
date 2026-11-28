@@ -211,6 +211,17 @@ describe("adventure-story-mode page 装配", () => {
     expect(page.data.heroHeight).toBe(440);
   });
 
+  it("背景图缺失：监听 unavailable 并把 hero 收窄，不再留 440rpx 空白", () => {
+    const page = harness.createInstance();
+    const wxml: string = read("adventure-story-mode.wxml");
+
+    expect(wxml).toContain('bind:unavailable="onHeroUnavailable"');
+
+    page.onHeroUnavailable();
+
+    expect(page.data.heroHeight).toBe(240);
+  });
+
   it("展示位 key 已登记并带中文标签，页面 json 注册了 elly-image", () => {
     const constants: string = read("../../constants/app-asset-keys.ts");
     const json: { usingComponents: Record<string, string> } = JSON.parse(

@@ -11,6 +11,7 @@
         mode="aspectFill"
         lazy-load="{{ false }}"
         bind:load="onHeroImageLoad"
+        bind:unavailable="onHeroUnavailable"
       />
 
       <!-- 自定义导航：无系统导航栏，只保留叠在 hero 上的返回键 -->

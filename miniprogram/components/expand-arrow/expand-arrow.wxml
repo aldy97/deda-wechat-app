@@ -1,0 +1,5 @@
+<view
+  class="expand-arrow {{ open ? 'expand-arrow--open' : '' }}"
+  style="width: {{ size }}rpx; height: {{ size }}rpx; border-width: 0 {{ weight }}rpx {{ weight }}rpx 0;"
+  aria-hidden="true"
+></view>

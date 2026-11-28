@@ -1,5 +1,6 @@
 <view class="device-list-page">
-  <!-- 自定义导航栏：中间品牌 logo（与刘海水平中线对齐）+ 左侧「孩子设备」下拉（多设备时）+ 添加设备圆形按钮 -->
+  <!-- 自定义导航栏：中间品牌 logo（与刘海水平中线对齐）+ 左侧常驻「孩子设备」下拉。
+       切换孩子与「添加设备」都收在下拉菜单里，导航栏不再单占一个圆形 + 按钮。 -->
   <view class="device-nav" style="padding-top: {{ statusBarHeight }}px;">
     <view class="device-nav-bar" style="height: {{ navBarHeight }}px;">
       <image
@@ -9,23 +10,16 @@
         aria-hidden="true"
       />
       <device-switch-dropdown
-        wx:if="{{ devices.length > 1 }}"
         class="device-nav-switch"
         devices="{{ deviceOptions }}"
         selected-id="{{ selectedDeviceId }}"
         selected-name="{{ selectedDeviceName }}"
-        variant="nav"
+        selected-gender="{{ selectedDeviceGender }}"
+        addable="{{ true }}"
+        menu-align="left"
         bind:change="onDeviceChange"
+        bind:add="onAddDevice"
       />
-      <view
-        class="add-device-fab"
-        bind:tap="onAddDevice"
-        hover-class="add-device-fab-hover"
-        aria-role="button"
-        aria-label="添加设备"
-      >
-        <van-icon name="plus" size="32rpx" color="var(--color-primary)" />
-      </view>
     </view>
   </view>
 

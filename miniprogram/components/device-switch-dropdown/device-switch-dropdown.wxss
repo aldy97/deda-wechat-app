@@ -28,25 +28,21 @@
   border: 0;
 }
 
+/* 孩子性别头像：胶囊里与菜单项里各一个尺寸 */
+.device-switch__avatar {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+}
+
 .device-switch-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* 箭头形状与开合动画收在 components/expand-arrow，这里只管间距 */
 .device-switch-arrow {
-  flex-shrink: 0;
-  box-sizing: border-box;
-  width: 12rpx;
-  height: 12rpx;
   margin-left: 12rpx;
-  border-right: 3rpx solid currentColor;
-  border-bottom: 3rpx solid currentColor;
-  transform: translateY(-3rpx) rotate(45deg);
-}
-
-.device-switch-arrow-open {
-  transform: translateY(3rpx) rotate(225deg);
 }
 
 .device-switch-mask {
@@ -72,10 +68,15 @@
   box-shadow: 0 16rpx 40rpx var(--color-shadow);
 }
 
+/* 胶囊贴在屏幕左侧时向左锚定，避免菜单溢出屏幕左边界 */
+.device-dropdown--left {
+  right: auto;
+  left: 0;
+}
+
 .device-dropdown-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   min-height: 88rpx;
   padding: 0 28rpx;
   box-sizing: border-box;
@@ -87,42 +88,53 @@
   border-top: 1rpx solid var(--color-divider);
 }
 
-.device-dropdown-item-selected {
-  background: var(--color-brand-light);
-  color: var(--color-primary);
-}
-
 .device-dropdown-item-hover {
   background: var(--color-bg);
 }
 
+.device-dropdown-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+
+.device-dropdown-item__avatar {
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
 .device-dropdown-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.device-dropdown-check {
-  flex-shrink: 0;
-  margin-left: 16rpx;
+/* 菜单底部的「添加设备」入口：与设备项同高，主色强调，始终排在最后 */
+.device-dropdown-add {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  border-top: 1rpx solid var(--color-divider);
   color: var(--color-primary);
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: 28rpx;
 }
 
-/* 导航栏变体：与圆形「添加设备」按钮同一视觉体系（白底 + 描边 + 轻阴影） */
-.variant-nav .device-switch {
-  min-height: 64rpx;
-  max-width: 260rpx;
-  padding: 8rpx 20rpx;
-  border: 2rpx solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: 0 4rpx 16rpx var(--color-shadow);
+.device-dropdown-add__plus {
+  flex-shrink: 0;
+  width: 24rpx;
+  margin-right: 16rpx;
+  font-size: 34rpx;
+  line-height: 1;
+  text-align: center;
 }
 
-/* 导航栏在屏幕左侧，菜单向左对齐更自然 */
-.variant-nav .device-dropdown {
-  right: auto;
-  left: 0;
+.device-dropdown-add__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

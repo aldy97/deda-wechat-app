@@ -32,6 +32,9 @@ interface PersistedManifest {
 let memoryManifest: AppAssetManifest | null = null;
 let memoryCachedAt = 0;
 let inFlight: Promise<AppAssetManifest> | null = null;
+let forceInFlight: Promise<AppAssetManifest> | null = null;
+/** 未命中展示位时的自愈额度：每个会话只允许强制刷新一次 */
+let missHealUsed = false;
 
 function now(): number {
   return Date.now();
@@ -188,6 +191,11 @@ export function loadAppAssets(): Promise<AppAssetManifest> {
 
 /** 忽略缓存强制刷新；失败时同样回退旧缓存，保证自检页不会因一次刷新而白屏。 */
 export function forceRefreshAppAssets(): Promise<AppAssetManifest> {
+  // 一屏里多个展示位同时未命中时共享同一次刷新，避免并发打接口
+  if (forceInFlight) {
+    return forceInFlight;
+  }
+
   let fallback: AppAssetManifest | null = memoryManifest;
   if (!fallback) {
     const persisted = readPersisted();
@@ -196,7 +204,7 @@ export function forceRefreshAppAssets(): Promise<AppAssetManifest> {
     }
   }
 
-  return fetchManifestWithTimeout()
+  const promise = fetchManifestWithTimeout()
     .then((manifest) => {
       cacheManifest(manifest);
       return manifest;
@@ -209,6 +217,27 @@ export function forceRefreshAppAssets(): Promise<AppAssetManifest> {
       }
       throw error;
     });
+
+  forceInFlight = promise;
+  const clearForceInFlight = () => {
+    forceInFlight = null;
+  };
+  promise.then(clearForceInFlight, clearForceInFlight);
+
+  return promise;
+}
+
+/**
+ * 未命中展示位时申请一次强制刷新额度。
+ *
+ * 设备上可能长期持有旧 manifest（拉取失败时回退旧缓存，且页面不会重试），
+ * 表现为「新上传的图在真机永远不出现」。第一次未命中就强制刷新一次，
+ * 让页面自愈；同一会话不再重复请求。
+ */
+export function takeMissHealChance(): boolean {
+  if (missHealUsed) return false;
+  missHealUsed = true;
+  return true;
 }
 
 /** 同步解析指定 key 的远程素材 entry；未命中或 entry 缺 url 时返回 null。 */
@@ -224,6 +253,8 @@ export function resetAppAssetsForTest(): void {
   memoryManifest = null;
   memoryCachedAt = 0;
   inFlight = null;
+  forceInFlight = null;
+  missHealUsed = false;
   try {
     wx.removeStorageSync(APP_ASSETS_STORAGE_KEY);
   } catch (error) {

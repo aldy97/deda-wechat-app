@@ -1,4 +1,7 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "child-avatar": "/components/child-avatar/child-avatar",
+    "expand-arrow": "/components/expand-arrow/expand-arrow"
+  }
 }

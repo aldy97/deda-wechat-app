@@ -47,7 +47,8 @@ describe("buildLocalEnv", () => {
   it("完整环境信息：手机与系统分开", () => {
     expect(ENV).toEqual({
       wechatText: "8.0.50",
-      phoneText: "iPhone 15",
+      phoneText: "Apple iPhone 15",
+      phoneRawText: "Apple iPhone 15",
       systemText: "iOS 18.2",
     });
   });
@@ -56,6 +57,7 @@ describe("buildLocalEnv", () => {
     expect(buildLocalEnv({})).toEqual({
       wechatText: "未获取",
       phoneText: "未获取",
+      phoneRawText: "未获取",
       systemText: "未获取",
     });
   });
@@ -71,6 +73,34 @@ describe("buildLocalEnv", () => {
     expect(
       buildLocalEnv({ deviceInfo: { system: "iOS 18.2" } }).systemText,
     ).toBe("iOS 18.2");
+  });
+
+  it("iPhone 硬件标识只在复制文本里保留，展示串为 maker + 型号", () => {
+    const env = buildLocalEnv({
+      deviceInfo: { brand: "Apple", model: "iPhone 15 pro<iPhone16,1>" },
+    });
+
+    expect(env.phoneText).toBe("Apple iPhone 15 pro");
+    expect(env.phoneRawText).toBe("Apple iPhone 15 pro<iPhone16,1>");
+  });
+
+  it("maker 与型号去重：model 已含 brand 前缀或 brand 缺失时不重复拼接", () => {
+    expect(
+      buildLocalEnv({
+        deviceInfo: { brand: "iPhone", model: "iPhone 15<iPhone16,1>" },
+      }).phoneText,
+    ).toBe("iPhone 15");
+    expect(
+      buildLocalEnv({ deviceInfo: { model: "iPhone 15<iPhone16,1>" } })
+        .phoneText,
+    ).toBe("iPhone 15");
+    expect(
+      buildLocalEnv({ deviceInfo: { brand: "Apple", model: "  " } }).phoneText,
+    ).toBe("Apple");
+    expect(
+      buildLocalEnv({ deviceInfo: { brand: "HUAWEI", model: "ALN-AL00" } })
+        .phoneText,
+    ).toBe("HUAWEI ALN-AL00");
   });
 });
 
@@ -111,9 +141,40 @@ describe("buildDiagnosticSections", () => {
     expect(sections[2].rows.map((row) => row.value)).toEqual([
       "CMS1W8bd_V1.01_828_brtc_version",
       "8.0.50",
-      "iPhone 15",
+      "Apple iPhone 15",
       "iOS 18.2",
     ]);
+  });
+
+  it("手机行展示 maker + 型号，复制文本保留硬件标识", () => {
+    const env = buildLocalEnv({
+      appBaseInfo: { version: "8.0.80" },
+      deviceInfo: { brand: "Apple", model: "iPhone 15 pro<iPhone16,1>" },
+    });
+    const sections = buildDiagnosticSections({
+      detail: DETAIL,
+      status: STATUS,
+      statusError: null,
+      env,
+    });
+    const phoneRow = sections[2].rows[2];
+
+    expect(phoneRow.label).toBe("手机");
+    expect(phoneRow.value).toBe("Apple iPhone 15 pro");
+    expect(buildDiagnosticsText(sections)).toContain(
+      "手机：Apple iPhone 15 pro<iPhone16,1>",
+    );
+  });
+
+  it("展示串与复制串一致时不额外挂 copyValue", () => {
+    const sections = buildDiagnosticSections({
+      detail: DETAIL,
+      status: STATUS,
+      statusError: null,
+      env: ENV,
+    });
+
+    expect(sections[2].rows[2].copyValue).toBeUndefined();
   });
 
   it("状态请求失败：状态字段显示未获取，身份/版本仍保留", () => {
@@ -248,7 +309,7 @@ describe("buildDiagnosticsText", () => {
     expect(text).toContain("微信版本：8.0.50");
     expect(text).not.toContain("小程序版本");
     expect(text).not.toContain("基础库");
-    expect(text).toContain("手机：iPhone 15");
+    expect(text).toContain("手机：Apple iPhone 15");
     expect(text).toContain("系统：iOS 18.2");
   });
 

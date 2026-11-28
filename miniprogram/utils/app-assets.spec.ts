@@ -5,6 +5,7 @@ import {
   loadAppAssets,
   resetAppAssetsForTest,
   resolveAppAsset,
+  takeMissHealChance,
 } from "./app-assets";
 import { request } from "./request";
 
@@ -330,6 +331,39 @@ describe("app-assets", () => {
       expect(resolveAppAsset("diagnostics/remote-probe")).toEqual({
         url: "https://cdn.example.com/remote-probe-v2.png",
       });
+    });
+
+    it("并发调用共享同一个 in-flight 请求，避免一屏多个展示位各打一次接口", async () => {
+      await Promise.all([
+        forceRefreshAppAssets(),
+        forceRefreshAppAssets(),
+        forceRefreshAppAssets(),
+      ]);
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it("刷新结束后清空 in-flight，下一次调用重新请求", async () => {
+      await forceRefreshAppAssets();
+      await forceRefreshAppAssets();
+
+      expect(mockRequest).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("takeMissHealChance", () => {
+    it("每个会话只放行一次", () => {
+      expect(takeMissHealChance()).toBe(true);
+      expect(takeMissHealChance()).toBe(false);
+      expect(takeMissHealChance()).toBe(false);
+    });
+
+    it("resetAppAssetsForTest 恢复额度", () => {
+      expect(takeMissHealChance()).toBe(true);
+
+      resetAppAssetsForTest();
+
+      expect(takeMissHealChance()).toBe(true);
     });
   });
 

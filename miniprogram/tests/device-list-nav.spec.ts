@@ -1,7 +1,7 @@
 /**
  * 设备列表导航栏与单卡展示 guard（静态层）。
  *
- * 首页不再有「我的设备」标题；多设备时导航栏左侧是共享 dropdown + 添加设备按钮；
+ * 首页不再有「我的设备」标题；导航栏左侧是常驻的共享 dropdown（切换孩子 + 添加设备）；
  * 设备卡片只渲染当前选中的孩子；哄睡入口按选中设备进入配置页。
  */
 export {};
@@ -46,20 +46,28 @@ describe("设备列表导航与单卡展示", () => {
     expect(wxss).not.toContain(".device-nav-title");
   });
 
-  it("dropdown 只在多设备时出现，且排在添加设备按钮左侧", () => {
+  it("dropdown 常驻导航栏，切换孩子与「添加设备」都收在同一个菜单里", () => {
     const navStart = wxml.indexOf('class="device-nav"');
     const navEnd = wxml.indexOf('class="container"');
     const nav = wxml.slice(navStart, navEnd);
     const dropdownIndex = nav.indexOf("<device-switch-dropdown");
-    const fabIndex = nav.indexOf('class="add-device-fab"');
+    const tag = /<device-switch-dropdown\b([^>]*)>/.exec(nav);
 
     expect(dropdownIndex).toBeGreaterThan(-1);
-    expect(fabIndex).toBeGreaterThan(dropdownIndex);
-    expect(nav).toMatch(
-      /<device-switch-dropdown[^>]*wx:if="\{\{\s*devices\.length > 1\s*\}\}"/,
-    );
-    expect(nav).toContain('variant="nav"');
+    expect(tag).not.toBeNull();
+    // 常驻：单设备 / 无设备时也要能进来添加设备
+    expect(nav).not.toMatch(/<device-switch-dropdown[^>]*wx:if=/);
+    expect(nav).toContain('addable="{{ true }}"');
+    expect(nav).toContain('selected-gender="{{ selectedDeviceGender }}"');
+    // 胶囊贴在屏幕左侧，菜单必须向左锚定，否则 264rpx 的菜单会被推出屏幕
+    expect(nav).toContain('menu-align="left"');
     expect(nav).toContain('bind:change="onDeviceChange"');
+    expect(nav).toContain('bind:add="onAddDevice"');
+    // 独立的圆形「+」按钮已下线，入口移到菜单底部
+    expect(nav).not.toContain('class="add-device-fab"');
+    expect(wxss).not.toContain(".add-device-fab");
+    // 两处调用共用同一套胶囊尺寸，不再有导航栏变体
+    expect(nav).not.toContain('variant="nav"');
   });
 
   it("页面 json 注册共享 dropdown 组件", () => {
@@ -101,11 +109,10 @@ describe("设备列表导航与单卡展示", () => {
     );
   });
 
-  it("顶栏 logo 水平居中于刘海中线，并与添加设备按钮同尺寸", () => {
+  it("顶栏 logo 水平居中于刘海中线，尺寸与去掉了的「+」按钮一致", () => {
     const logo = /<image\b[^>]*class="device-nav-logo"[^>]*>/.exec(wxml);
     const logoIndex = wxml.indexOf('class="device-nav-logo"');
     const dropdownIndex = wxml.indexOf("<device-switch-dropdown");
-    const fabIndex = wxml.indexOf('class="add-device-fab"');
 
     expect(logo).not.toBeNull();
     expect((logo as RegExpExecArray)[0]).toContain(
@@ -113,7 +120,6 @@ describe("设备列表导航与单卡展示", () => {
     );
     expect(logoIndex).toBeGreaterThan(-1);
     expect(logoIndex).toBeLessThan(dropdownIndex);
-    expect(logoIndex).toBeLessThan(fabIndex);
 
     const logoRule = rule(".device-nav-logo");
 
@@ -122,12 +128,8 @@ describe("设备列表导航与单卡展示", () => {
     expect(declaration(logoRule, "left")).toBe("50%");
     expect(declaration(logoRule, "top")).toBe("calc(50% - 3rpx)");
     expect(declaration(logoRule, "transform")).toBe("translate(-50%, -50%)");
-    expect(declaration(logoRule, "width")).toBe(
-      declaration(rule(".add-device-fab"), "width"),
-    );
-    expect(declaration(logoRule, "height")).toBe(
-      declaration(rule(".add-device-fab"), "height"),
-    );
+    expect(declaration(logoRule, "width")).toBe("64rpx");
+    expect(declaration(logoRule, "height")).toBe("64rpx");
     expect(
       fs.existsSync(
         path.join(MINIPROGRAM_ROOT, "static/images/kid-info/logo.png"),
