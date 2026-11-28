@@ -4,9 +4,17 @@
  */
 import { installPageHarness } from "../../tests/page-harness";
 
+declare const __dirname: string;
+const fs = require("fs");
+const path = require("path");
+
 const harness = installPageHarness();
 
 require("./sleep-config");
+
+function read(relative: string): string {
+  return fs.readFileSync(path.join(__dirname, relative), "utf8");
+}
 
 describe("sleep-config page 装配", () => {
   beforeEach(() => {
@@ -61,6 +69,17 @@ describe("sleep-config page 装配", () => {
 
     page.onHeroImageLoad({ detail: { width: 750, height: 440 } });
     expect(page.data.heroHeight).toBe(440);
+  });
+
+  it("背景图缺失：监听 unavailable 并把 hero 收窄，不再留 440rpx 空白", () => {
+    const page = harness.createInstance();
+    const wxml: string = read("sleep-config.wxml");
+
+    expect(wxml).toContain('bind:unavailable="onHeroUnavailable"');
+
+    page.onHeroUnavailable();
+
+    expect(page.data.heroHeight).toBe(240);
   });
 
   it("返回失败时降级到设备列表", () => {

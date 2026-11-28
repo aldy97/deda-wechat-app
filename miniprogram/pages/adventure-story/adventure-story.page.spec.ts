@@ -103,6 +103,26 @@ describe("adventure-story page 装配", () => {
     expect(page.data.heroHeight).toBe(440);
   });
 
+  it("背景图缺失：监听 unavailable 并把 hero 收窄，不再留 440rpx 空白", () => {
+    const page = harness.createInstance();
+    const wxml: string = read("adventure-story.wxml");
+
+    expect(wxml).toContain('bind:unavailable="onHeroUnavailable"');
+
+    page.onHeroUnavailable();
+
+    expect(page.data.heroHeight).toBe(240);
+  });
+
+  it("hero 不再自绘渐变：底色交给 kid-gradient-bg，避免与页面渐变形成接缝", () => {
+    const wxss: string = read("adventure-story.wxss");
+    const hero = /\.adventure-story-hero\s*\{([^}]*)\}/.exec(wxss);
+
+    expect(hero).not.toBeNull();
+    expect((hero as RegExpExecArray)[1]).not.toContain("linear-gradient");
+    expect((hero as RegExpExecArray)[1]).toContain("overflow: hidden");
+  });
+
   it("三段说明按序排列且正文非空", () => {
     const page = harness.createInstance();
     const titles: string[] = page.data.sections.map(

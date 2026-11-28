@@ -3,15 +3,30 @@
  * 远程失败回退与卸载后不再写数据。
  */
 import { installComponentHarness } from "../../tests/component-harness";
-import { loadAppAssets, resolveAppAsset } from "../../utils/app-assets";
+import { isDevEnv } from "../../config/api.config";
+import {
+  forceRefreshAppAssets,
+  loadAppAssets,
+  resolveAppAsset,
+  takeMissHealChance,
+} from "../../utils/app-assets";
 
 jest.mock("../../utils/app-assets", () => ({
   loadAppAssets: jest.fn(),
   resolveAppAsset: jest.fn(),
+  forceRefreshAppAssets: jest.fn(),
+  takeMissHealChance: jest.fn(),
+}));
+
+jest.mock("../../config/api.config", () => ({
+  isDevEnv: jest.fn(() => false),
 }));
 
 const mockLoadAssets = loadAppAssets as jest.Mock;
 const mockResolveAsset = resolveAppAsset as jest.Mock;
+const mockForceRefresh = forceRefreshAppAssets as jest.Mock;
+const mockTakeHeal = takeMissHealChance as jest.Mock;
+const mockIsDevEnv = isDevEnv as jest.Mock;
 
 const FALLBACK = "/static/images/kid-info/logo.png";
 const REMOTE = "https://cdn.example.com/hero.webp";
@@ -28,6 +43,9 @@ describe("elly-image 组件", () => {
     jest.clearAllMocks();
     mockLoadAssets.mockResolvedValue({ version: "", assets: {} });
     mockResolveAsset.mockReturnValue(null);
+    mockForceRefresh.mockResolvedValue({ version: "", assets: {} });
+    // 默认不消耗自愈额度：保持既有用例的「未命中就保持 fallback」语义
+    mockTakeHeal.mockReturnValue(false);
   });
 
   function create(props: Record<string, unknown> = {}) {
@@ -153,5 +171,221 @@ describe("elly-image 组件", () => {
     instance.onImageError();
 
     expect(instance.data.errored).toBe(true);
+  });
+
+  it("manifest 未命中：消耗一次自愈额度，强制刷新命中后切图", async () => {
+    mockTakeHeal.mockReturnValue(true);
+    mockResolveAsset
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({ url: REMOTE });
+    const instance = create({ assetKey: "adventure-story/hero-bg" });
+
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(mockForceRefresh).toHaveBeenCalledTimes(1);
+    expect(instance.data.displayedSrc).toBe(REMOTE);
+    expect(instance.data.useWebp).toBe(true);
+    expect(instance.triggerEvent).not.toHaveBeenCalledWith(
+      "unavailable",
+      expect.anything(),
+    );
+  });
+
+  it("自愈后仍未命中：抛 unavailable(lookup)，hero 页保持空串", async () => {
+    mockTakeHeal.mockReturnValue(true);
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(mockForceRefresh).toHaveBeenCalledTimes(1);
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.triggerEvent).toHaveBeenCalledWith("unavailable", {
+      assetKey: "adventure-story/hero-bg",
+      reason: "lookup",
+    });
+  });
+
+  it("本会话没有自愈额度：不发强制刷新，直接抛 unavailable(lookup)", async () => {
+    mockTakeHeal.mockReturnValue(false);
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(mockForceRefresh).not.toHaveBeenCalled();
+    expect(instance.triggerEvent).toHaveBeenCalledWith("unavailable", {
+      assetKey: "adventure-story/hero-bg",
+      reason: "lookup",
+    });
+  });
+
+  it("manifest 拉取失败：抛 unavailable(manifest)，hero 页保持空串", async () => {
+    mockLoadAssets.mockRejectedValue(new Error("network"));
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+
+    instance.lifetimes.attached();
+    await flush();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.triggerEvent).toHaveBeenCalledWith("unavailable", {
+      assetKey: "adventure-story/hero-bg",
+      reason: "manifest",
+    });
+  });
+
+  it("远程图失败且没有 fallback：抛 unavailable(load)，回落到空串", () => {
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+
+    instance.onImageError();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.triggerEvent).toHaveBeenCalledWith("unavailable", {
+      assetKey: "adventure-story/hero-bg",
+      reason: "load",
+    });
+  });
+
+  it("远程图失败但有 fallback：不抛 unavailable（页面上仍有图）", () => {
+    const instance = create({ assetKey: "owner-info/mascot" });
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+
+    instance.onImageError();
+
+    expect(instance.triggerEvent).not.toHaveBeenCalledWith(
+      "unavailable",
+      expect.anything(),
+    );
+  });
+
+  it("unavailable 每个实例只抛一次", () => {
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+
+    instance.onImageError();
+    instance.setData({ displayedSrc: REMOTE, useWebp: true });
+    instance.onImageError();
+
+    const calls = (instance.triggerEvent as jest.Mock).mock.calls.filter(
+      (call) => call[0] === "unavailable",
+    );
+    expect(calls).toHaveLength(1);
+  });
+
+  it("有包内兜底图时 manifest 失败不抛 unavailable：页面上仍有图可显示", async () => {
+    mockLoadAssets.mockRejectedValue(new Error("network"));
+    const instance = create({ assetKey: "owner-info/mascot" });
+
+    instance.lifetimes.attached();
+    await flush();
+
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.triggerEvent).not.toHaveBeenCalledWith(
+      "unavailable",
+      expect.anything(),
+    );
+  });
+
+  it("组件已卸载：自愈结果不再写数据也不再抛事件", async () => {
+    mockTakeHeal.mockReturnValue(true);
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+    instance.detached = true;
+
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.triggerEvent).not.toHaveBeenCalledWith(
+      "unavailable",
+      expect.anything(),
+    );
+  });
+
+  it("强制刷新失败：抛 unavailable(lookup)，hero 页保持空串", async () => {
+    mockTakeHeal.mockReturnValue(true);
+    mockForceRefresh.mockRejectedValue(new Error("network down"));
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(instance.data.displayedSrc).toBe("");
+    expect(instance.triggerEvent).toHaveBeenCalledWith("unavailable", {
+      assetKey: "adventure-story/hero-bg",
+      reason: "lookup",
+    });
+  });
+
+  it("刷新期间组件被卸载：回来时不再写数据", async () => {
+    mockTakeHeal.mockReturnValue(true);
+    let releaseRefresh: (value: unknown) => void = () => {};
+    mockForceRefresh.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseRefresh = resolve;
+        }),
+    );
+    const instance = create({ assetKey: "adventure-story/hero-bg" });
+
+    instance.lifetimes.attached();
+    await flush();
+    instance.detached = true;
+    releaseRefresh({ version: "", assets: {} });
+    await flush();
+    await flush();
+
+    expect(instance.data.displayedSrc).toBe(FALLBACK);
+    expect(instance.triggerEvent).not.toHaveBeenCalledWith(
+      "unavailable",
+      expect.anything(),
+    );
+  });
+
+  it("开发环境打一条 warn，便于真机调试定位缺失展示位", async () => {
+    mockIsDevEnv.mockReturnValueOnce(true);
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const instance = create({
+      fallback: "",
+      assetKey: "adventure-story/hero-bg",
+    });
+    instance.lifetimes.attached();
+    await flush();
+    await flush();
+
+    expect(warn).toHaveBeenCalledWith(
+      "[elly-image] unavailable",
+      "adventure-story/hero-bg",
+      "lookup",
+    );
+    warn.mockRestore();
   });
 });

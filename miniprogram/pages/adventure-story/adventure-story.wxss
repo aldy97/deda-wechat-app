@@ -9,16 +9,13 @@ page {
   box-sizing: border-box;
 }
 
-/* 顶部 hero：与 night-story-intro/hero-bg 相同的满宽背景图版式 */
+/* 顶部 hero：与 night-story-intro/hero-bg 相同的满宽背景图版式。
+   不自绘渐变：底色由 kid-gradient-bg 统一提供，否则 hero 的渐变末端
+   与页面渐变在同一高度对不上，会横贯出一条硬接缝。 */
 .adventure-story-hero {
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    var(--color-kid-bg-top) 0%,
-    var(--color-kid-bg-bottom) 100%
-  );
 }
 
 /* 背景图向四边各溢出 1px：亚像素舍入不会在边缘露出底色 */

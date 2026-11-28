@@ -3,6 +3,7 @@ import {
   DEFAULT_STATUS_BAR_HEIGHT,
   readNavBarMetrics,
 } from "../../utils/nav-bar";
+import { EMPTY_HERO_HEIGHT_RPX } from "../../constants/hero";
 
 /**
  * 冒险故事介绍页。
@@ -75,6 +76,14 @@ Page({
     if (heroHeight > 0 && heroHeight !== this.data.heroHeight) {
       this.setData({ heroHeight });
     }
+  },
+
+  /**
+   * 背景图最终拿不到（展示位未命中 / 加载失败）：把 hero 收窄到导航安全区，
+   * 不再留 440rpx 空白。
+   */
+  onHeroUnavailable() {
+    this.setData({ heroHeight: EMPTY_HERO_HEIGHT_RPX });
   },
 
   /**

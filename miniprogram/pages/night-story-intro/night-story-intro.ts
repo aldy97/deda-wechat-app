@@ -1,3 +1,5 @@
+import { EMPTY_HERO_HEIGHT_RPX } from "../../constants/hero";
+
 /**
  * 晚安故事模式介绍页（功能版）。
  *
@@ -46,5 +48,13 @@ Page({
     if (heroHeight > 0 && heroHeight !== this.data.heroHeight) {
       this.setData({ heroHeight });
     }
+  },
+
+  /**
+   * 背景图最终拿不到（展示位未命中 / 加载失败）：把 hero 收窄到导航安全区，
+   * 不再留 440rpx 空白。
+   */
+  onHeroUnavailable() {
+    this.setData({ heroHeight: EMPTY_HERO_HEIGHT_RPX });
   },
 });
