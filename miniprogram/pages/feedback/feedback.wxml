@@ -48,6 +48,7 @@
         bind:input="onContactInput"
       />
     </view>
+    <view class="contact-hint">提交后，该手机号会作为你的账号手机号保存。</view>
   </view>
 
   <view

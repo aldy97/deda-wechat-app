@@ -34,7 +34,7 @@
           <input
             class="profile-row-input"
             type="nickname"
-            maxlength="20"
+            maxlength="10"
             value="{{ form.nickname }}"
             placeholder="给自己起个昵称"
             placeholder-class="profile-placeholder"
@@ -45,12 +45,42 @@
         </view>
 
         <view class="profile-row">
-          <text class="profile-row-label">手机号</text>
-          <view class="profile-row-value">
-            <text class="profile-row-text {{ phoneUnbound ? 'profile-row-text-placeholder' : '' }}">{{ phoneText }}</text>
-            <text wx:if="{{ phoneUnbound }}" class="profile-row-hint">暂不支持自助绑定</text>
+          <text class="profile-row-label">性别</text>
+          <view class="profile-gender-group">
+            <view
+              class="profile-gender {{ form.gender === 'male' ? 'profile-gender-active' : '' }}"
+              data-gender="male"
+              bind:tap="onSelectGender"
+              aria-role="button"
+              aria-label="选择男"
+            >男</view>
+            <view
+              class="profile-gender {{ form.gender === 'female' ? 'profile-gender-active' : '' }}"
+              data-gender="female"
+              bind:tap="onSelectGender"
+              aria-role="button"
+              aria-label="选择女"
+            >女</view>
           </view>
         </view>
+
+        <picker
+          mode="date"
+          start="1900-01-01"
+          end="{{ today }}"
+          value="{{ form.birthday || '1990-01-01' }}"
+          bindchange="onBirthdayChange"
+        >
+          <view class="profile-row" aria-role="button" aria-label="选择生日">
+            <text class="profile-row-label">生日</text>
+            <view class="profile-row-value profile-row-value-row">
+              <text
+                class="profile-row-text {{ form.birthday ? '' : 'profile-row-text-placeholder' }}"
+              >{{ form.birthday || '请选择生日' }}</text>
+              <van-icon name="arrow" size="30rpx" color="var(--color-secondary)" />
+            </view>
+          </view>
+        </picker>
       </view>
 
       <view class="profile-tip">昵称会用于 DEDA 对你的称呼，保存后可在「我的」页看到。</view>
